@@ -13,7 +13,7 @@ before_script:
   - sudo apt-key update -q
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
-  - sudo apt-get install -y libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev  # autotrace-dev?
+  - sudo apt-get install -y libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev?
 
 script:
   - export OMP_NUM_THREADS=1
@@ -22,15 +22,15 @@ script:
   - make -j$(nproc)
   - # Generate AppImage
   - make install DESTDIR=$(readlink -f appdir) ; find appdir/
-  - mkdir -p appdir/usr/share/applications/ ; cp imagemagick.desktop appdir/usr/share/applications/
-  - mkdir -p appdir/usr/share/icons/hicolor/128x128/apps/ ; touch appdir/usr/share/icons/hicolor/128x128/apps/imagemagick.png # FIXME
+  - mkdir -p appdir/usr/share/applications/ ; cp appimage/imagemagick.desktop appdir/usr/share/applications/
+  - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp appimage/imagemagick.png  appdir/usr/share/icons/hicolor/512x512/apps/
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt*.AppImage
   - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
   - export VERSION=$(git rev-parse --short HEAD)-$CC
   - ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/imagemagick.desktop -bundle-non-qt-libs
   - ./linuxdeployqt*.AppImage --appimage-extract
-  - rm ./appdir/AppRun ; cp AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
+  - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -g ./appdir/
 
 after_success:
