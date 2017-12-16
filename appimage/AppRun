@@ -11,8 +11,10 @@
 
 HERE="$(dirname "$(readlink -f "${0}")")"
 
-export MAGICK_HOME="$HERE/usr" # http://www.imagemagick.org/QuickStart.txt
-export MAGICK_CONFIGURE_PATH=$(readlink -f "$HERE/usr/lib/ImageMagick-7.0.7/config-Q16HDRI") # Undocumented? Wildcards won't work...
+export MAGICK_HOME="$HERE/usr"  # http://www.imagemagick.org/QuickStart.txt
+export MAGICK_CONFIGURE_PATH=$(readlink -f "$HERE/usr/lib/ImageMagick-7.0.7/config-Q16HDRI"):$(readlink -f "$HERE/share/ImageMagick-7"):$(readlink -f "$HERE/etc/ImageMagick-7") # Undocumented? Wildcards won't work...
+export LD_LIBRARY_PATH=$(readlink -f "$HERE/usr/lib"):$LD_LIBRARY_PATH
+
 
 if [ "x$1" == "xhelp" ] ; then
     echo ""
@@ -40,9 +42,6 @@ if [ "x$1" == "xhelp" ] ; then
     echo "         $ARGV0  listfile"
     echo "                    # List all files embedded in AppImage"
     echo ""
-    echo "         $ARGV0  file <path/to/file>"
-    echo "                    # Open file embedded in AppImage (for path see \"$ARGV0 listfile\")"
-    echo ""
     echo "         $ARGV0  listdir"
     echo "                    # List all directories embedded in AppImage"
     echo ""
@@ -64,7 +63,7 @@ if [ "x$1" == "xhelp" ] ; then
     echo " ----------------------------------------------------------------------------------------------------------------------------"
     echo " NOTE: The execution of this AppImage is controlled by a custom AppRun script. The state of this script is experimental and"
     echo " preliminary. Hence it may not work as expected, or miss some functionality. You can hack on this script by unpacking this"
-    echo " AppImage into your local sub-directory [currently named 'squashfs-root'] with this command:"
+    echo " AppImage into a local sub-directory [currently named 'squashfs-root'] with this command:"
     echo "       $ARGV0 --appimage-extract"
     echo " After you're done with your hacks, repackage the AppImage again with this command:"
     echo "       appimagetool [/path/to/]squashfs-root [/path/to/]ImageMagick.AppImage"
@@ -95,20 +94,6 @@ if [ x"$1" == "xindex" -o x"$1" == "xindex.html" ] ; then
     exit $?
 fi
 
-if [ x"$1" == "xfile" ] ; then
-    cd "$HERE"
-    shift
-    echo ""
-    if [ x"$1" == "x" ] ; then
-        echo " You must give a path to the file you want to open."
-        echo "   For available files run \"$ARGV0 listfile\""
-    else
-        xdg-open $1
-    fi
-    echo ""
-    exit $?
-fi
-
 
 if [ x"$1" == "xdir" ] ; then
     cd "$HERE"
@@ -116,14 +101,13 @@ if [ x"$1" == "xdir" ] ; then
     echo ""
     if [ x"$1" == "x" ] ; then
         echo " You must give a path to the directory you want to open."
-        echo "   For available directories run \"$ARGV0 listfile\""
+        echo "   For available directories run \"$ARGV0 listdir\""
     else
-        xdg-open $1
+        xdg-open $HERE/$1
     fi
     echo ""
     exit $?
 fi
-
 
 if [ x"$1" == "xlistdir" ] ; then
     cd "$HERE"
@@ -150,11 +134,9 @@ if [ x"$1" == "xlisthtml" ] ; then
     exit $?
 fi
 
-
 if [ x"$1" == "xhtml" ] ; then
     shift
     htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "${1}.html" -o -name "${1}" | head -n 1 )
-    #htmlfile=$( basename $htmlfile )
     xdg-open $htmlfile
     exit $?
 fi
