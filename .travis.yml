@@ -13,7 +13,7 @@ before_script:
   - sudo apt-key update -q
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
-  - sudo apt-get install -y libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev autotrace-dev libwmf-dev
+  - sudo apt-get install -y libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev  # autotrace-dev?
 
 script:
   - export OMP_NUM_THREADS=1
