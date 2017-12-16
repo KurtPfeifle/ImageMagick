@@ -32,6 +32,7 @@ script:
   - mkdir -p appdir/usr/share/applications/ ; cp appimage/imagemagick.desktop appdir/usr/share/applications/
   - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp appimage/imagemagick.png  appdir/usr/share/icons/hicolor/512x512/apps/
   - make install DESTDIR=$(readlink -f appdir) ; find appdir/
+  - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI; ln -s ../../../etc/ImageMagick-7/*.xml . ; cd -
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt*.AppImage
   - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
