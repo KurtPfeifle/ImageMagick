@@ -11,6 +11,8 @@
 
 HERE="$(dirname "$(readlink -f "${0}")")"
 
+export MAGICK_HOME="$HERE/usr" # http://www.imagemagick.org/QuickStart.txt
+export MAGICK_CONFIGURE_PATH=$(readlink -f "$HERE/usr/lib/ImageMagick-*/config-*/") # Undocumented?
 
 if [ "x$1" == "xhelp" ] ; then
     echo ""
