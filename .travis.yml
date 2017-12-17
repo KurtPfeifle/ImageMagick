@@ -27,7 +27,7 @@ script:
   - dpkg -l  # Check to see what's there...
   - export OMP_NUM_THREADS=1
   - export CFLAGS="-Wno-deprecated-declarations -Wdeclaration-after-statement -Wno-error=unused-variable"
-  - ./configure --with-rsvg --with-wmf --with-modules --with-autotrace --with-x --enable-reproducible-build --enable-hdri --with-gvc --with-fpx --with-heic --with-raqm --with-gslib --with-perl --prefix=/usr
+  - ./configure --with-rsvg --with-wmf --with-modules --with-autotrace --with-x --enable-reproducible-build --enable-hdri --with-gvc --with-fpx --with-heic --with-raqm --with-gslib --with-perl --with-dejavu-font-dir=/usr/share/fonts/truetype/dejavu --prefix=/usr
   - make -j$(nproc)
   - # Generate AppImage
   - mkdir -p appdir/usr/share/applications/ ; cp appimage/imagemagick.desktop appdir/usr/share/applications/
