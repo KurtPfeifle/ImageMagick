@@ -8,19 +8,19 @@ compiler:
   - gcc
 
 before_script:
-  - sudo add-apt-repository -y ppa:as-bahanta/raqm
-  - sudo add-apt-repository -y ppa:dns/gnu
-  - sudo add-apt-repository -y ppa:aacid/openjp2trusty
-  - #sudo add-apt-repository -y ppa:opencpu/julia
-  - #sudo add-apt-repository -y ppa:tuxpoldo/yeasoft-backports
-  - sudo add-apt-repository -y ppa:richardpuppy96/backports
-  - sudo add-apt-repository -y ppa:twodopeshaggy/ppapackages
-  - #sudo add-apt-repository -y ppa:voxops/backports
-  - #sudo add-apt-repository -y ppa:dsci-admins/live
+  - sudo add-apt-repository -y ppa:as-bahanta/raqm              # libraqm-dev, libfribidi0
+  - sudo add-apt-repository -y ppa:dns/gnu                      # 
+  - sudo add-apt-repository -y ppa:aacid/openjp2trusty          # libopenjp2-7
+  - #sudo add-apt-repository -y ppa:opencpu/julia               # 
+  - #sudo add-apt-repository -y ppa:tuxpoldo/yeasoft-backports  # 
+  - sudo add-apt-repository -y ppa:richardpuppy96/backports     # libgs, librsvg, openjpeg, libopenjp2-7, libfontconfig1-dev
+  - sudo add-apt-repository -y ppa:twodopeshaggy/ppapackages    # 
+  - #sudo add-apt-repository -y ppa:voxops/backports            # 
+  - #sudo add-apt-repository -y ppa:dsci-admins/live            # 
   - sudo apt-key update -q
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
-  - sudo apt-get install -y libgs-dev libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev flif-dev?
+  - sudo apt-get install -y libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev flif-dev?
   - #sudo apt-get install -y libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev
 
 script:
