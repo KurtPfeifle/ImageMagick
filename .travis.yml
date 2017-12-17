@@ -26,7 +26,7 @@ before_script:
 script:
   - dpkg -l | grep -v "^ii  lib"  # Check to see what's there...
   - dpkg -l | grep    "^ii  lib"  # Check to see what's there...
-  - echo 'Number of installed packages: $(dpkg -l | grep "^ii  " | wc -l)'
+  - echo -n "Number of installed packages: " ; $(dpkg -l | grep "^ii  " | wc -l)
   - export OMP_NUM_THREADS=1
   - export CFLAGS="-Wno-deprecated-declarations -Wdeclaration-after-statement -Wno-error=unused-variable"
   - ./configure --with-rsvg --with-wmf --with-modules --with-autotrace --with-x --enable-reproducible-build --enable-hdri --with-gvc --with-fpx --with-heic --with-raqm --with-gslib --with-perl --with-dejavu-font-dir=/usr/share/fonts/truetype/dejavu --prefix=/usr
@@ -43,7 +43,7 @@ script:
   - export VERSION=$(git rev-parse --short HEAD)-$CC
   - ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/imagemagick.desktop -bundle-non-qt-libs
   - ./linuxdeployqt*.AppImage --appimage-extract
-  - for i in $(ls -1d */) ; do echo $i ; cd $i ; pwd ; find . ; cd - ; done
+  - for i in $(ls -1d */) ; do echo "CURRENT DIRECTORY: $i" ; cd $i ; echo -n "CURRENT DIRECTORY: " ; pwd ; find . ; echo "" ; cd - ; done
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -g ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
