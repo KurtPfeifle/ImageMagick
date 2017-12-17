@@ -43,6 +43,9 @@ if [ "x$1" == "xhelp" ] ; then
     echo "         $ARGV0  listfile"
     echo "                    # List all files embedded in AppImage"
     echo ""
+    echo "         $ARGV0  listexe"
+    echo "                    # List all executables embedded in AppImage"
+    echo ""
     echo "         $ARGV0  listdir"
     echo "                    # List all directories embedded in AppImage"
     echo ""
@@ -56,7 +59,10 @@ if [ "x$1" == "xhelp" ] ; then
     echo "                    # Use browser to display the entry point into all HTML help page(s)"
     echo ""
     echo "         $ARGV0  html animate|compare|composite|conjure|convert|display|identify|import|magick-script|mogrify|montage|stream"
-    echo "                    # Use browser to display embedded manual page(s)"
+    echo "                    # Use browser to display HTML version of embedded manual page(s)"
+    echo ""
+    echo "         $ARGV0  html <path/to/file>"
+    echo "                    # Use browser to show HTML file embedded in AppImage (for path see \"$ARGV0 listhtml\")"
     echo ""
     echo "         $ARGV0  --appimage-help"
     echo "                    # Show available AppImage options"
@@ -122,6 +128,15 @@ if [ x"$1" == "xlistdir" ] ; then
 fi
 
 
+if [ x"$1" == "xlistexe" ] ; then
+    cd "$HERE"
+    echo ""
+    find -type f -o -type l -o -type s -o -type p | grep '/bin/' | sed 's#./usr/bin/#  #' | sort -V
+    echo ""
+    exit $?
+fi
+
+
 if [ x"$1" == "xlistfile" ] ; then
     cd "$HERE"
     echo ""
@@ -129,6 +144,7 @@ if [ x"$1" == "xlistfile" ] ; then
     echo ""
     exit $?
 fi
+
 
 if [ x"$1" == "xlisthtml" ] ; then
     cd "$HERE/usr/share/doc/ImageMagick-7/www"
@@ -141,9 +157,9 @@ fi
 
 if [ x"$1" == "xhtml" ] ; then
     shift
-    htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "${1}.html" -o -name "${1}" | head -n 1 )
+    htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "${1}" -o -name "${1}.html" | head -n 1 )
     #htmlfile=$( basename $htmlfile )
-    xdg-open $htmlfile
+    xdg-open $HERE/usr/share/doc/ImageMagick-7/www/$htmlfile
     sleep 5
     exit $?
 fi
