@@ -157,9 +157,8 @@ fi
 
 if [ x"$1" == "xhtml" ] ; then
     shift
-    htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "${1}" -o -name "${1}.html" | head -n 1 )
-    #htmlfile=$( basename $htmlfile )
-    xdg-open $HERE/usr/share/doc/ImageMagick-7/www/$htmlfile
+    htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "*.html" | grep "${1}" | sort | head -n 1 )
+    xdg-open $htmlfile
     sleep 5
     exit $?
 fi
