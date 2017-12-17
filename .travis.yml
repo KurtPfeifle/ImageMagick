@@ -26,7 +26,7 @@ before_script:
 script:
   - dpkg -l | grep -v "^ii  lib"  # Check to see what's there...
   - dpkg -l | grep    "^ii  lib"  # Check to see what's there...
-  - echo -n "Number of installed packages: " ; $(dpkg -l | grep "^ii  " | wc -l)
+  - echo -n "Number of installed packages: " ; echo $(dpkg -l | grep "^ii  " | wc -l)
   - export OMP_NUM_THREADS=1
   - export CFLAGS="-Wno-deprecated-declarations -Wdeclaration-after-statement -Wno-error=unused-variable"
   - ./configure --with-rsvg --with-wmf --with-modules --with-autotrace --with-x --enable-reproducible-build --enable-hdri --with-gvc --with-fpx --with-heic --with-raqm --with-gslib --with-perl --with-dejavu-font-dir=/usr/share/fonts/truetype/dejavu --prefix=/usr
