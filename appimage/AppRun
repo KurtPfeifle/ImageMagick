@@ -11,9 +11,10 @@
 
 HERE="$(dirname "$(readlink -f "${0}")")"
 
-export MAGICK_HOME="$HERE/usr"  # http://www.imagemagick.org/QuickStart.txt
-export MAGICK_CONFIGURE_PATH=$(readlink -f "$HERE/usr/lib/ImageMagick-7.0.7/config-Q16HDRI"):$(readlink -f "$HERE/share/ImageMagick-7"):$(readlink -f "$HERE/etc/ImageMagick-7") # Undocumented? Wildcards won't work...
+export MAGICK_HOME="$HERE/usr:$MAGICK_HOME"   # http://www.imagemagick.org/QuickStart.txt
+export MAGICK_CONFIGURE_PATH=$(readlink -f "$HERE/usr/lib/ImageMagick-7.0.7/config-Q16HDRI"):$(readlink -f "$HERE/share/ImageMagick-7"):$(readlink -f "$HERE/etc/ImageMagick-7"):$MAGICK_CONFIGURE_PATH # Undocumented? Wildcards won't work...
 export LD_LIBRARY_PATH=$(readlink -f "$HERE/usr/lib"):$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HERE}/usr/lib/ImageMagick-7.0.7/modules-Q16HDRI/coders:$LD_LIBRARY_PATH
 
 
 if [ "x$1" == "xhelp" ] ; then
@@ -91,6 +92,7 @@ fi
 
 if [ x"$1" == "xindex" -o x"$1" == "xindex.html" ] ; then
     xdg-open ${HERE}/usr/share/doc/ImageMagick-7/www/index.html
+    sleep 5
     exit $?
 fi
 
@@ -104,10 +106,12 @@ if [ x"$1" == "xdir" ] ; then
         echo "   For available directories run \"$ARGV0 listdir\""
     else
         xdg-open $HERE/$1
+        sleep 5
     fi
     echo ""
     exit $?
 fi
+
 
 if [ x"$1" == "xlistdir" ] ; then
     cd "$HERE"
@@ -121,7 +125,7 @@ fi
 if [ x"$1" == "xlistfile" ] ; then
     cd "$HERE"
     echo ""
-    find -type f | sed 's#^./#  file #'
+    find -type f -o -type l -o -type s -o -type p | sed 's#^./#  file #'
     echo ""
     exit $?
 fi
@@ -134,17 +138,30 @@ if [ x"$1" == "xlisthtml" ] ; then
     exit $?
 fi
 
+
 if [ x"$1" == "xhtml" ] ; then
     shift
     htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "${1}.html" -o -name "${1}" | head -n 1 )
+    #htmlfile=$( basename $htmlfile )
     xdg-open $htmlfile
+    sleep 5
     exit $?
 fi
 
 
+#set -x
 if [ ! -z $APPIMAGE ] ; then
     BINARY_NAME=$(basename "$ARGV0")
-    if [ -e "$HERE/usr/bin/$BINARY_NAME" ] ; then
+    APPIMAGE=$APPIMAGE
+    CALLED_SUBCMD=$( basename $1 2>/dev/null )
+    if [ -e "$HERE/usr/bin/$CALLED_SUBCMD" ] && [ "x$CALLED_SUBCMD" != "x" ]; then
+        #echo befor shift dollar_at=$@
+        shift
+        #echo after shift dollar_at=$@
+        #echo CALLED_SUBCMD=$CALLED_SUBCMD
+        exec "$HERE/usr/bin/$CALLED_SUBCMD" "$@"
+    elif [ -e "$HERE/usr/bin/$BINARY_NAME" ] ; then
+        shift
         exec "$HERE/usr/bin/$BINARY_NAME" "$@"
     else
         exec "$HERE/usr/bin/magick" "$@"
