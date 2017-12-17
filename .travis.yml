@@ -4,7 +4,7 @@ dist: trusty   # needed for HarfBuzz
 language: c
 
 compiler:
-  - clang
+  #- clang
   - gcc
 
 before_script:
@@ -55,6 +55,12 @@ script:
   - ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/imagemagick.desktop -bundle-non-qt-libs
   - ./linuxdeployqt*.AppImage --appimage-extract
   - ls -1d */
+  - find utilities -type f
+  - find tests     -type f
+  - find scripts   -type f
+  - find filters   -type f
+  - find coders    -type f
+  - find config    -type f
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -g ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
