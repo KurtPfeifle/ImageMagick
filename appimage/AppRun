@@ -9,6 +9,53 @@
 # It also provides some additional help parameters in order to allow faster familiarization with functionality
 # embedded in this AppImage.
 
+#stty cols $(tput cols)
+
+if [ $(tput cols) -lt 120 ] ; then
+    stty cols 120
+fi
+
+#if [ $(tput rows) -lt 67 ] ; then
+    stty rows 67
+#fi
+
+#### font search paths...
+#
+# $MAGICK_CONFIGURE_PATH
+# $MAGICK_HOME/etc/ImageMagick
+# $MAGICK_HOME/share/ImageMagick-7.0.2/config
+# $HOME/.config/ImageMagick/
+# <client path>/etc/ImageMagick/
+# <current directory>/
+# $MAGICK_FONT_PATH
+
+
+### Environment variables...
+#
+# MAGICK_TMPDIR           path to store temporary files
+# LD_LIBRARY_PATH         path to libMagick.so and other libraries
+
+
+### Configuration Files...
+#
+# ImageMagick depends on a number of external configuration files which
+# include colors.xml, delegates.xml, magic.xml, coder.xml, and others.
+# ImageMagick searches for configuration files in the following order, and
+# loads them if found:
+#
+# $MAGICK_CONFIGURE_PATH
+# $MAGICK_HOME/etc/ImageMagick
+# $MAGICK_HOME/share/ImageMagick-7.0.2/config
+# $HOME/.config/ImageMagick/
+# <client path>/etc/ImageMagick/
+# <current directory>/
+
+
+#### OpenCL Cache path...
+#
+# export IMAGEMAGICK_OPENCL_CACHE_DIR=
+# export MAGICK_OPENCL_CACHE_DIR=
+
 HERE="$(dirname "$(readlink -f "${0}")")"
 
 export MAGICK_HOME="$HERE/usr:$MAGICK_HOME"   # http://www.imagemagick.org/QuickStart.txt
@@ -17,7 +64,9 @@ export LD_LIBRARY_PATH=$(readlink -f "$HERE/usr/lib"):$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${HERE}/usr/lib/ImageMagick-7.0.7/modules-Q16HDRI/coders:$LD_LIBRARY_PATH
 
 
-if [ "x$1" == "xhelp" ] ; then
+#env
+
+if [ "x$1" == "xhelp" -o "x$1" == "x--help" ] ; then
     echo ""
     echo " --------------------------------------------------------------------------"
     echo "    All the great ImageMagick functionality inside an AppImage package."
@@ -45,6 +94,12 @@ if [ "x$1" == "xhelp" ] ; then
     echo ""
     echo "         $ARGV0  listexe"
     echo "                    # List all executables embedded in AppImage"
+    echo ""
+    echo "         $ARGV0  listreadme"
+    echo "                    # List all READMEs embedded in AppImage"
+    echo ""
+    echo "         $ARGV0  readme <path/to/readme>"
+    echo "                    # Show content of README embedded in AppImage (for path see \"$ARGV0 listreadme\")"
     echo ""
     echo "         $ARGV0  listdir"
     echo "                    # List all directories embedded in AppImage"
@@ -81,18 +136,19 @@ if [ "x$1" == "xhelp" ] ; then
 fi
 
 
-if [ x"$1" == "xlistman" ] ; then
-    cd "$HERE/usr/share/man"
+if [ x"$1" == "xlistman" -o x"$1" == "x--listman" ] ; then
+    cd "$HERE"
     echo ""
-    find man* -type f | sed 's#^# man #;s#man man# man #;s#/# #;s#\.[0-9]$##'
+    find usr/share/man* usr/local/man* -type f | sed 's#^# man #'
     echo ""
     exit $?
 fi
 
 
-if [ x"$1" == "xman" ] ; then
-    export MANPATH="$HERE/usr/share/man:$MANPATH"
-    exec "$@"
+if [ x"$1" == "xman"  -o  x"$1" == "x--man" ] ; then
+    export MANPATH="$HERE/usr/share/man:$HERE/usr/local/man:$MANPATH"
+    shift
+    exec man "$@"
 fi
 
 
@@ -103,13 +159,15 @@ if [ x"$1" == "xindex" -o x"$1" == "xindex.html" ] ; then
 fi
 
 
-if [ x"$1" == "xdir" ] ; then
+if [ x"$1" == "xdir" -o x"$1" == "x--dir" ] ; then
     cd "$HERE"
     shift
     echo ""
     if [ x"$1" == "x" ] ; then
+        echo ""
         echo " You must give a path to the directory you want to open."
         echo "   For available directories run \"$ARGV0 listdir\""
+        echo ""
     else
         xdg-open $HERE/$1
         sleep 5
@@ -119,35 +177,44 @@ if [ x"$1" == "xdir" ] ; then
 fi
 
 
-if [ x"$1" == "xlistdir" ] ; then
+if [ x"$1" == "xlistdir" -o x"$1" == "x--listdir" ] ; then
     cd "$HERE"
     echo ""
-    find -type d | sed 's#^./#  dir #'
+    find . -type d | sed 's#^./#  dir #'
     echo ""
     exit $?
 fi
 
 
-if [ x"$1" == "xlistexe" ] ; then
+if [ x"$1" == "xlistexe" -o x"$1" == "x--listexe" ] ; then
     cd "$HERE"
     echo ""
-    find -type f -o -type l -o -type s -o -type p | grep '/bin/' | sed 's#./usr/bin/#  #' | sort -V
+    find . -type f -o -type l -o -type s -o -type p | grep '/bin/' | sed 's#./usr/bin/#  #' | sort -V
     echo ""
     exit $?
 fi
 
 
-if [ x"$1" == "xlistfile" ] ; then
+if [ x"$1" == "xlistfile" -o x"$1" == "x--listfile" ] ; then
     cd "$HERE"
     echo ""
-    find -type f -o -type l -o -type s -o -type p | sed 's#^./#  file #'
+    find . -type f -o -type l -o -type s -o -type p | sed 's#^./#  file #'
     echo ""
     exit $?
 fi
 
 
-if [ x"$1" == "xlisthtml" ] ; then
-    cd "$HERE/usr/share/doc/ImageMagick-7/www"
+if [ x"$1" == "xlistreadme" -o x"$1" == "x--listreadme" ] ; then
+    cd "$HERE"
+    echo ""
+    find . -type f -name "*README*" -o -name "*readme*" -o -name "*.txt" | sed 's#^./#  readme #'
+    echo ""
+    exit $?
+fi
+
+
+if [ x"$1" == "xlisthtml"  -o x"$1" == "x--listhtml" ] ; then
+    cd "$HERE"
     echo ""
     find -type f -name "*.html" | sed 's#^./#  html #'
     echo ""
@@ -155,11 +222,36 @@ if [ x"$1" == "xlisthtml" ] ; then
 fi
 
 
-if [ x"$1" == "xhtml" ] ; then
+if [ x"$1" == "xreadme" -o x"$1" == "x--readme" ] ; then
+    cd "$HERE"
     shift
-    htmlfile=$( find "$HERE/usr/share/doc/ImageMagick-7/www" -type f -name "*.html" | grep "${1}" | sort -rV | head -n 1 )
-    xdg-open $htmlfile
-    sleep 5
+    if [ x"$1" == "x" ] ; then
+        echo ""
+        echo " You must give a path to the README you want to open."
+        echo "   For available READMEs run \"$ARGV0 listreadme\""
+        echo ""
+    else
+        readmefile=$( find . -type f -name "*README*" -o -name "*readme*" -o -name "*.txt" | grep "${1}" | sort -rV | head -n 1 )
+        cat $readmefile
+        sleep 5
+    fi
+    exit $?
+fi
+
+
+if [ x"$1" == "xhtml" -o x"$1" == "x--html" ] ; then
+    cd "$HERE"
+    shift
+    if [ x"$1" == "x" ] ; then
+        echo ""
+        echo " You must give a path to the HTML file you want to open."
+        echo "   For available READMEs run \"$ARGV0 listhtml\""
+        echo ""
+    else
+        htmlfile=$( find . -type f -name "*.html" | grep "${1}" | sort -rV | head -n 1 )
+        xdg-open $htmlfile
+        sleep 5
+    fi
     exit $?
 fi
 
