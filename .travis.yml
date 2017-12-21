@@ -62,7 +62,7 @@ script:
   - find coders    -type f
   - find config    -type f
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
-  - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -g ./appdir/
+  - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u -g -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
   - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental.AppImage
   - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then 
