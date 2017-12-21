@@ -27,7 +27,7 @@ AC_PREREQ(2.69)
 m4_define([magick_major_version], [7])
 m4_define([magick_minor_version], [0])
 m4_define([magick_micro_version], [7])
-m4_define([magick_patchlevel_version], [15])
+m4_define([magick_patchlevel_version], [16])
 m4_define([magick_version],
           [magick_major_version.magick_minor_version.magick_micro_version-magick_patchlevel_version])
 m4_define([magick_git_revision], esyscmd([sh -c "(gitversion.sh .) | tr -d '\n'"]))
@@ -1704,6 +1704,7 @@ if test "$build_modules" != 'no' || test "X$ax_cv_check_cl_libcl" != Xno; then
       LTDL_LIBS='-lltdl'
       LIBS="$LTDL_LIBS $LIBS"
       AC_DEFINE(LTDL_DELEGATE,1,[Define if using libltdl to support dynamically loadable modules and OpenCL])
+      AC_DEFINE_UNQUOTED([LTDL_MODULE_EXT],["${shrext_cmds}"],[Native module suffix])
       AC_MSG_RESULT([yes])
       have_ltdl='yes'
     fi
