@@ -64,12 +64,21 @@ script:
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
-  - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental.AppImage
+  - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental-x86_64.AppImage
+  - cp ./ImageMagick-xperimental{,-$(git rev-parse --short HEAD)}-x86_64.AppImage
+  - sha512sum ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage > ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512
+  - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                               > ./ImageMagick-xperimental-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then 
-  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh ; bash upload.sh ImageMagick*AppImage*
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - bash upload.sh ImageMagick-xperimental-x86_64.AppImage
+  - bash upload.sh ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then 
-  - curl --upload-file ./ImageMagick*.AppImage https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage        https://transfer.sh/ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512 https://transfer.sh/ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512
+  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage        https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage.sha512 https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage.sha512
   - #; fi
+  - find . -name "ImageMagick-*.AppImage*"
 
 after_success:
