@@ -34,8 +34,11 @@
     
 - Output of *`uname -a`*
 
+**AppImage Configuration:**
+
+- Output of *`imagemagick-*.AppImage --appimage-version`*,  
+  or, if you use a symlink or a re-named AppImage: *`name --appimage-version`*
+
 **Additional information:**
 
 <!-- Thanks for reporting the issue to ImageMagick/AppImage! -->
-
-
