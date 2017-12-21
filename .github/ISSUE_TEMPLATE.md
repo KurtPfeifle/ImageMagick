@@ -21,7 +21,6 @@
 - ImageMagick version:
     + Output of *`imagemagick-*.AppImage convert -version`*,   
       or, if you use a symlink or a re-named AppImage: *`name convert -version`*
-      
     + Output of *`imagemagick-*.AppImage -list configure`,   
       or, if you use a symlink or a re-named AppImage: *`name convert -list configure`*
 
