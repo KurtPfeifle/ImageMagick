@@ -3516,7 +3516,6 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
               break;
           }
       }
-      quantum_info=DestroyQuantumInfo(quantum_info);
     }
 
   else /* image->storage_class != DirectClass */
@@ -3712,8 +3711,7 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
             ping_color_type&=0x03;
           }
       }
-    }
-
+  }
   quantum_info=DestroyQuantumInfo(quantum_info);
 
   if (image->storage_class == PseudoClass)
@@ -9252,10 +9250,13 @@ static MagickBooleanType WriteOnePNGImage(MngInfo *mng_info,
 
             image->colors = image_colors;
 
-            if (AcquireImageColormap(image,image_colors,exception) ==
-                MagickFalse)
-               ThrowWriterException(ResourceLimitError,
-                   "MemoryAllocationFailed");
+            if (AcquireImageColormap(image,image_colors,exception) == MagickFalse)
+              {
+                (void) ThrowMagickException(exception,GetMagickModule(),
+                  ResourceLimitError,"MemoryAllocationFailed","`%s'",
+                  image->filename);
+                break;
+              }
 
             for (i=0; i< (ssize_t) image_colors; i++)
                image->colormap[i] = colormap[i];
@@ -11304,7 +11305,6 @@ static MagickBooleanType WriteOnePNGImage(MngInfo *mng_info,
   if (pixel_info == (MemoryInfo *) NULL)
     png_error(ping,"Allocation of memory for pixels failed");
   ping_pixels=(unsigned char *) GetVirtualMemoryBlob(pixel_info);
-
   /*
     Initialize image scanlines.
   */

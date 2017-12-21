@@ -2802,9 +2802,8 @@ MagickExport const char *GetMagickProperty(ImageInfo *image_info,
       if (LocaleCompare("colorspace",property) == 0)
         {
           WarnNoImageReturn("\"%%[%s]\"",property);
-          /* FUTURE: return actual colorspace - no 'gray' stuff */
           string=CommandOptionToMnemonic(MagickColorspaceOptions,(ssize_t)
-            image->colorspace);
+            GetImageColorspaceType(image,exception));
           break;
         }
       if (LocaleCompare("compose",property) == 0)
