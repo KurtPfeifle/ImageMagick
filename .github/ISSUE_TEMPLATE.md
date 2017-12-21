@@ -1,5 +1,7 @@
 ### Prerequisites
 
+The more checkmarks you can set below, the higher your chance that this issue can be looked into fast:
+
 - [ ] I have written a descriptive issue title
 - [ ] I have checked: this issue is specific to the AppImage version of ImageMagick; it does not occur with a "standard" installed package (.rpm, .deb, ...)
 - [ ] I have verified that I am using the latest version of ImageMagick (`magick convert -version`)
