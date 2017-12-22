@@ -68,16 +68,16 @@ script:
   - cp ./ImageMagick-xperimental{,-$(git rev-parse --short HEAD)}-x86_64.AppImage
   - sha512sum ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage > ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512
   - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                               > ./ImageMagick-xperimental-x86_64.AppImage.sha512
-  - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then 
+  - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage
+  - bash upload.sh ImageMagick-xperimental-x86_64.AppImage.sha512
   - bash upload.sh ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
+  - bash upload.sh ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512
   - #; fi
-  - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then 
+  - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then
   - curl --upload-file ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage        https://transfer.sh/ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
-  - curl --upload-file ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512 https://transfer.sh/ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512
   - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage        https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
-  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage.sha512 https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage.sha512
   - #; fi
   - find . -name "ImageMagick-*.AppImage*"
 
