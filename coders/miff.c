@@ -1086,12 +1086,10 @@ static Image *ReadMIFFImage(const ImageInfo *image_info,
         (image->colorspace == UndefinedColorspace) ||
         (image->columns == 0) || (image->rows == 0))
       {
+        if (profiles != (LinkedListInfo *) NULL)
+          profiles=DestroyLinkedList(profiles,RelinquishMagickMemory);
         if (image->previous == (Image *) NULL)
-          {
-            if (profiles != (LinkedListInfo *) NULL)
-              profiles=DestroyLinkedList(profiles,RelinquishMagickMemory);
-            ThrowReaderException(CorruptImageError,"ImproperImageHeader");
-          }
+          ThrowReaderException(CorruptImageError,"ImproperImageHeader");
         DeleteImageFromList(&image);
         (void) ThrowMagickException(exception,GetMagickModule(),
           CorruptImageError,"ImproperImageHeader","`%s'",image->filename);
@@ -1124,6 +1122,8 @@ static Image *ReadMIFFImage(const ImageInfo *image_info,
               p=image->directory+strlen(image->directory);
             }
           c=ReadBlobByte(image);
+          if (c == EOF)
+            break;
           *p++=(char) c;
         } while (c != (int) '\0');
       }

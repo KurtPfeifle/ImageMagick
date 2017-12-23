@@ -193,6 +193,7 @@ MagickPrivate Cache AcquirePixelCache(const size_t number_threads)
   (void) ResetMagickMemory(cache_info,0,sizeof(*cache_info));
   cache_info->type=UndefinedCache;
   cache_info->mode=IOMode;
+  cache_info->disk_mode=IOMode;
   cache_info->colorspace=sRGBColorspace;
   cache_info->file=(-1);
   cache_info->id=GetMagickThreadId();
@@ -3301,7 +3302,7 @@ static MagickBooleanType OpenPixelCacheOnDisk(CacheInfo *cache_info,
   /*
     Open pixel cache on disk.
   */
-  if ((cache_info->file != -1) && (cache_info->mode == mode))
+  if ((cache_info->file != -1) && (cache_info->disk_mode == mode))
     return(MagickTrue);  /* cache already open and in the proper mode */
   if (*cache_info->cache_filename == '\0')
     file=AcquireUniqueFileResource(cache_info->cache_filename);
@@ -3337,6 +3338,7 @@ static MagickBooleanType OpenPixelCacheOnDisk(CacheInfo *cache_info,
   if (cache_info->file != -1)
     (void) ClosePixelCacheOnDisk(cache_info);
   cache_info->file=file;
+  cache_info->disk_mode=mode;
   return(MagickTrue);
 }
 
@@ -3520,7 +3522,8 @@ static MagickBooleanType OpenPixelCache(Image *image,const MapMode mode,
       cache_info->type=PingCache;
       return(MagickTrue);
     }
-  status=AcquireMagickResource(AreaResource,cache_info->length);
+  status=AcquireMagickResource(AreaResource,(MagickSizeType) 
+    cache_info->columns*cache_info->rows);
   if (cache_info->mode == PersistMode)
     status=MagickFalse;
   length=number_pixels*(cache_info->number_channels*sizeof(Quantum)+
@@ -3686,58 +3689,60 @@ static MagickBooleanType OpenPixelCache(Image *image,const MapMode mode,
   else
     {
       status=AcquireMagickResource(MapResource,cache_info->length);
-      if ((status == MagickFalse) && (cache_info->type != MapCache) &&
-          (cache_info->type != MemoryCache))
-        {
-          status=MagickTrue;
-          cache_info->type=DiskCache;
-        }
+      if (status == MagickFalse)
+        cache_info->type=DiskCache;
       else
-        {
-          status=MagickTrue;
-          cache_info->pixels=(Quantum *) MapBlob(cache_info->file,mode,
-            cache_info->offset,(size_t) cache_info->length);
-          if (cache_info->pixels == (Quantum *) NULL)
-            {
-              cache_info->type=DiskCache;
-              cache_info->pixels=source_info.pixels;
-            }
-          else
-            {
-              /*
-                Create file-backed memory-mapped pixel cache.
-              */
-              (void) ClosePixelCacheOnDisk(cache_info);
-              cache_info->type=MapCache;
-              cache_info->mapped=MagickTrue;
-              cache_info->metacontent=(void *) NULL;
-              if (cache_info->metacontent_extent != 0)
-                cache_info->metacontent=(void *) (cache_info->pixels+
-                  number_pixels*cache_info->number_channels);
-              if ((source_info.storage_class != UndefinedClass) &&
-                  (mode != ReadMode))
-                {
-                  status=ClonePixelCacheRepository(cache_info,&source_info,
-                    exception);
-                  RelinquishPixelCachePixels(&source_info);
-                }
-              if (image->debug != MagickFalse)
-                {
-                  (void) FormatMagickSize(cache_info->length,MagickTrue,"B",
-                    MagickPathExtent,format);
-                  type=CommandOptionToMnemonic(MagickCacheOptions,(ssize_t)
-                    cache_info->type);
-                  (void) FormatLocaleString(message,MagickPathExtent,
-                    "open %s (%s[%d], %s, %.20gx%.20gx%.20g %s)",
-                    cache_info->filename,cache_info->cache_filename,
-                    cache_info->file,type,(double) cache_info->columns,(double)
-                    cache_info->rows,(double) cache_info->number_channels,
-                    format);
-                  (void) LogMagickEvent(CacheEvent,GetMagickModule(),"%s",
-                    message);
-                }
-              return(status == 0 ? MagickFalse : MagickTrue);
-            }
+        if ((cache_info->type != MapCache) && (cache_info->type != MemoryCache))
+          {
+            cache_info->type=DiskCache;
+            RelinquishMagickResource(MapResource,cache_info->length);
+          }
+        else
+          {
+            cache_info->pixels=(Quantum *) MapBlob(cache_info->file,mode,
+              cache_info->offset,(size_t) cache_info->length);
+            if (cache_info->pixels == (Quantum *) NULL)
+              {
+                cache_info->type=DiskCache;
+                cache_info->pixels=source_info.pixels;
+                RelinquishMagickResource(MapResource,cache_info->length);
+              }
+            else
+              {
+                /*
+                  Create file-backed memory-mapped pixel cache.
+                */
+                (void) ClosePixelCacheOnDisk(cache_info);
+                cache_info->type=MapCache;
+                cache_info->mapped=MagickTrue;
+                cache_info->metacontent=(void *) NULL;
+                if (cache_info->metacontent_extent != 0)
+                  cache_info->metacontent=(void *) (cache_info->pixels+
+                    number_pixels*cache_info->number_channels);
+                if ((source_info.storage_class != UndefinedClass) &&
+                    (mode != ReadMode))
+                  {
+                    status=ClonePixelCacheRepository(cache_info,&source_info,
+                      exception);
+                    RelinquishPixelCachePixels(&source_info);
+                  }
+                if (image->debug != MagickFalse)
+                  {
+                    (void) FormatMagickSize(cache_info->length,MagickTrue,"B",
+                      MagickPathExtent,format);
+                    type=CommandOptionToMnemonic(MagickCacheOptions,(ssize_t)
+                      cache_info->type);
+                    (void) FormatLocaleString(message,MagickPathExtent,
+                      "open %s (%s[%d], %s, %.20gx%.20gx%.20g %s)",
+                      cache_info->filename,cache_info->cache_filename,
+                      cache_info->file,type,(double) cache_info->columns,
+                      (double) cache_info->rows,(double)
+                      cache_info->number_channels,format);
+                    (void) LogMagickEvent(CacheEvent,GetMagickModule(),"%s",
+                      message);
+                  }
+                return(status == 0 ? MagickFalse : MagickTrue);
+              }
         }
     }
   status=MagickTrue;
