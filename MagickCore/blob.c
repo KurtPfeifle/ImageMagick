@@ -3221,7 +3221,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
                 if (blob_info->file_info.file != (FILE *) NULL)
                   (void) fclose(blob_info->file_info.file);
                 blob_info->file_info.file=(FILE *) NULL;
-                blob_info->file_info.gzfile=gzopen(filename,type);
+                blob_info->file_info.gzfile=gzopen(filename,"rb");
                 if (blob_info->file_info.gzfile != (gzFile) NULL)
                   blob_info->type=ZipStream;
                }
@@ -3232,7 +3232,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
                 if (blob_info->file_info.file != (FILE *) NULL)
                   (void) fclose(blob_info->file_info.file);
                 blob_info->file_info.file=(FILE *) NULL;
-                blob_info->file_info.bzfile=BZ2_bzopen(filename,type);
+                blob_info->file_info.bzfile=BZ2_bzopen(filename,"r");
                 if (blob_info->file_info.bzfile != (BZFILE *) NULL)
                   blob_info->type=BZipStream;
               }
@@ -3290,9 +3290,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
             (LocaleCompare(extension,"wmz") == 0) ||
             (LocaleCompare(extension,"svgz") == 0))
           {
-            if (mode == WriteBinaryBlobMode)
-              type="wb";
-            blob_info->file_info.gzfile=gzopen(filename,type);
+            blob_info->file_info.gzfile=gzopen(filename,"wb");
             if (blob_info->file_info.gzfile != (gzFile) NULL)
               blob_info->type=ZipStream;
           }
@@ -3301,7 +3299,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
 #if defined(MAGICKCORE_BZLIB_DELEGATE)
           if (LocaleCompare(extension,"bz2") == 0)
             {
-              blob_info->file_info.bzfile=BZ2_bzopen(filename,type);
+              blob_info->file_info.bzfile=BZ2_bzopen(filename,"w");
               if (blob_info->file_info.bzfile != (BZFILE *) NULL)
                 blob_info->type=BZipStream;
             }
