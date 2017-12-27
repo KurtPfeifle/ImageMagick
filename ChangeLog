@@ -1,3 +1,20 @@
+2017-12-26  7.0.7-17 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-16, GIT revision 22088:354674e2b:20171226.
+
+2017-12-26  7.0.7-17 Cristy  <quetzlzacatenango@image...>
+  * Fix heap use after free error (reference
+    https://github.com/ImageMagick/ImageMagick/issues/918).
+
+2017-12-24  7.0.7-16 Cristy  <quetzlzacatenango@image...>
+  * Release ImageMagick version 7.0.7-16, GIT revision 22038:e55dc7626:20171225.
+
+2017-12-18  7.0.7-16 Cristy  <quetzlzacatenango@image...>
+  * Fix error reading multi-layer XCF image file.
+  * Fix possible stack overflow in WEBP reader (reference
+    https://github.com/ImageMagick/ImageMagick/issues/907)
+  * Fixed numerous memory leaks (reference
+    https://github.com/ImageMagick/ImageMagick/issues).
+
 2017-12-16  7.0.7-15 Cristy  <quetzlzacatenango@image...>
   * Release ImageMagick version 7.0.7-15, GIT revision 21924:30cb31746:20171216.
 

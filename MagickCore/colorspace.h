@@ -27,7 +27,7 @@ typedef enum
   UndefinedColorspace,
   CMYColorspace,           /* negated linear RGB colorspace */
   CMYKColorspace,          /* CMY with Black separation */
-  GRAYColorspace,          /* Single Channel greyscale (linear) image */
+  GRAYColorspace,          /* Single Channel greyscale (non-linear) image */
   HCLColorspace,
   HCLpColorspace,
   HSBColorspace,
@@ -56,7 +56,8 @@ typedef enum
   YDbDrColorspace,
   YIQColorspace,
   YPbPrColorspace,
-  YUVColorspace
+  YUVColorspace,
+  LinearGRAYColorspace     /* Single Channel greyscale (linear) image */
 } ColorspaceType;
 
 extern MagickExport ColorspaceType

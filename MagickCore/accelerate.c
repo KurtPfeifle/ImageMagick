@@ -114,6 +114,7 @@ static MagickBooleanType checkAccelerateCondition(const Image* image)
   /* check if the image's colorspace is supported */
   if (image->colorspace != RGBColorspace &&
       image->colorspace != sRGBColorspace &&
+      image->colorspace != LinearGRAYColorspace &&
       image->colorspace != GRAYColorspace)
     return(MagickFalse);
 

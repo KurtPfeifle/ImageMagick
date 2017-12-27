@@ -932,9 +932,6 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
   char
     *url;
 
-  ColorspaceType
-    colorspace;
-
   const char
     *artifact,
     *locate,
@@ -1029,7 +1026,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
     }
   JSONFormatLocaleFile(file,"    \"units\": %s,\n",CommandOptionToMnemonic(
     MagickResolutionOptions,(ssize_t) image->units));
-  type=GetImageType(image);
+  type=IdentifyImageType(image,exception);
   JSONFormatLocaleFile(file,"    \"type\": %s,\n",CommandOptionToMnemonic(
     MagickTypeOptions,(ssize_t) type));
   if (image->type != type)
@@ -1069,8 +1066,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
       if (image->alpha_trait != UndefinedPixelTrait)
         (void) PrintChannelLocations(file,image,AlphaPixelChannel,"Alpha",
           type,max_locations,MagickTrue,channel_statistics);
-      colorspace=GetImageColorspaceType(image,exception);
-      switch (colorspace)
+      switch (image->colorspace)
       {
         case RGBColorspace:
         default:
@@ -1087,14 +1083,15 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
         {
           (void) PrintChannelLocations(file,image,CyanPixelChannel,"Cyan",
             type,max_locations,MagickTrue,channel_statistics);
-          (void) PrintChannelLocations(file,image,MagentaPixelChannel,"Magenta",
-            type,max_locations,MagickTrue,channel_statistics);
+          (void) PrintChannelLocations(file,image,MagentaPixelChannel,
+            "Magenta",type,max_locations,MagickTrue,channel_statistics);
           (void) PrintChannelLocations(file,image,YellowPixelChannel,"Yellow",
             type,max_locations,MagickTrue,channel_statistics);
           (void) PrintChannelLocations(file,image,BlackPixelChannel,"Black",
             type,max_locations,MagickFalse,channel_statistics);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) PrintChannelLocations(file,image,GrayPixelChannel,"Gray",
@@ -1109,13 +1106,9 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
   /*
     Detail channel depth and extrema.
   */
-  colorspace=GetImageColorspaceType(image,exception);
   JSONFormatLocaleFile(file,"    \"colorspace\": %s,\n",
-    CommandOptionToMnemonic(MagickColorspaceOptions,(ssize_t) colorspace));
-  if (image->colorspace != colorspace)
-    JSONFormatLocaleFile(file,"    \"baseColorspace\": %s,\n",
-      CommandOptionToMnemonic(MagickColorspaceOptions,(ssize_t)
-        image->colorspace));
+    CommandOptionToMnemonic(MagickColorspaceOptions,(ssize_t)
+    image->colorspace));
   channel_statistics=(ChannelStatistics *) NULL;
   channel_moments=(ChannelMoments *) NULL;
   channel_phash=(ChannelPerceptualHash *) NULL;
@@ -1148,7 +1141,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
   if (image->alpha_trait != UndefinedPixelTrait)
     (void) FormatLocaleFile(file,"      \"alpha\": %.20g,\n",(double)
       channel_statistics[AlphaPixelChannel].depth);
-  switch (colorspace)
+  switch (image->colorspace)
   {
     case RGBColorspace:
     default:
@@ -1173,6 +1166,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
         channel_statistics[BlackChannel].depth);
       break;
     }
+    case LinearGRAYColorspace:
     case GRAYColorspace:
     {
       (void) FormatLocaleFile(file,"      \"gray\": %.20g\n",(double)
@@ -1189,7 +1183,8 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
     {
       (void) FormatLocaleFile(file,"    \"pixels\": %.20g,\n",
         channel_statistics[CompositePixelChannel].area);
-      if (colorspace != GRAYColorspace)
+      if ((image->colorspace != LinearGRAYColorspace) &&
+          (image->colorspace != GRAYColorspace))
         {
           (void) FormatLocaleFile(file,"    \"imageStatistics\": {\n");
           (void) PrintChannelStatistics(file,(PixelChannel) MaxPixelChannels,
@@ -1200,7 +1195,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
       if (image->alpha_trait != UndefinedPixelTrait)
         (void) PrintChannelStatistics(file,AlphaPixelChannel,"Alpha",1.0/scale,
           MagickTrue,channel_statistics);
-      switch (colorspace)
+      switch (image->colorspace)
       {
         case RGBColorspace:
         default:
@@ -1225,6 +1220,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
             scale,MagickFalse,channel_statistics);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) PrintChannelStatistics(file,GrayPixelChannel,"Gray",1.0/scale,
@@ -1242,7 +1238,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
       if (image->alpha_trait != UndefinedPixelTrait)
         (void) PrintChannelMoments(file,AlphaPixelChannel,"Alpha",MagickTrue,
           channel_moments);
-      switch (colorspace)
+      switch (image->colorspace)
       {
         case RGBColorspace:
         default:
@@ -1267,6 +1263,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
             MagickFalse,channel_moments);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) PrintChannelMoments(file,GrayPixelChannel,"Gray",MagickFalse,
@@ -1292,7 +1289,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
       if (image->alpha_trait != UndefinedPixelTrait)
         (void) PrintChannelFeatures(file,AlphaPixelChannel,"Alpha",MagickTrue,
           channel_features);
-      switch (colorspace)
+      switch (image->colorspace)
       {
         case RGBColorspace:
         default:
@@ -1317,6 +1314,7 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
             MagickFalse,channel_features);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) PrintChannelFeatures(file,GrayPixelChannel,"Gray",MagickFalse,

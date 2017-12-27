@@ -530,6 +530,7 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   if (file == (FILE *) NULL)
     file=stdout;
+  colorspace=image->colorspace;
   locate=GetImageArtifact(image,"identify:locate");
   if (locate != (const char *) NULL)
     {
@@ -555,7 +556,6 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
       if (channel_statistics == (ChannelStatistics *) NULL)
         return(MagickFalse);
       (void) FormatLocaleFile(file,"Channel %s locations:\n",locate);
-      colorspace=GetImageColorspaceType(image,exception);
       switch (colorspace)
       {
         case RGBColorspace:
@@ -573,14 +573,15 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
         {
           (void) PrintChannelLocations(file,image,CyanPixelChannel,"Cyan",
             statistic_type,max_locations,channel_statistics);
-          (void) PrintChannelLocations(file,image,MagentaPixelChannel,"Magenta",
-            statistic_type,max_locations,channel_statistics);
+          (void) PrintChannelLocations(file,image,MagentaPixelChannel,
+            "Magenta",statistic_type,max_locations,channel_statistics);
           (void) PrintChannelLocations(file,image,YellowPixelChannel,"Yellow",
             statistic_type,max_locations,channel_statistics);
           (void) PrintChannelLocations(file,image,BlackPixelChannel,"Black",
             statistic_type,max_locations,channel_statistics);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) PrintChannelLocations(file,image,GrayPixelChannel,"Gray",
@@ -638,9 +639,9 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
       if (image->type != UndefinedType)
         (void) FormatLocaleFile(file,"%s ",CommandOptionToMnemonic(
           MagickTypeOptions,(ssize_t) image->type));
-      if (image->colorspace != UndefinedColorspace)
+      if (colorspace != UndefinedColorspace)
         (void) FormatLocaleFile(file,"%s ",CommandOptionToMnemonic(
-          MagickColorspaceOptions,(ssize_t) image->colorspace));
+          MagickColorspaceOptions,(ssize_t) colorspace));
       if (image->storage_class == DirectClass)
         {
           if (image->total_colors != 0)
@@ -723,7 +724,9 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
     }
   (void) FormatLocaleFile(file,"  Units: %s\n",CommandOptionToMnemonic(
     MagickResolutionOptions,(ssize_t) image->units));
-  type=GetImageType(image);
+  (void) FormatLocaleFile(file,"  Colorspace: %s\n",CommandOptionToMnemonic(
+    MagickColorspaceOptions,(ssize_t) colorspace));
+  type=IdentifyImageType(image,exception);
   (void) FormatLocaleFile(file,"  Type: %s\n",CommandOptionToMnemonic(
     MagickTypeOptions,(ssize_t) type));
   if (image->type != type)
@@ -734,13 +737,6 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
   /*
     Detail channel depth and extrema.
   */
-  colorspace=GetImageColorspaceType(image,exception);
-  (void) FormatLocaleFile(file,"  Colorspace: %s\n",CommandOptionToMnemonic(
-    MagickColorspaceOptions,(ssize_t) colorspace));
-  if (colorspace != image->colorspace)
-    (void) FormatLocaleFile(file,"  Base colorspace: %s\n",
-      CommandOptionToMnemonic(MagickColorspaceOptions,(ssize_t)
-        image->colorspace));
   channel_statistics=(ChannelStatistics *) NULL;
   channel_moments=(ChannelMoments *) NULL;
   channel_phash=(ChannelPerceptualHash *) NULL;
@@ -799,6 +795,7 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
             channel_statistics[BlackPixelChannel].depth);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) FormatLocaleFile(file,"    Gray: %.20g-bit\n",(double)
@@ -851,6 +848,7 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
             scale,channel_statistics);
           break;
         }
+        case LinearGRAYColorspace:
         case GRAYColorspace:
         {
           (void) PrintChannelStatistics(file,GrayPixelChannel,"Gray",1.0/
@@ -875,7 +873,7 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
       if (image->alpha_trait != UndefinedPixelTrait)
         (void) PrintChannelStatistics(file,AlphaPixelChannel,"Alpha",1.0/
           scale,channel_statistics);
-      if (colorspace != GRAYColorspace)
+      if ((colorspace != LinearGRAYColorspace) && (colorspace != GRAYColorspace))
         {
           (void) FormatLocaleFile(file,"  Image statistics:\n");
           (void) PrintChannelStatistics(file,CompositePixelChannel,"Overall",
@@ -1010,7 +1008,7 @@ MagickExport MagickBooleanType IdentifyImage(Image *image,FILE *file,
     }
   if (ping == MagickFalse)
     {
-      if (image->colorspace == CMYKColorspace)
+      if (colorspace == CMYKColorspace)
         (void) FormatLocaleFile(file,"  Total ink density: %.*g%%\n",
           GetMagickPrecision(),100.0*GetImageTotalInkDensity(image,exception)/
           (double) QuantumRange);

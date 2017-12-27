@@ -959,6 +959,8 @@ MATLAB_KO:
       goto MATLAB_KO;
     filepos += MATLAB_HDR.ObjectSize + 4 + 4;
 
+    if (clone_info != (ImageInfo *) NULL)
+      clone_info=DestroyImageInfo(clone_info);
     clone_info=CloneImageInfo(image_info);
     if ((image != image2) && (image2 != (Image *) NULL))
       image2=DestroyImage(image2);
@@ -1334,6 +1336,8 @@ done_reading:
       /* row scan buffer is no longer needed */
     RelinquishMagickMemory(BImgBuff);
     BImgBuff = NULL;
+    if (quantum_info != (QuantumInfo *) NULL)
+      quantum_info=DestroyQuantumInfo(quantum_info);
 
     if(--Frames>0)
     {
@@ -1356,8 +1360,6 @@ done_reading:
         }
         }
 
-    if (quantum_info != (QuantumInfo *) NULL)
-      quantum_info=DestroyQuantumInfo(quantum_info);
     if (clone_info)
       clone_info=DestroyImageInfo(clone_info);
   }

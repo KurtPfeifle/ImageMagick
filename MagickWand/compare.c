@@ -1337,6 +1337,7 @@ WandExport MagickBooleanType CompareImagesCommand(ImageInfo *image_info,
                       channel_distortion[AlphaPixelChannel]);
                   break;
                 }
+                case LinearGRAYColorspace:
                 case GRAYColorspace:
                 {
                   (void) FormatLocaleFile(stderr,"    gray: %g (%g)\n",
@@ -1392,6 +1393,7 @@ WandExport MagickBooleanType CompareImagesCommand(ImageInfo *image_info,
                       channel_distortion[AlphaPixelChannel]);
                   break;
                 }
+                case LinearGRAYColorspace:
                 case GRAYColorspace:
                 {
                   (void) FormatLocaleFile(stderr,"    gray: %g\n",

@@ -379,6 +379,7 @@ static MagickBooleanType sRGBTransformImage(Image *image,
         return(MagickFalse);
       return(status);
     }
+    case LinearGRAYColorspace:
     case GRAYColorspace:
     {
       /*
@@ -1154,8 +1155,7 @@ MagickExport MagickBooleanType SetImageColorspace(Image *image,
   type=image->type;
   if (IsGrayColorspace(colorspace) != MagickFalse)
     {
-      if ((image->intensity == Rec601LuminancePixelIntensityMethod) ||
-          (image->intensity == Rec709LuminancePixelIntensityMethod))
+      if (colorspace == LinearGRAYColorspace)
         image->gamma=1.000;
       type=GrayscaleType;
     }
@@ -1334,15 +1334,17 @@ MagickExport MagickBooleanType TransformImageColorspace(Image *image,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   if (image->colorspace == colorspace)
     return(SetImageColorspace(image,colorspace,exception));
-  if ((image->colorspace == RGBColorspace) && (colorspace == GRAYColorspace))
+  (void) DeleteImageProfile(image,"icc");
+  (void) DeleteImageProfile(image,"icm");
+  if (colorspace == LinearGRAYColorspace)
     return(GrayscaleImage(image,Rec709LuminancePixelIntensityMethod,exception));
+  if (colorspace == GRAYColorspace)
+    return(GrayscaleImage(image,Rec709LumaPixelIntensityMethod,exception));
   if (colorspace == UndefinedColorspace)
     return(SetImageColorspace(image,colorspace,exception));
   /*
     Convert the reference image from an alternate colorspace to sRGB.
   */
-  (void) DeleteImageProfile(image,"icc");
-  (void) DeleteImageProfile(image,"icm");
   if (IssRGBColorspace(colorspace) != MagickFalse)
     return(TransformsRGBImage(image,exception));
   status=MagickTrue;
@@ -1845,6 +1847,7 @@ static MagickBooleanType TransformsRGBImage(Image *image,
         return(MagickFalse);
       return(status);
     }
+    case LinearGRAYColorspace:
     case GRAYColorspace:
     {
       /*

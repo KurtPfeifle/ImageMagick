@@ -532,6 +532,7 @@ MagickExport Image *CombineImages(const Image *image,
         combine_image->alpha_trait=BlendPixelTrait;
       break;
     }
+    case LinearGRAYColorspace:
     case GRAYColorspace:
     {
       if (GetImageListLength(image) > 1)

@@ -2383,7 +2383,9 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
         (void) LogMagickEvent(CoderEvent,GetMagickModule(),
           "  exit ReadOnePNGImage() with error.");
 
-      return(GetFirstImageInList(image));
+      if (image != (Image *) NULL)
+        image=DestroyImageList(image);
+      return(image);
     }
 
   /* {  For navigation to end of SETJMP-protected block.  Within this
@@ -3163,7 +3165,7 @@ static Image *ReadOnePNGImage(MngInfo *mng_info,
            * image->colorspace to GRAY, and reset image->chromaticity.
            */
           image->intensity = Rec709LuminancePixelIntensityMethod;
-          SetImageColorspace(image,GRAYColorspace,exception);
+          SetImageColorspace(image,LinearGRAYColorspace,exception);
         }
       else
         {
@@ -5597,9 +5599,13 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
         if (memcmp(type,mng_DEFI,4) == 0)
           {
             if (mng_type == 3)
-              (void) ThrowMagickException(exception,GetMagickModule(),
-                CoderError,"DEFI chunk found in MNG-VLC datastream","`%s'",
-                image->filename);
+              {
+                (void) ThrowMagickException(exception,GetMagickModule(),
+                  CoderError,"DEFI chunk found in MNG-VLC datastream","`%s'",
+                  image->filename);
+                chunk=(unsigned char *) RelinquishMagickMemory(chunk);
+                continue;
+              }
 
             if (length < 2)
               {
@@ -5607,7 +5613,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
                 ThrowReaderException(CorruptImageError,"CorruptImage");
               }
 
-            object_id=(p[0] << 8) | p[1];
+            object_id=((unsigned int) p[0] << 8) | (unsigned int) p[1];
 
             if (mng_type == 2 && object_id != 0)
               (void) ThrowMagickException(exception,GetMagickModule(),
@@ -5882,7 +5888,7 @@ static Image *ReadOneMNGImage(MngInfo* mng_info, const ImageInfo *image_info,
 
                 p++; /* framing mode */
 
-                while (*p && ((p-chunk) < (ssize_t) length))
+                while (((p-chunk) < (long) length) && *p)
                   p++;  /* frame name */
 
                 p++;  /* frame name terminator */

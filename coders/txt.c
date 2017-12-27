@@ -488,6 +488,7 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
           break;
         switch (image->colorspace)
         {
+          case LinearGRAYColorspace:
           case GRAYColorspace:
           {
             if (image->alpha_trait != UndefinedPixelTrait)
@@ -565,6 +566,7 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
           break;
       }
     }
+    *text='\0';
     (void) ReadBlobString(image,text);
     if (LocaleNCompare((char *) text,MagickID,strlen(MagickID)) == 0)
       {
@@ -794,7 +796,8 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
           (double) x,(double) y);
         (void) WriteBlobString(image,buffer);
         (void) CopyMagickString(tuple,"(",MagickPathExtent);
-        if (pixel.colorspace == GRAYColorspace)
+        if ((pixel.colorspace == LinearGRAYColorspace) ||
+            (pixel.colorspace == GRAYColorspace))
           ConcatenateColorComponent(&pixel,GrayPixelChannel,compliance,tuple);
         else
           {
@@ -803,7 +806,8 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
             ConcatenateColorComponent(&pixel,GreenPixelChannel,compliance,
               tuple);
             (void) ConcatenateMagickString(tuple,",",MagickPathExtent);
-            ConcatenateColorComponent(&pixel,BluePixelChannel,compliance,tuple);
+            ConcatenateColorComponent(&pixel,BluePixelChannel,compliance,
+              tuple);
           }
         if (pixel.colorspace == CMYKColorspace)
           {

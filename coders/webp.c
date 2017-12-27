@@ -554,7 +554,7 @@ static int WebPEncodeProgress(int percent,const WebPPicture* picture)
   MagickBooleanType
     status;
 
-  image=(Image *) picture->custom_ptr;
+  image=(Image *) picture->user_data;
   status=SetImageProgress(image,EncodeImageTag,percent-1,100);
   return(status == MagickFalse ? 0 : 1);
 }
@@ -633,6 +633,7 @@ static MagickBooleanType WriteWEBPImage(const ImageInfo *image_info,
 #endif
 #if WEBP_DECODER_ABI_VERSION >= 0x0100
   picture.progress_hook=WebPEncodeProgress;
+  picture.user_data=(void *) image;
 #endif
   picture.stats=(&statistics);
   picture.width=(int) image->columns;

@@ -643,7 +643,8 @@ static MagickBooleanType AssignImageColors(Image *image,CubeInfo *cube_info,
   if (cube_info->quantize_info->measure_error != MagickFalse)
     (void) GetImageQuantizeError(image,exception);
   if ((cube_info->quantize_info->number_colors == 2) &&
-      (cube_info->quantize_info->colorspace == GRAYColorspace))
+      ((cube_info->quantize_info->colorspace == LinearGRAYColorspace) ||
+       (cube_info->quantize_info->colorspace == GRAYColorspace)))
     {
       double
         intensity;
@@ -742,7 +743,8 @@ static inline void SetAssociatedAlpha(const Image *image,CubeInfo *cube_info)
   associate_alpha=image->alpha_trait == BlendPixelTrait ? MagickTrue :
     MagickFalse;
   if ((cube_info->quantize_info->number_colors == 2) &&
-      (cube_info->quantize_info->colorspace == GRAYColorspace))
+      ((cube_info->quantize_info->colorspace == LinearGRAYColorspace) ||
+       (cube_info->quantize_info->colorspace == GRAYColorspace)))
     associate_alpha=MagickFalse;
   cube_info->associate_alpha=associate_alpha;
 }

@@ -2710,12 +2710,19 @@ MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
   blob_info=image->blob;
   switch (blob_info->type)
   {
-    case FileStream:
     case BlobStream:
-    case ZipStream:
       return(MagickTrue);
-    case UndefinedStream:
     case StandardStream:
+    case FileStream:
+    case ZipStream:
+    {
+      int
+        status;
+
+      status=fseek(blob_info->file_info.file,0,SEEK_CUR);
+      return(status == -1 ? MagickFalse : MagickTrue);
+    }
+    case UndefinedStream:
     case BZipStream:
     case FifoStream:
     case PipeStream:
@@ -3089,7 +3096,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       if (strchr(type,'b') != (char *) NULL)
         setmode(fileno(blob_info->file_info.file),_O_BINARY);
 #endif
-      blob_info->type=StandardStream;
+      blob_info->type=FileStream;
       blob_info->exempt=MagickTrue;
       return(SetStreamBuffering(image_info,image));
     }
@@ -3105,7 +3112,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       if (strchr(type,'b') != (char *) NULL)
         setmode(fileno(blob_info->file_info.file),_O_BINARY);
 #endif
-      blob_info->type=StandardStream;
+      blob_info->type=FileStream;
       blob_info->exempt=MagickTrue;
       return(SetStreamBuffering(image_info,image));
     }
@@ -3221,7 +3228,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
                 if (blob_info->file_info.file != (FILE *) NULL)
                   (void) fclose(blob_info->file_info.file);
                 blob_info->file_info.file=(FILE *) NULL;
-                blob_info->file_info.gzfile=gzopen(filename,type);
+                blob_info->file_info.gzfile=gzopen(filename,"rb");
                 if (blob_info->file_info.gzfile != (gzFile) NULL)
                   blob_info->type=ZipStream;
                }
@@ -3232,7 +3239,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
                 if (blob_info->file_info.file != (FILE *) NULL)
                   (void) fclose(blob_info->file_info.file);
                 blob_info->file_info.file=(FILE *) NULL;
-                blob_info->file_info.bzfile=BZ2_bzopen(filename,type);
+                blob_info->file_info.bzfile=BZ2_bzopen(filename,"r");
                 if (blob_info->file_info.bzfile != (BZFILE *) NULL)
                   blob_info->type=BZipStream;
               }
@@ -3290,9 +3297,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
             (LocaleCompare(extension,"wmz") == 0) ||
             (LocaleCompare(extension,"svgz") == 0))
           {
-            if (mode == WriteBinaryBlobMode)
-              type="wb";
-            blob_info->file_info.gzfile=gzopen(filename,type);
+            blob_info->file_info.gzfile=gzopen(filename,"wb");
             if (blob_info->file_info.gzfile != (gzFile) NULL)
               blob_info->type=ZipStream;
           }
@@ -3301,7 +3306,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
 #if defined(MAGICKCORE_BZLIB_DELEGATE)
           if (LocaleCompare(extension,"bz2") == 0)
             {
-              blob_info->file_info.bzfile=BZ2_bzopen(filename,type);
+              blob_info->file_info.bzfile=BZ2_bzopen(filename,"w");
               if (blob_info->file_info.bzfile != (BZFILE *) NULL)
                 blob_info->type=BZipStream;
             }
@@ -4677,7 +4682,14 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
           break;
         }
       }
-      break;
+      if (blob_info->offset < (MagickOffsetType) ((off_t) blob_info->length))
+        {
+          blob_info->eof=MagickFalse;
+          break;
+        }
+      if (blob_info->offset < (MagickOffsetType) ((off_t) blob_info->extent))
+        break;
+      return(-1);
     }
     case CustomStream:
     {

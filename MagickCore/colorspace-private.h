@@ -96,7 +96,7 @@ static inline MagickBooleanType IsCMYKColorspace(
 static inline MagickBooleanType IsGrayColorspace(
   const ColorspaceType colorspace)
 {
-  if (colorspace == GRAYColorspace)
+  if ((colorspace == LinearGRAYColorspace) || (colorspace == GRAYColorspace))
     return(MagickTrue);
   return(MagickFalse);
 }
@@ -120,8 +120,8 @@ static inline MagickBooleanType IssRGBCompatibleColorspace(
   const ColorspaceType colorspace)
 {
   if ((colorspace == sRGBColorspace) || (colorspace == RGBColorspace) ||
-      (colorspace == scRGBColorspace) || 
-      (IsGrayColorspace(colorspace) != MagickFalse))
+      (colorspace == scRGBColorspace) || (colorspace == GRAYColorspace) ||
+      (colorspace == LinearGRAYColorspace))
     return(MagickTrue);
   return(MagickFalse);
 }

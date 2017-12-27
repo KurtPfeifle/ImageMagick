@@ -1011,7 +1011,8 @@ MagickExport MagickBooleanType ProfileImage(Image *image,const char *name,
                 (target_colorspace == UndefinedColorspace))
               ThrowProfileException(ImageError,"ColorspaceColorProfileMismatch",
                 name);
-             if ((source_colorspace == GRAYColorspace) &&
+             if (((source_colorspace == LinearGRAYColorspace) ||
+                  (source_colorspace == GRAYColorspace)) &&
                  (SetImageGray(image,exception) == MagickFalse))
               ThrowProfileException(ImageError,"ColorspaceColorProfileMismatch",
                 name);
