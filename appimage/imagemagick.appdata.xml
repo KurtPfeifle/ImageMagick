@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>imagemagick</id>
+	<metadata_license>ImageMagick</metadata_license>
+	<project_license>ImageMagick</project_license>
+	<name>ImageMagick</name>
+	<summary>Create, edit, compose, or convert bitmap images</summary>
+	<description>
+		<p>Read and write PNG, JPEG, JPEG-2000, GIF, TIFF, DPX, EXR, WebP, Postscript, PDF, and SVG. Resize, flip, mirror, rotate, distort, shear and transform images, adjust image colors, apply various special effects, or draw text, lines, polygons, ellipses, and Bézier curves</p>
+	</description>
+	<launchable type="desktop-id">imagemagick.desktop</launchable>
+	<url type="homepage">http://imagemagick.org/script/index.php</url>
+	<screenshots>
+		<screenshot type="default">
+			<image>http://imagemagick.org/image/wizard.png</image>
+		</screenshot>
+	</screenshots>
+	<provides>
+		<id>imagemagick.desktop</id>
+	</provides>
+</component>

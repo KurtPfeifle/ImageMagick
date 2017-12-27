@@ -21,7 +21,7 @@ before_script:
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
   - #sudo apt-get install -y libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev flif-dev?
-  - sudo apt-get install -y libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev              # autotrace-dev flif-dev?
+  - sudo apt-get install -y appstream libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev              # autotrace-dev flif-dev?
   - #sudo apt-get install -y libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev
 
 script:
@@ -43,8 +43,9 @@ script:
   - ./configure --with-rsvg --with-wmf --with-autotrace --with-x --enable-reproducible-build --enable-hdri --with-gvc --with-fpx --with-heic --with-raqm --with-gslib --with-perl --with-dejavu-font-dir=/usr/share/fonts/truetype/dejavu --prefix=/usr
   - make -j$(nproc)
   - # Generate AppImage
-  - mkdir -p appdir/usr/share/applications/ ; cp appimage/imagemagick.desktop appdir/usr/share/applications/
-  - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp appimage/imagemagick.png  appdir/usr/share/icons/hicolor/512x512/apps/
+  - mkdir -p appdir/usr/share/applications/ ; cp ./appimage/imagemagick.desktop ./appdir/usr/share/applications/
+  - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp ./appimage/imagemagick.png  ./appdir/usr/share/icons/hicolor/512x512/apps/
+  - mkdir -p appdir/usr/share/metainfo/ ; cp ./appimage/imagemagick.appdata.xml  ./appdir/usr/share/metainfo/
   - make install DESTDIR=$(readlink -f appdir) ; find appdir/
   - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../etc/ImageMagick-7/*.xml . ; cd -
   - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
