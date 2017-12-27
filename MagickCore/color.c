@@ -1589,8 +1589,8 @@ MagickExport void GetColorTuple(const PixelInfo *pixel,
   if (color.alpha_trait != UndefinedPixelTrait)
     (void) ConcatenateMagickString(tuple,"a",MagickPathExtent);
   (void) ConcatenateMagickString(tuple,"(",MagickPathExtent);
-  if ((color.colorspace == GRAYColorspace) ||
-      (color.colorspace == sGRAYColorspace))
+  if ((color.colorspace == LinearGRAYColorspace) ||
+      (color.colorspace == GRAYColorspace))
     ConcatenateColorComponent(&color,GrayPixelChannel,SVGCompliance,tuple);
   else
     {
@@ -2456,16 +2456,16 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
             }
           if (LocaleCompare(colorspace,"gray") == 0)
             {
-              color->colorspace=GRAYColorspace;
               color->green=color->red;
               color->blue=color->red;
               if (((flags & SigmaValue) != 0) &&
                   (color->alpha_trait != UndefinedPixelTrait))
                 color->alpha=(double) ClampToQuantum(QuantumRange*
                   geometry_info.sigma);
-              if (icc_color == MagickFalse)
+              if ((icc_color == MagickFalse) &&
+                  (color->colorspace == LinearGRAYColorspace))
                 {
-                  color->colorspace=sGRAYColorspace;
+                  color->colorspace=GRAYColorspace;
                   color->depth=8;
                 }
             }
@@ -2530,7 +2530,7 @@ MagickExport MagickBooleanType QueryColorCompliance(const char *name,
   color->colorspace=sRGBColorspace;
   if ((LocaleNCompare(name,"gray",4) == 0) || 
       (LocaleNCompare(name,"grey",4) == 0))
-    color->colorspace=sGRAYColorspace;
+    color->colorspace=GRAYColorspace;
   color->depth=8;
   color->alpha_trait=p->color.alpha != OpaqueAlpha ? BlendPixelTrait :
     UndefinedPixelTrait;
