@@ -47,14 +47,14 @@ script:
   - mkdir -p appdir/usr/share/applications/ ; cp ./appimage/imagemagick.desktop ./appdir/usr/share/applications/
   - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp ./appimage/imagemagick.png  ./appdir/usr/share/icons/hicolor/512x512/apps/
   - mkdir -p appdir/usr/share/metainfo/ ; cp ./appimage/imagemagick.appdata.xml  ./appdir/usr/share/metainfo/
-  - make install DESTDIR=$(readlink -f appdir) ; find appdir/
+  - ls -l appdir
+  - readlink -f appdir
+  - make install DESTDIR=$(readlink -f appdir)
+  - find appdir/
   - find . -type f -name "*.xml"
   - find . -type d -name share
-  - find . -type d -name etc
-  - find ./appdir/usr/etc -name "*.xml" -ls
-  - find ./appdir/usr/share -name "*.xml" -ls
   - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../etc/ImageMagick-7/*.xml . ; cd -
-  - #cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
+  - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt*.AppImage
   - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
@@ -69,7 +69,7 @@ script:
   - find coders    -type f
   - find config    -type f
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
-  - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' ./appdir/
+  - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
   - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental-x86_64.AppImage
   - cp ./ImageMagick-xperimental{,-$(git rev-parse --short HEAD)}-x86_64.AppImage
@@ -90,4 +90,3 @@ script:
   - find . -name "ImageMagick-*.AppImage*"
 
 after_success:
-
