@@ -71,15 +71,14 @@ script:
   - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage
-  - bash upload.sh ImageMagick-xperimental-x86_64.AppImage.zsync
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage.sha512
   - bash upload.sh ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
-  - bash upload.sh ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.zsync
+  - bash upload.sh ImageMagick-$(git rev-parse --short HEAD)-gcc-x86_64.AppImage.zsync
   - bash upload.sh ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage.sha512
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then
-  - curl --upload-file ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage        https://transfer.sh/ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
-  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage        https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage  https://transfer.sh/ImageMagick-xperimental-$(git rev-parse --short HEAD)-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage                                https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
   - #; fi
   - find . -name "ImageMagick-*.AppImage*"
 
