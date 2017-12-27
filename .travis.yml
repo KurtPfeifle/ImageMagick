@@ -51,6 +51,8 @@ script:
   - find . -type f -name "*.xml"
   - find . -type d -name share
   - find . -type d -name etc
+  - find ./appdir/usr/etc -name "*.xml" -ls
+  - find ./appdir/usr/share -name "*.xml" -ls
   - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../etc/ImageMagick-7/*.xml . ; cd -
   - #cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
