@@ -51,7 +51,7 @@ script:
   - readlink -f appdir
   - make install DESTDIR=$(readlink -f appdir)
   - find appdir/
-  - find . -type f -name "*.xml"
+  - find . -name "*.xml"
   - find . -type d -name share
   - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../etc/ImageMagick-7/*.xml . ; cd -
   - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
