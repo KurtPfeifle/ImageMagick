@@ -74,7 +74,7 @@ script:
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
   - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental-x86_64.AppImage
-  - export IMVERSION="$(./ImageMagick-xperimental-x86_64.AppImage -version | grep ^Version: | awk '{print $3, $4, $6}' | sed 's/ /-/g')"
+  - export IMVERSION=$(./ImageMagick-xperimental-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4, $6}' | sed 's# #-#g')
   - cp ./ImageMagick-xperimental{,-$IMVERSION-$VERSION}-x86_64.AppImage
   - sha512sum ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                     > ./ImageMagick-xperimental-x86_64.AppImage.sha512
