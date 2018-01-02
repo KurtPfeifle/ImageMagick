@@ -6,7 +6,7 @@
 	<name>ImageMagick</name>
 	<summary>Create, edit, compose, or convert bitmap images</summary>
 	<description>
-		<p>Read and write PNG, JPEG, JPEG-2000, GIF, TIFF, DPX, EXR, WebP, Postscript, PDF, and SVG. Resize, flip, mirror, rotate, distort, shear and transform images, adjust image colors, apply various special effects, or draw text, lines, polygons, ellipses, and Bézier curves</p>
+		<p>Read and write PNG, JPEG, JPEG-2000, GIF, TIFF, DPX, EXR, WebP, Postscript, PDF, and SVG. Resize, flip, mirror, rotate, distort, shear and transform images, adjust image colors, apply various special effects, or draw text, lines, polygons, ellipses, and Beier curves</p>
 	</description>
 	<launchable type="desktop-id">imagemagick.desktop</launchable>
 	<url type="homepage">http://imagemagick.org/script/index.php</url>
