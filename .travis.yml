@@ -80,12 +80,13 @@ script:
   - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                     > ./ImageMagick-xperimental-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
+  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage.sha512
   - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage
   - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  - bash upload.sh ImageMagick-$VERSION-gcc-x86_64.AppImage.zsync
+  - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.zsync
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then
   - curl --upload-file ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage
