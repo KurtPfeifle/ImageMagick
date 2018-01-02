@@ -74,21 +74,23 @@ script:
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
   - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental-x86_64.AppImage
-  - cp ./ImageMagick-xperimental{,-$VERSION}-x86_64.AppImage
-  - sha512sum ./ImageMagick-xperimental-$VERSION-x86_64.AppImage > ./ImageMagick-xperimental-$VERSION-x86_64.AppImage.sha512
-  - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                               > ./ImageMagick-xperimental-x86_64.AppImage.sha512
-  - IMVERSION=$(./ImageMagick-xperimental-x86_64.AppImage -version | grep ^Version: | awk '{print $3, $4, $6}' | sed 's# #-#g')
+  - export IMVERSION=$(./ImageMagick-xperimental-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4, $6}' | sed 's/ /-/g')
+  - cp ./ImageMagick-xperimental{,-$IMVERSION-$VERSION}-x86_64.AppImage
+  - sha512sum ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                     > ./ImageMagick-xperimental-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then
+  - ls -l *.AppImage.zsync
+  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage
   - bash upload.sh ImageMagick-xperimental-x86_64.AppImage.sha512
   - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage
-  - bash upload.sh ImageMagick-$IMVERSION-$VERSION-gcc-x86_64.AppImage.zsync
   - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.zsync
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then
-  - curl --upload-file ./ImageMagick-xperimental-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-xperimental-$VERSION-x86_64.AppImage
-  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage           https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage                      https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
   - #; fi
   - find . -name "ImageMagick-*.AppImage*"
 
