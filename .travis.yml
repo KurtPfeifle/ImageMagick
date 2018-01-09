@@ -38,61 +38,65 @@ script:
   - #dpkg -l | grep    "^ii  l[k-z]"   ; sleep 1   # Check to see what's there...
   - #dpkg -l | grep    "^ii  [k-z]"    ; sleep 1   # Check to see what's there...
   - #dpkg -l | grep    "^rc  "         ; sleep 1   # Check to see what's there...
-  - dpkg -l | grep    "^ii  " | wc -l ; sleep 1   # How many packages have we installed?
+  - #dpkg -l | grep    "^ii  " | wc -l ; sleep 1   # How many packages have we installed?
+  - env | grep TRAVIS_
   - export OMP_NUM_THREADS=1
   - export CFLAGS="-Wno-deprecated-declarations -Wdeclaration-after-statement -Wno-error=unused-variable"
+  #### Custom configure to get all bells and whistles available on Ubuntu Trusty
   - ./configure --with-rsvg --with-wmf --with-autotrace --with-x --enable-reproducible-build --enable-hdri --with-gvc --with-fpx --with-heic --with-raqm --with-gslib --with-perl --with-dejavu-font-dir=/usr/share/fonts/truetype/dejavu --prefix=/usr
   - make -j$(nproc)
-  - # Generate AppImage
+  #### Prepare AppImage
   - mkdir -p appdir/usr/share/applications/ ; cp ./appimage/imagemagick.desktop ./appdir/usr/share/applications/
   - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp ./appimage/imagemagick.png  ./appdir/usr/share/icons/hicolor/512x512/apps/
   - mkdir -p appdir/usr/share/metainfo/ ; cp ./appimage/imagemagick.appdata.xml  ./appdir/usr/share/metainfo/
   - appstreamcli validate --verbose ./appimage/imagemagick.appdata.xml
-  - ls -l appdir
-  - readlink -f appdir
+  #- ls -l appdir
+  #- readlink -f appdir
   - make install DESTDIR=$(readlink -f appdir)
-  - find appdir/ -type d
-  - find . -name "*.xml"
-  - find . -type d -name share
-  - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ls -l ../../../etc/ImageMagick-7/*.xml   ; ln -s ../../../etc/ImageMagick-7/*.xml .   ; cd -
-  - cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ls -l ../../../share/ImageMagick-7/*.xml ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
-  - ls -l appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI
+  #- find appdir/ -type d
+  #- find . -name "*.xml"
+  #- find . -type d -name share
+  #- cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ls -l ../../../etc/ImageMagick-7/*.xml   ; ln -s ../../../etc/ImageMagick-7/*.xml .   ; cd -
+  #- cd appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI ; ls -l ../../../share/ImageMagick-7/*.xml ; ln -s ../../../share/ImageMagick-7/*.xml . ; cd -
+  #- ls -l appdir/usr/lib/ImageMagick-7.0.7/config-Q16HDRI
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt*.AppImage
   - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
   - export VERSION="git.$(git rev-parse --short HEAD)-$CC"
   - ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/imagemagick.desktop -bundle-non-qt-libs
   - ./linuxdeployqt*.AppImage --appimage-extract
-  - ls -1d */
-  - find utilities -type f
-  - find tests     -type f
-  - find scripts   -type f
-  - find filters   -type f
-  - find coders    -type f
-  - find config    -type f
-  - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun # Replace symlink with custom script
+  #- ls -1d */
+  #- find utilities -type f
+  #- find tests     -type f
+  #- find scripts   -type f
+  #- find filters   -type f
+  #- find coders    -type f
+  #- find config    -type f
+  - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun      # Replace symlink with custom script
+  #### Make AppImage
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
-  - mv ./ImageMagick*.AppImage ./ImageMagick-xperimental-x86_64.AppImage
-  - export IMVERSION=$(./ImageMagick-xperimental-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4, $6}' | sed 's/ /-/g')
-  - cp ./ImageMagick-xperimental{,-$IMVERSION-$VERSION}-x86_64.AppImage
-  - sha512sum ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  - sha512sum ./ImageMagick-xperimental-x86_64.AppImage                     > ./ImageMagick-xperimental-x86_64.AppImage.sha512
+  #### Prepare Upload( Name)s
+  - mv ./ImageMagick*.AppImage ./ImageMagick-continuous-x86_64.AppImage
+  - export IMVERSION=$(./ImageMagick-continuous-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y-%m-%d")
+  - cp ./ImageMagick-continuous{,-$IMVERSION-$VERSION}-x86_64.AppImage
+  - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then
-  - ls -l *.AppImage.zsync
-  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
+  #- ls -l *.AppImage.zsync
+  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash upload.sh ImageMagick-xperimental-x86_64.AppImage
-  - bash upload.sh ImageMagick-xperimental-x86_64.AppImage.sha512
-  - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage
-  - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  - bash upload.sh ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage.zsync
+  - bash upload.sh ImageMagick-continuous-x86_64.AppImage
+  #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
+  - bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
+  - bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  - bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then
-  - curl --upload-file ./ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-xperimental-$IMVERSION-$VERSION-x86_64.AppImage
-  - curl --upload-file ./ImageMagick-xperimental-x86_64.AppImage                      https://transfer.sh/ImageMagick-xperimental-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-continuous-x86_64.AppImage                      https://transfer.sh/ImageMagick-continuous-x86_64.AppImage
   - #; fi
   - find . -name "ImageMagick-*.AppImage*"
 
 after_success:
-  -# Do nothing for now
+  #- Do nothing for now
