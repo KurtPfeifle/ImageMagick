@@ -179,7 +179,6 @@ MagickExport MagickStatusType GetGeometry(const char *geometry,ssize_t *x,
         break;
       }
       case '-':
-      case '.':
       case ',':
       case '+':
       case '0':
@@ -197,6 +196,18 @@ MagickExport MagickStatusType GetGeometry(const char *geometry,ssize_t *x,
       case 'E':
       {
         p++;
+        break;
+      }
+      case '.':
+      {
+        p++;
+        flags|=DecimalValue;
+        break;
+      }
+      case ':':
+      {
+        p++;
+        flags|=AspectRatioValue;
         break;
       }
       default:
@@ -950,7 +961,6 @@ MagickExport MagickStatusType ParseGeometry(const char *geometry,
       case '8':
       case '9':
       case '/':
-      case ':':
       case 215:
       case 'e':
       case 'E':
@@ -962,6 +972,12 @@ MagickExport MagickStatusType ParseGeometry(const char *geometry,
       {
         p++;
         flags|=DecimalValue;
+        break;
+      }
+      case ':':
+      {
+        p++;
+        flags|=AspectRatioValue;
         break;
       }
       default:
@@ -1225,6 +1241,36 @@ MagickExport MagickStatusType ParseGravityGeometry(const Image *image,
       region_info->width=(size_t) floor((scale.x*image->columns/100.0)+0.5);
       region_info->height=(size_t) floor((scale.y*image->rows/100.0)+0.5);
     }
+  if ((flags & AspectRatioValue) != 0)
+    {
+      double
+        geometry_ratio,
+        image_ratio;
+
+      GeometryInfo
+        geometry_info;
+
+      /*
+        Geometry is a relative to image size and aspect ratio.
+      */
+      if (image->gravity != UndefinedGravity)
+        flags|=XValue | YValue;
+      (void) ParseGeometry(geometry,&geometry_info);
+      geometry_ratio=geometry_info.rho;
+      image_ratio=image->columns/(double) image->rows;
+      if (geometry_ratio >= image_ratio)
+        {
+          region_info->width=image->columns;
+          region_info->height=(size_t) floor((image->rows*image_ratio/
+            geometry_ratio)+0.5);
+        }
+      else
+        {
+          region_info->width=(size_t) floor((image->columns*geometry_ratio/
+            image_ratio)+0.5);
+          region_info->height=image->rows;
+        }
+    }
   /*
     Adjust offset according to gravity setting.
   */
@@ -1253,7 +1299,7 @@ MagickExport MagickStatusType ParseGravityGeometry(const Image *image,
 %
 %  ParseMetaGeometry() is similar to GetGeometry() except the returned
 %  geometry is modified as determined by the meta characters:  %, !, <, >, @,
-%  and ^ in relation to image resizing.
+%  ~, and ^ in relation to image resizing.
 %
 %  Final image dimensions are adjusted so as to preserve the aspect ratio as
 %  much as possible, while generating a integer (pixel) size, and fitting the
@@ -1264,8 +1310,9 @@ MagickExport MagickStatusType ParseGravityGeometry(const Image *image,
 %     !   do not try to preserve aspect ratio
 %     <   only enlarge images smaller that geometry
 %     >   only shrink images larger than geometry
-%     @   Fit image to contain at most this many pixels
-%     ^   Contain the given geometry given, (minimal dimensions given)
+%     @   fit image to contain at most this many pixels
+%     ~   width and height denotes an aspect ratio
+%     ^   contain the given geometry given, (minimal dimensions given)
 %
 %  The format of the ParseMetaGeometry method is:
 %
@@ -1333,6 +1380,35 @@ MagickExport MagickStatusType ParseMetaGeometry(const char *geometry,ssize_t *x,
         scale.y=scale.x;
       *width=(size_t) MagickMax(floor(scale.x*former_width/100.0+0.5),1.0);
       *height=(size_t) MagickMax(floor(scale.y*former_height/100.0+0.5),1.0);
+      former_width=(*width);
+      former_height=(*height);
+    }
+  if ((flags & AspectRatioValue) != 0)
+    {
+      double
+        geometry_ratio,
+        image_ratio;
+
+      GeometryInfo
+        geometry_info;
+
+      /*
+        Geometry is a relative to image size and aspect ratio.
+      */
+      (void) ParseGeometry(geometry,&geometry_info);
+      geometry_ratio=geometry_info.rho;
+      image_ratio=former_width/(double) former_height;
+      if (geometry_ratio >= image_ratio)
+        {
+          *width=former_width;
+          *height=(size_t) floor((former_height*image_ratio/geometry_ratio)+
+            0.5);
+        }
+      else
+        {
+          *width=(size_t) floor((former_width*geometry_ratio/image_ratio)+0.5);
+          *height=former_height;
+        }
       former_width=(*width);
       former_height=(*height);
     }
