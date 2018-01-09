@@ -8,37 +8,37 @@ compiler:
   - gcc
 
 before_script:
-  - sudo add-apt-repository -y ppa:as-bahanta/raqm              # libraqm-dev, libfribidi0
-  - sudo add-apt-repository -y ppa:dns/gnu                      # 
-  - sudo add-apt-repository -y ppa:aacid/openjp2trusty          # libopenjp2-7
-  - #sudo add-apt-repository -y ppa:opencpu/julia               # 
-  - #sudo add-apt-repository -y ppa:tuxpoldo/yeasoft-backports  # 
-  - sudo add-apt-repository -y ppa:richardpuppy96/backports     # libgs, librsvg, openjpeg, libopenjp2-7, libfontconfig1-dev
-  - sudo add-apt-repository -y ppa:twodopeshaggy/ppapackages    # 
-  - #sudo add-apt-repository -y ppa:voxops/backports            # 
-  - #sudo add-apt-repository -y ppa:dsci-admins/live            # 
-  - sudo add-apt-repository -y ppa:ximion/packagekit
+  - sudo add-apt-repository -y ppa:as-bahanta/raqm              # USED! libraqm-dev, libfribidi0, harfbuzz
+  #- sudo add-apt-repository -y ppa:dns/gnu                     # UN-used
+  - sudo add-apt-repository -y ppa:aacid/openjp2trusty          # USED! libopenjp2-7
+  #- sudo add-apt-repository -y ppa:opencpu/julia               # 
+  #- sudo add-apt-repository -y ppa:tuxpoldo/yeasoft-backports  # 
+  - sudo add-apt-repository -y ppa:richardpuppy96/backports     # USED! libgs, librsvg, openjpeg, libopenjp2-7, libfontconfig1-dev, pango
+  #- sudo add-apt-repository -y ppa:twodopeshaggy/ppapackages   # UN-used
+  #- sudo add-apt-repository -y ppa:voxops/backports            # 
+  #- sudo add-apt-repository -y ppa:dsci-admins/live            # 
+  - sudo add-apt-repository -y ppa:ximion/packagekit            # USED! libglib, appstream
   - sudo apt-key update -q
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
-  - #sudo apt-get install -y libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev flif-dev?
-  - sudo apt-get install -y appstream libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev              # autotrace-dev flif-dev?
-  - #sudo apt-get install -y libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev
+  #- sudo apt-get install -y libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev flif-dev?
+  - sudo apt-get install -y appstream libltdl-dev libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libraqm0 libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev              # libraqm-dev libraqm0 autotrace-dev flif-dev?
+  #- sudo apt-get install -y libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev
 
 script:
-  - #dpkg -l | grep    "^ii  lib[a-f]" ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  lib[g-k]" ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  lib[l-q]" ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  lib[r-z]" ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  [a-f]"    ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  [g-h]"    ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  [i-k]"    ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  l[a-j]"   ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  li[^b]"   ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  l[k-z]"   ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  [k-z]"    ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^rc  "         ; sleep 1   # Check to see what's there...
-  - #dpkg -l | grep    "^ii  " | wc -l ; sleep 1   # How many packages have we installed?
+  #- dpkg -l | grep    "^ii  lib[a-f]" ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  lib[g-k]" ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  lib[l-q]" ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  lib[r-z]" ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  [a-f]"    ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  [g-h]"    ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  [i-k]"    ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  l[a-j]"   ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  li[^b]"   ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  l[k-z]"   ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  [k-z]"    ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^rc  "         ; sleep 1   # Check to see what's there...
+  #- dpkg -l | grep    "^ii  " | wc -l ; sleep 1   # How many packages have we installed?
   - env | grep TRAVIS_
   - export OMP_NUM_THREADS=1
   - export CFLAGS="-Wno-deprecated-declarations -Wdeclaration-after-statement -Wno-error=unused-variable"
@@ -62,7 +62,7 @@ script:
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt*.AppImage
   - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
-  - export VERSION="git.$(git rev-parse --short HEAD)-$CC"
+  - export VERSION="git.$(git rev-parse --short HEAD)"       #-$CC"
   - ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/imagemagick.desktop -bundle-non-qt-libs
   - ./linuxdeployqt*.AppImage --appimage-extract
   #- ls -1d */
@@ -78,11 +78,11 @@ script:
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
   #### Prepare Upload( Name)s
   - mv ./ImageMagick*.AppImage ./ImageMagick-continuous-x86_64.AppImage
-  - export IMVERSION=$(./ImageMagick-continuous-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y-%m-%d")
+  - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./ImageMagick-continuous-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
   - cp ./ImageMagick-continuous{,-$IMVERSION-$VERSION}-x86_64.AppImage
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
-  - #if [ "$TRAVIS_BRANCH" == "TRAVIS_TAG" ] ; then
+  - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   #- ls -l *.AppImage.zsync
   - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
@@ -92,7 +92,7 @@ script:
   - bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   - bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync
   - #; fi
-  - #if [ "$TRAVIS_BRANCH" != "TRAVIS_TAG" ] ; then
+  - #if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ] ; then
   - curl --upload-file ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
   - curl --upload-file ./ImageMagick-continuous-x86_64.AppImage                      https://transfer.sh/ImageMagick-continuous-x86_64.AppImage
   - #; fi
