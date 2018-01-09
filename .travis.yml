@@ -95,3 +95,4 @@ script:
   - find . -name "ImageMagick-*.AppImage*"
 
 after_success:
+  -# Do nothing for now
