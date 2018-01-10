@@ -17,7 +17,7 @@ before_script:
   #- sudo add-apt-repository -y ppa:twodopeshaggy/ppapackages   # UN-used
   #- sudo add-apt-repository -y ppa:voxops/backports            # 
   #- sudo add-apt-repository -y ppa:dsci-admins/live            # 
-  - sudo add-apt-repository -y ppa:ximion/packagekit            # USED! libglib, appstream
+  - sudo add-apt-repository -y ppa:ximion/packagekit            # USED! libglib, appstream #Huh? Travis says 'appstream' has no insta candidate
   - sudo apt-key update -q
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
