@@ -50,8 +50,11 @@ script:
   - mkdir -p appdir/usr/share/applications/ ; cp ./appimage/imagemagick.desktop ./appdir/usr/share/applications/
   - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp ./appimage/imagemagick.png  ./appdir/usr/share/icons/hicolor/512x512/apps/
   - mkdir -p appdir/usr/share/metainfo/ ; cp ./appimage/imagemagick.appdata.xml  ./appdir/usr/share/metainfo/
+  - echo "$(appstreamcli --version)"
   - echo "$(appstreamcli validate --verbose ./appimage/imagemagick.appdata.xml)"
-  - appstreamcli --version
+  - echo "$(appstream-util --version)"
+  - echo "$(appstream-util validate-strict --verbose ./appimage/imagemagick.appdata.xml)"
+  - echo "$(appstream-util validate-relax  --verbose ./appimage/imagemagick.appdata.xml)"
   #- ls -l appdir
   #- readlink -f appdir
   - make install DESTDIR=$(readlink -f appdir)
