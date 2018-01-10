@@ -23,7 +23,7 @@ before_script:
   - sudo apt-get update -q
   - sudo apt-get install --only-upgrade autoconf
   #- sudo apt-get install -y libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev  # autotrace-dev flif-dev?
-  - sudo apt-get install -y appstream libltdl-dev libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libraqm0 libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev              # libraqm-dev libraqm0 autotrace-dev flif-dev?
+  - sudo apt-get install -y appstream appstream-util libltdl-dev libfftw3-dev fonts-dejavu fonts-dejavu-extra fonts-dejavu-core libpotrace-dev libraqm-dev libraqm0 libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev              # libraqm-dev libraqm0 autotrace-dev flif-dev?
   #- sudo apt-get install -y libpotrace-dev libraqm-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libperl-dev graphviz-dev libgraphviz-dev libwmf-dev fftw-dev libraw-dev libopenraw-dev liblqr-1-0-dev libopenjpeg-dev libopenjp2-7-dev libpango1.0-dev libwebp-dev
 
 script:
