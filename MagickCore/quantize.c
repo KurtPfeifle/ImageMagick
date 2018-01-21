@@ -511,7 +511,7 @@ static MagickBooleanType AssignImageColors(Image *image,CubeInfo *cube_info,
       (void) TransformImageColorspace(image,sRGBColorspace,exception);
   if (AcquireImageColormap(image,cube_info->colors,exception) == MagickFalse)
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
-      image->filename);;
+      image->filename);
   image->colors=0;
   cube_info->transparent_pixels=0;
   cube_info->transparent_index=(-1);
@@ -3318,8 +3318,12 @@ static MagickBooleanType SetGrayscaleImage(Image *image,
   assert(image->signature == MagickCoreSignature);
   if (image->type != GrayscaleType)
     (void) TransformImageColorspace(image,GRAYColorspace,exception);
-  colormap_index=(ssize_t *) AcquireQuantumMemory(MaxColormapSize,
-    sizeof(*colormap_index));
+  if (image->storage_class == PseudoClass)
+    colormap_index=(ssize_t *) AcquireQuantumMemory(image->colors,
+      sizeof(*colormap_index));
+  else
+    colormap_index=(ssize_t *) AcquireQuantumMemory(MaxColormapSize,
+      sizeof(*colormap_index));
   if (colormap_index == (ssize_t *) NULL)
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
       image->filename);
