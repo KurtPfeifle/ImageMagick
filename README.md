@@ -1,3 +1,15 @@
+[![AppImage Build Status](https://travis-ci.org/KurtPfeifle/ImageMagick.svg?branch=continuous)](https://travis-ci.org/KurtPfeifle/ImageMagick) <= AppImage Build Status
+
+### This Repo was cloned from original solely to test + optimize the AppImage build and will hopefully be merged back as a PR during the next one or two weeks
+
+For my AppImages, see here: https://github.com/KurtPfeifle/ImageMagick/releases    
+Please test them and report issues: https://github.com/KurtPfeifle/ImageMagick/issues
+
+Original upstream README follows...
+
+----
+
+
 ImageMagick
 ===========
 
