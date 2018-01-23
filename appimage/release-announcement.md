@@ -1,20 +1,37 @@
-# First *`ImageMagick`* AppImage
+### TL;DR
+
+**How to get and use the AppImage**
+
+1. Download it from https://github.com/KurtPfeifle/ImageMagick/releases
+2. Make it executable: *`chmod +x ImageMagick-*.AppImage`*
+3. Optionally, but for maximum convenience, rename ***OR*** symlink to the AppImage:
+    - Rename: *`mv ImageMagick-*.AppImage magick`*
+    - Symlink: *`ln -s ImageMagick-*.AppImage magick`*
+
+----
+
+# AppImage Linux binary package for *`ImageMagick`*
 
 This is my first shot at building an AppImage for *ImageMagick v7* which sports a *custom AppRun*. The AppRun is implemented as a shell script.
 
 The AppImage currently gives you this version of ImageMagick v7:
 
 ```
-$~>  ./ImageMagick-xperimental.AppImage  -version
-
-   Version: ImageMagick 7.0.7-15 Q16 x86_64 20171208 http://www.imagemagick.org
+$~>  ./ImageMagick-continuous.AppImage  -version
+   Version: ImageMagick 7.0.7-23 Q16 x86_64 20180123 http://www.imagemagick.org
    Copyright: © 1999-2018 ImageMagick Studio LLC
    License: http://www.imagemagick.org/script/license.php
    Features: Cipher DPC HDRI OpenMP 
    Delegates (built-in): bzlib cairo djvu fftw fontconfig freetype gvc jbig jng jp2 jpeg lcms lqr lzma openexr pangocairo png raw rsvg tiff wmf x xml zlib
+    
+$~>  ./ImageMagick-continuous-195-7.0.7-23-Q16-20180123-git.99141e5-x86_64.AppImage -list configure | grep heic
+   CONFIGURE   ./configure  '--with-rsvg' '--with-wmf' '--with-autotrace' '--with-x' '--enable-reproducible-build' '--enable-hdri' '--with-gvc' \
+                            '--with-fpx' '--with-heic' '--with-raqm' '--with-gslib' '--with-perl' '--with-dejavu-font-dir=/usr/share/fonts/truetype/dejavu' \
+                            '--prefix=/usr' 'CC=gcc' 'CFLAGS=-Wno-deprecated-declarations -Wdeclaration-after-statement -Wno-error=unused-variable'
+   DELEGATES   bzlib djvu mpeg fftw fontconfig freetype heic jbig jng jpeg lcms lqr lzma openexr openjp2 pango png raw raqm rsvg tiff wmf x xml zlib
 ```
 
-If you are an ImageMagick user already, you also must feel comfortable to have left GUI, mouse and touchpad behind, right? Intimate familiarity with all kinds of CLI tools can be assumed?
+If you are an ImageMagick user already, you also must feel comfortable to have left behind GUI, mouse and touchpad, right? Intimate familiarity with all kinds of CLI tools can be assumed?
 
 My main reason for building this AppImage is: I want to have an easy access to the latest "bleeding edge" releases of ImageMagick (which happen every fortnight or so), without the need to re-compile the code every few days and for each Linux system I use.
 
@@ -30,7 +47,7 @@ Hence you should prepare your environment for conveniently accessing the main Im
      $~>  ln -s ../AppImages/ImageMagick-x86_64.AppImage magick
      $~>  export PATH=$HOME/bin:$PATH
 
-Of course, you can choose to not do that. But then you have to deal with typing the long original name of this AppImage, *`./ImageMagick-xperimental.AppImage`*, every time you want to run it...
+Of course, you can choose to not do that. But then you have to deal with typing the long original name of this AppImage, *`./ImageMagick-continuous.AppImage`*, every time you want to run it...
 
 You are also free to rename the whole thing after you downloaded it. You can even simply use *`im`* as the name. 
 <sup>(It is little known, but very convenient, that AppImages do not require to carry the filename suffix of *`.AppImage`* in order to work.)</sup>
@@ -58,12 +75,12 @@ The same is true for the other commands:
 
 ## Custom *AppRun*
 
-The AppImage comes with a custom AppRun providing additional help. Try to run it with *`ImageMagick-xperimental.AppImage help`* first. Then walk from there, and try:
+The AppImage comes with a custom AppRun providing additional help. Try to run it with *`ImageMagick-continuous.AppImage help`* first. Then walk from there, and try:
 
-    $~>  ImageMagick-xperimental.AppImage listman         # List all embedded manual pages
-    $~>  ImageMagick-xperimental.AppImage man compare     # View the manual page for 'compare'
-    $~>  ImageMagick-xperimental.AppImage listhtml        # List all embedded HTML pages
-    $~>  ImageMagick-xperimental.AppImage html fx.html    # View the 'fx.html' page
+    $~>  ImageMagick-continuous.AppImage --listman         # List all embedded manual pages
+    $~>  ImageMagick-continuous.AppImage --man compare     # View the manual page for 'compare'
+    $~>  ImageMagick-continuous.AppImage --listhtml        # List all embedded HTML pages
+    $~>  ImageMagick-continuous.AppImage --html fx.html    # View the 'fx.html' page
     $~>  [....]
 
 ![Help screen if AppImage is started with `--help` parameter.](https://user-images.githubusercontent.com/4747960/34114984-8b78173a-e414-11e7-8aa0-f05ea2a627db.jpg "Help screen if AppImage is started with `--help` parameter.")
@@ -71,10 +88,10 @@ The AppImage comes with a custom AppRun providing additional help. Try to run it
 
 Or, if you created the *`magick`*-symlink as described above:
 
-    $~>  magick listman         # List all embedded manual pages
-    $~>  magick man compare     # View the manual page for 'compare'
-    $~>  magick listhtml        # List all embedded HTML pages
-    $~>  magick html fx.html    # View the 'fx.html' page
+    $~>  magick --listman         # List all embedded manual pages
+    $~>  magick --man compare     # View the manual page for 'compare'
+    $~>  magick --listhtml        # List all embedded HTML pages
+    $~>  magick --html fx.html    # View the 'fx.html' page
 
 ![Help screen if symlink *"im"* pointing to real AppImage starts it.](https://user-images.githubusercontent.com/4747960/34114897-4e40b818-e414-11e7-94a7-2f8bf4138aaf.jpg  "Help screen if symlink *'im'* pointing to real AppImage starts it.")
 
