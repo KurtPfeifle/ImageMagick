@@ -83,8 +83,8 @@ script:
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|latest|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
   #### Prepare Upload( Name)s
-  - ls -l ./ImageMagick*.AppImage
-  - mv ./ImageMagick*.AppImage ./ImageMagick-latest-x86_64.AppImage
+  - export _appimage=$(basename $(ls -1 ./ImageMagick*.AppImage))
+  - cp ./ImageMagick*.AppImage ./ImageMagick-latest-x86_64.AppImage
   - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./ImageMagick-latest-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
   - cp ./ImageMagick-latest{,-$IMVERSION-$VERSION}-x86_64.AppImage
   - sha512sum ./ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.sha512
@@ -95,6 +95,7 @@ script:
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - bash upload.sh ImageMagick-latest-x86_64.AppImage
   #- bash upload.sh ImageMagick-latest-x86_64.AppImage.sha512
+  - bash upload.sh $_appimage
   - bash upload.sh ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage
   - bash upload.sh ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   - bash upload.sh ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.zsync
