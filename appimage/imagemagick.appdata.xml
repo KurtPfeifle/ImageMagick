@@ -1,3 +1,4 @@
+<!-- Copyright 1999-2018 ImageMagick Studio LLC -->
 <?xml version="1.0" encoding="UTF-8"?>
 <component>
 	<id>imagemagick</id>
@@ -10,12 +11,18 @@
 	</description>
 	<x-launchable type="desktop-id">imagemagick.desktop</x-launchable>
 	<url type="homepage">http://imagemagick.org/script/index.php</url>
+	<url type="bugtracker">https://github.com/ImageMagick/ImageMagick/issues</url>
+	<url type="help">https://imagemagick.org/discourse-server/</url>
 	<screenshots>
 		<screenshot type="default">
-			<image>http://imagemagick.org/image/wizard.png</image>
+			<image width="2135" height="2048">http://imagemagick.org/image/logo.png</image>
+		</screenshot>
+		<screenshot>
+			<image width="1104" height="1468">http://imagemagick.org/image/wizard.png</image>
 		</screenshot>
 	</screenshots>
 	<provides>
 		<id>imagemagick.desktop</id>
 	</provides>
+	<update_contact></update_contact>
 </component>
