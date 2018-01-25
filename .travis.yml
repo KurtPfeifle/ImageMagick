@@ -76,6 +76,9 @@ script:
   #- find coders    -type f
   #- find config    -type f
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun      # Replace symlink with custom script
+  #### Check AppStream metadata for validity
+  - export _appstreamcli="$(appstreamcli ./appdir/usr/share/metainfo/imagemagick.appdata.xml 2>&1)"
+  - echo "$_appstreamcli"
   #### Make AppImage
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
