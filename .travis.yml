@@ -51,6 +51,7 @@ script:
   - mkdir -p appdir/usr/share/applications/ ; cp ./appimage/imagemagick.desktop ./appdir/usr/share/applications/
   - mkdir -p appdir/usr/share/icons/hicolor/512x512/apps/ ; cp ./appimage/imagemagick.png  ./appdir/usr/share/icons/hicolor/512x512/apps/
   - mkdir -p appdir/usr/share/metainfo/ ; cp ./appimage/imagemagick.appdata.xml  ./appdir/usr/share/metainfo/
+  - mkdir ./appdir/usr/bin
   - cp -a /bin/less                                      ./appdir/usr/bin/
   #### Check AppStream metadata for validity
   - echo "$(appstreamcli --version)"
