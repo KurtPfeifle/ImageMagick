@@ -23,7 +23,6 @@ int main() {
   allowedNames.push_back("DDS");
   allowedNames.push_back("EPT");
   allowedNames.push_back("FAX");
-  allowedNames.push_back("GRADIENT");
   allowedNames.push_back("HTML");
   allowedNames.push_back("JP2");
   allowedNames.push_back("JPEG");
@@ -41,7 +40,11 @@ int main() {
   allowedNames.push_back("YCBCR");
 
   std::list<std::string> excludeList;
+  excludeList.push_back("GRADIENT");
+  excludeList.push_back("LABEL");
   excludeList.push_back("NULL");
+  excludeList.push_back("PATTERN");
+  excludeList.push_back("PLASMA");
   excludeList.push_back("SCREENSHOT");
   excludeList.push_back("XC");
 
