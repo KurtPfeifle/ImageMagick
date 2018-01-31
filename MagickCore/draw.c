@@ -3359,10 +3359,10 @@ static inline double GetStopColorOffset(const GradientInfo *gradient,
         }
       v.x=(double) (((x-gradient->center.x)*cos(DegreesToRadians(
         gradient->angle)))+((y-gradient->center.y)*sin(DegreesToRadians(
-        gradient->angle))))/gradient->radii.x;
+        gradient->angle))))*PerceptibleReciprocal(gradient->radii.x);
       v.y=(double) (((x-gradient->center.x)*sin(DegreesToRadians(
         gradient->angle)))-((y-gradient->center.y)*cos(DegreesToRadians(
-        gradient->angle))))/gradient->radii.y;
+        gradient->angle))))*PerceptibleReciprocal(gradient->radii.y);
       return(sqrt(v.x*v.x+v.y*v.y));
     }
   }
@@ -3469,7 +3469,7 @@ MagickExport MagickBooleanType DrawGradientImage(Image *image,
     composite=zero;
     offset=GetStopColorOffset(gradient,0,y);
     if (gradient->type != RadialGradient)
-      offset/=length;
+      offset*=PerceptibleReciprocal(length);
     for (x=bounding_box.x; x < (ssize_t) bounding_box.width; x++)
     {
       GetPixelInfoPixel(image,q,&pixel);
@@ -3483,7 +3483,7 @@ MagickExport MagickBooleanType DrawGradientImage(Image *image,
             {
               offset=GetStopColorOffset(gradient,x,y);
               if (gradient->type != RadialGradient)
-                offset/=length;
+                offset*=PerceptibleReciprocal(length);
             }
           for (i=0; i < (ssize_t) gradient->number_stops; i++)
             if (offset < gradient->stops[i].offset)
@@ -3511,7 +3511,7 @@ MagickExport MagickBooleanType DrawGradientImage(Image *image,
             {
               offset=GetStopColorOffset(gradient,x,y);
               if (gradient->type != RadialGradient)
-                offset/=length;
+								offset*=PerceptibleReciprocal(length);
             }
           if (offset < 0.0)
             offset=(-offset);
@@ -3561,7 +3561,7 @@ MagickExport MagickBooleanType DrawGradientImage(Image *image,
                     repeat=fmod(offset,length);
                   antialias=(repeat < length) && ((repeat+1.0) > length) ?
                     MagickTrue : MagickFalse;
-                  offset=repeat/length;
+								  offset=PerceptibleReciprocal(length)*repeat;
                 }
               else
                 {

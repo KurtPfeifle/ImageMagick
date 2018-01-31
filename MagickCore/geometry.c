@@ -240,7 +240,7 @@ MagickExport MagickStatusType GetGeometry(const char *geometry,ssize_t *x,
               if (LocaleNCompare(p,"0x",2) == 0)
                 *width=(size_t) strtol(p,&p,10);
               else
-                *width=(size_t) floor(StringToDouble(p,&p)+0.5);
+                *width=((size_t) floor(StringToDouble(p,&p)+0.5)) & 0x7fffffff;
             }
           if (p != q)
             flags|=WidthValue;
@@ -259,7 +259,7 @@ MagickExport MagickStatusType GetGeometry(const char *geometry,ssize_t *x,
               */
               q=p;
               if (height != (size_t *) NULL)
-                *height=(size_t) floor(StringToDouble(p,&p)+0.5);
+                *height=((size_t) floor(StringToDouble(p,&p)+0.5)) & 0x7fffffff;
               if (p != q)
                 flags|=HeightValue;
             }
@@ -278,7 +278,7 @@ MagickExport MagickStatusType GetGeometry(const char *geometry,ssize_t *x,
       }
       q=p;
       if (x != (ssize_t *) NULL)
-        *x=(ssize_t) ceil(StringToDouble(p,&p)-0.5);
+        *x=((ssize_t) ceil(StringToDouble(p,&p)-0.5)) & 0x7fffffff;
       if (p != q)
         {
           flags|=XValue;
@@ -299,7 +299,7 @@ MagickExport MagickStatusType GetGeometry(const char *geometry,ssize_t *x,
       }
       q=p;
       if (y != (ssize_t *) NULL)
-        *y=(ssize_t) ceil(StringToDouble(p,&p)-0.5);
+        *y=((ssize_t) ceil(StringToDouble(p,&p)-0.5)) & 0x7fffffff;
       if (p != q)
         {
           flags|=YValue;
@@ -1494,12 +1494,14 @@ MagickExport MagickStatusType ParseMetaGeometry(const char *geometry,ssize_t *x,
       (void) ParseGeometry(geometry,&geometry_info);
       area=geometry_info.rho+sqrt(MagickEpsilon);
       distance=sqrt((double) former_width*former_height);
-      scale.x=(double) former_width/(distance/sqrt(area));
-      scale.y=(double) former_height/(distance/sqrt(area));
+      scale.x=(double) former_width*PerceptibleReciprocal(distance/sqrt(area));
+      scale.y=(double) former_height*PerceptibleReciprocal(distance/sqrt(area));
       if ((scale.x < (double) *width) || (scale.y < (double) *height))
         {
-          *width=(unsigned long) (former_width/(distance/sqrt(area)));
-          *height=(unsigned long) (former_height/(distance/sqrt(area)));
+          *width=(unsigned long) (former_width*PerceptibleReciprocal(
+            distance/sqrt(area)));
+          *height=(unsigned long) (former_height*PerceptibleReciprocal(
+            distance/sqrt(area)));
         }
       former_width=(*width);
       former_height=(*height);
