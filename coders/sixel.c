@@ -83,8 +83,8 @@
 /*
   Macros
 */
-#define SIXEL_RGB(r, g, b) (((r) << 16) + ((g) << 8) +  (b))
-#define SIXEL_PALVAL(n,a,m) (((n) * (a) + ((m) / 2)) / (m))
+#define SIXEL_RGB(r, g, b) ((int) (((ssize_t) (r) << 16) + ((g) << 8) +  (b)))
+#define SIXEL_PALVAL(n,a,m) ((int) (((ssize_t) (n) * (a) + ((m) / 2)) / (m)))
 #define SIXEL_XRGB(r,g,b) SIXEL_RGB(SIXEL_PALVAL(r, 255, 100), SIXEL_PALVAL(g, 255, 100), SIXEL_PALVAL(b, 255, 100))
 
 /*
@@ -179,9 +179,9 @@ static int hls_to_rgb(int hue, int lum, int sat)
         R = G = B = (lum * RGBMAX) / HLSMAX;
     } else {
         if (lum <= (HLSMAX / 2)) {
-            Magic2 = (lum * (HLSMAX + sat) + (HLSMAX / 2)) / HLSMAX;
+            Magic2 = (int) (((ssize_t) lum * (HLSMAX + sat) + (HLSMAX / 2)) / HLSMAX);
         } else {
-            Magic2 = lum + sat - ((lum * sat) + (HLSMAX / 2)) / HLSMAX;
+            Magic2 = (int) (lum + sat - (((ssize_t) lum * sat) + (HLSMAX / 2)) / HLSMAX);
         }
         Magic1 = 2 * lum - Magic2;
 

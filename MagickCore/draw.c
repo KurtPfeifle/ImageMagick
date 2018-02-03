@@ -2987,8 +2987,12 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
       case BezierPrimitive:
       {
         if (primitive_info[j].coordinates > 107)
-          (void) ThrowMagickException(exception,GetMagickModule(),DrawError,
-            "TooManyBezierCoordinates","`%s'",token);
+          {
+            (void) ThrowMagickException(exception,GetMagickModule(),DrawError,
+              "TooManyBezierCoordinates","`%s'",token);
+            status=MagickFalse;
+            break;
+          }
         points_extent=(double) (BezierQuantum*primitive_info[j].coordinates);
         break;
       }
@@ -3025,12 +3029,21 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
         double
           alpha,
           beta,
+          coordinates,
           radius;
 
         alpha=bounds.x2-bounds.x1;
         beta=bounds.y2-bounds.y1;
         radius=hypot(alpha,beta);
-        points_extent=ceil(MagickPI*MagickPI*radius)+6*BezierQuantum+360;
+        coordinates=ceil(MagickPI*MagickPI*radius)+6*BezierQuantum+360;
+        if (coordinates > 21400)
+          {
+            (void) ThrowMagickException(exception,GetMagickModule(),DrawError,
+              "TooManyBezierCoordinates","`%s'",token);
+            status=MagickFalse;
+            break;
+          }
+        points_extent=coordinates;
         break;
       }
       default:
@@ -3472,6 +3485,11 @@ MagickExport MagickBooleanType DrawGradientImage(Image *image,
       offset*=PerceptibleReciprocal(length);
     for (x=bounding_box.x; x < (ssize_t) bounding_box.width; x++)
     {
+      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
+        {
+          q+=GetPixelChannels(image);
+          continue;
+        }
       GetPixelInfoPixel(image,q,&pixel);
       switch (gradient->spread)
       {
@@ -4154,6 +4172,11 @@ RestoreMSCWarning
       /*
         Fill and/or stroke.
       */
+      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
+        {
+          q+=GetPixelChannels(image);
+          continue;
+        }
       fill_alpha=GetFillAlpha(polygon_info[id],mid,fill,draw_info->fill_rule,
         x,y,&stroke_alpha);
       if (draw_info->stroke_antialias == MagickFalse)
@@ -4395,6 +4418,11 @@ MagickExport MagickBooleanType DrawPrimitive(Image *image,
               break;
             for (x=0; x < (ssize_t) image->columns; x++)
             {
+              if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
+                {
+                  q+=GetPixelChannels(image);
+                  continue;
+                }
               GetPixelInfoPixel(image,q,&pixel);
               if (IsFuzzyEquivalencePixelInfo(&pixel,&target) == MagickFalse)
                 {
@@ -4454,6 +4482,11 @@ MagickExport MagickBooleanType DrawPrimitive(Image *image,
               break;
             for (x=0; x < (ssize_t) image->columns; x++)
             {
+              if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
+                {
+                  q+=GetPixelChannels(image);
+                  continue;
+                }
               GetFillColor(draw_info,x,y,&pixel,exception);
               SetPixelAlpha(image,ClampToQuantum(pixel.alpha),q);
               q+=GetPixelChannels(image);
@@ -4511,6 +4544,11 @@ MagickExport MagickBooleanType DrawPrimitive(Image *image,
               break;
             for (x=0; x < (ssize_t) image->columns; x++)
             {
+              if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
+                {
+                  q+=GetPixelChannels(image);
+                  continue;
+                }
               GetPixelInfoPixel(image,q,&pixel);
               if (IsFuzzyEquivalencePixelInfo(&pixel,&target) == MagickFalse)
                 {
@@ -4566,6 +4604,11 @@ MagickExport MagickBooleanType DrawPrimitive(Image *image,
               break;
             for (x=0; x < (ssize_t) image->columns; x++)
             {
+              if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
+                {
+                  q+=GetPixelChannels(image);
+                  continue;
+                }
               GetFillColor(draw_info,x,y,&pixel,exception);
               SetPixelViaPixelInfo(image,&pixel,q);
               q+=GetPixelChannels(image);

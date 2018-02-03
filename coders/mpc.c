@@ -184,9 +184,6 @@ static Image *ReadMPCImage(const ImageInfo *image_info,ExceptionInfo *exception)
   ssize_t
     count;
 
-  StringInfo
-    *profile;
-
   unsigned int
     signature;
 
@@ -631,18 +628,20 @@ static Image *ReadMPCImage(const ImageInfo *image_info,ExceptionInfo *exception)
                     size_t
                       length;
 
+                    StringInfo
+                      *profile;
+
+                    length=StringToLong(options);
+                    if ((MagickSizeType) length > GetBlobSize(image))
+                      {
+                        options=DestroyString(options);
+                        ThrowReaderException(CorruptImageError,
+                          "InsufficientImageDataInFile");
+                      }
                     if (profiles == (LinkedListInfo *) NULL)
                       profiles=NewLinkedList(0);
                     (void) AppendValueToLinkedList(profiles,
                       AcquireString(keyword+8));
-                    if (length > sizeof(keyword)-8)
-                      {
-                        options=DestroyString(options);
-                        profiles=DestroyLinkedList(profiles,
-                          RelinquishMagickMemory);
-                        ThrowReaderException(CorruptImageError,
-                          "ImproperImageHeader");
-                      }
                     profile=BlobToStringInfo((const void *) NULL,length);
                     if (profile == (StringInfo *) NULL)
                       {
