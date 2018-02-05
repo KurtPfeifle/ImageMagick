@@ -2728,6 +2728,7 @@ MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
     }
     case ZipStream:
     {
+#if defined(MAGICKCORE_ZLIB_DELEGATE)
       int
         status;
 
@@ -2735,13 +2736,16 @@ MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
         return(MagickFalse);
       status=gzseek(blob_info->file_info.gzfile,0,SEEK_CUR);
       return(status == -1 ? MagickFalse : MagickTrue);
+#else
+      break;
+#endif
     }
     case UndefinedStream:
     case BZipStream:
     case FifoStream:
     case PipeStream:
     case StandardStream:
-      return(MagickFalse);
+      break;
     case CustomStream:
     {
       if ((blob_info->custom_stream->seeker != (CustomStreamSeeker) NULL) &&
@@ -4532,36 +4536,31 @@ MagickExport const void *ReadBlobStream(Image *image,const size_t length,
 */
 MagickExport char *ReadBlobString(Image *image,char *string)
 {
-  register const unsigned char
-    *p;
+  int
+    c;
 
   register ssize_t
     i;
-
-  ssize_t
-    count;
-
-  unsigned char
-    buffer[1];
 
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
   for (i=0; i < (MagickPathExtent-1L); i++)
   {
-    p=(const unsigned char *) ReadBlobStream(image,1,buffer,&count);
-    if (count != 1)
+    c=ReadBlobByte(image);
+    if (c == EOF)
       {
         if (i == 0)
           return((char *) NULL);
-        string[i]='\0';
         break;
       }
-    string[i]=(char) (*p);
-    if ((string[i] == '\r') || (string[i] == '\n'))
-      break;
+    string[i]=c;
+    if (c == '\n')
+      {
+        if ((i > 0) && (string[i-1] == '\r'))
+          i--;
+        break;
+      }
   }
-  if (string[i] == '\r')
-    (void) ReadBlobStream(image,1,buffer,&count);
   string[i]='\0';
   return(string);
 }
@@ -4703,28 +4702,12 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
           break;
         }
       }
-      if (blob_info->offset <= (MagickOffsetType) ((off_t) blob_info->length))
+      if (blob_info->offset < (MagickOffsetType) ((off_t) blob_info->length))
         {
           blob_info->eof=MagickFalse;
           break;
         }
-      if ((image->blob->mapped == MagickFalse) &&
-          ((image->blob->mode == WriteBlobMode) ||
-           (image->blob->mode == WriteBinaryBlobMode)))
-        {
-          image->blob->extent=(size_t) (image->blob->offset+
-            image->blob->quantum);
-          image->blob->quantum<<=1;
-          image->blob->data=(unsigned char *) ResizeQuantumMemory(
-            image->blob->data,image->blob->extent+1,sizeof(*image->blob->data));
-          (void) SyncBlob(image);
-          if (image->blob->data == (unsigned char *) NULL)
-            {
-              (void) DetachBlob(image->blob);
-              return(-1);
-            }
-        }
-      if (blob_info->offset > (MagickOffsetType) ((off_t) blob_info->extent))
+      if (blob_info->offset >= (MagickOffsetType) ((off_t) blob_info->extent))
         return(-1);
       break;
     }

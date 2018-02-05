@@ -789,6 +789,8 @@ static Image *ExtractPostscript(Image *image,const ImageInfo *image_info,
   /*     printf("Detected:%s  \n",magic_info->name); */
   if(exception->severity != UndefinedException) goto FINISH_UNL;
   if(magic_info->name == (char *) NULL) goto FINISH_UNL;
+  if (LocaleCompare(magic_info->name,"WPG") == 0)
+    goto FINISH_UNL;
 
   (void) strncpy(clone_info->magick,magic_info->name,MagickPathExtent-1);
   if (LocaleCompare(image_info->magick,clone_info->magick) == 0)
@@ -1169,6 +1171,9 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
               if ((image->storage_class != PseudoClass) && (bpp < 24))
                 {
                   image->colors=one << bpp;
+                  if (image->colors > GetBlobSize(image))
+                    ThrowReaderException(CorruptImageError,
+                      "InsufficientImageDataInFile");
                   if (!AcquireImageColormap(image,image->colors,exception))
                     {
                     NoMemory:

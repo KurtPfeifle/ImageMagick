@@ -1742,11 +1742,20 @@ static MagickBooleanType GetXMPProperty(const Image *image,const char *property)
   profile=GetImageProfile(image,"xmp");
   if (profile == (StringInfo *) NULL)
     return(MagickFalse);
+  if (GetStringInfoLength(profile) < 17)
+    return(MagickFalse);
   if ((property == (const char *) NULL) || (*property == '\0'))
     return(MagickFalse);
   xmp_profile=StringInfoToString(profile);
   if (xmp_profile == (char *) NULL)
     return(MagickFalse);
+  if ((strstr(xmp_profile,"<rdf:RDF") == (char *) NULL) ||
+      (strstr(xmp_profile,"<rdf:Description") == (char *) NULL) ||
+      (strstr(xmp_profile,"<x:") == (char *) NULL))
+    {
+      xmp_profile=DestroyString(xmp_profile);
+      return(MagickFalse);
+    }
   for (p=xmp_profile; *p != '\0'; p++)
     if ((*p == '<') && (*(p+1) == 'x'))
       break;
