@@ -2987,6 +2987,9 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
     greenmap=(int *) RelinquishMagickMemory(greenmap); \
   if (redmap != (int *) NULL) \
     redmap=(int *) RelinquishMagickMemory(redmap); \
+  if (stream_info->offsets == (ssize_t *) NULL) \
+    stream_info->offsets=(ssize_t *) RelinquishMagickMemory( \
+      stream_info->offsets); \
   if (stream_info != (DCMStreamInfo *) NULL) \
     stream_info=(DCMStreamInfo *) RelinquishMagickMemory(stream_info); \
   ThrowReaderException((exception),(message)); \
@@ -3816,7 +3819,8 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
         unsigned int
           tag;
 
-        tag=(ReadBlobLSBShort(image) << 16) | ReadBlobLSBShort(image);
+        tag=((unsigned int) ReadBlobLSBShort(image) << 16) |
+          ReadBlobLSBShort(image);
         length=(size_t) ReadBlobLSBLong(image);
         if (tag == 0xFFFEE0DD)
           break; /* sequence delimiter tag */
@@ -3911,7 +3915,8 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
         if (c == EOF)
           break;
       }
-      tag=(ReadBlobLSBShort(image) << 16) | ReadBlobLSBShort(image);
+      tag=((unsigned int) ReadBlobLSBShort(image) << 16) |
+        ReadBlobLSBShort(image);
       (void) tag;
       length=(size_t) ReadBlobLSBLong(image);
       if (length > GetBlobSize(image))
@@ -4008,8 +4013,16 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
           Read RLE segment table.
         */
         for (i=0; i < (ssize_t) stream_info->remaining; i++)
-          (void) ReadBlobByte(image);
-        tag=(ReadBlobLSBShort(image) << 16) | ReadBlobLSBShort(image);
+        {
+          int
+            c;
+
+          c=ReadBlobByte(image);
+          if (c == EOF)
+            break;
+        }
+        tag=((unsigned int) ReadBlobLSBShort(image) << 16) |
+          ReadBlobLSBShort(image);
         stream_info->remaining=(size_t) ReadBlobLSBLong(image);
         if ((tag != 0xFFFEE000) || (stream_info->remaining <= 64) ||
             (EOFBlob(image) != MagickFalse))
