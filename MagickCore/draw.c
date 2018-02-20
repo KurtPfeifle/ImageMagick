@@ -1425,6 +1425,8 @@ MagickExport MagickBooleanType DrawClipPath(Image *image,
   clip_mask=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
   if (clip_mask == (Image *) NULL)
     return(MagickFalse);
+  (void) SetImageMask(clip_mask,ReadPixelMask,(Image *) NULL,exception);
+  (void) SetImageMask(clip_mask,WritePixelMask,(Image *) NULL,exception);
   (void) QueryColorCompliance("#0000",AllCompliance,
     &clip_mask->background_color,exception);
   clip_mask->background_color.alpha=(MagickRealType) TransparentAlpha;
@@ -3298,6 +3300,8 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
   if (primitive_info != (PrimitiveInfo *) NULL)
     primitive_info=(PrimitiveInfo *) RelinquishMagickMemory(primitive_info);
   primitive=DestroyString(primitive);
+  if (stops != (StopInfo *) NULL)
+    stops=(StopInfo *) RelinquishMagickMemory(stops);
   for ( ; n >= 0; n--)
     graphic_context[n]=DestroyDrawInfo(graphic_context[n]);
   graphic_context=(DrawInfo **) RelinquishMagickMemory(graphic_context);
@@ -4170,7 +4174,8 @@ RestoreMSCWarning
       continue;
     start_x=(ssize_t) ceil(bounds.x1-0.5);
     stop_x=(ssize_t) floor(bounds.x2+0.5);
-    q=GetCacheViewAuthenticPixels(image_view,start_x,y,(size_t) (stop_x-start_x+      1),1,exception);
+    q=GetCacheViewAuthenticPixels(image_view,start_x,y,(size_t) (stop_x-start_x+
+      1),1,exception);
     if (q == (Quantum *) NULL)
       {
         status=MagickFalse;
