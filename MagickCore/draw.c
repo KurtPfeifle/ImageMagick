@@ -96,6 +96,7 @@
   (void) ThrowMagickException(exception,GetMagickModule(),DrawError, \
     "NonconformingDrawingPrimitiveDefinition","`%s'",token); \
   status=MagickFalse; \
+  break; \
 }
 
 /*
@@ -1779,7 +1780,7 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
       ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
         image->filename);
     }
-  number_points=6613;
+  number_points=8192;
   primitive_info=(PrimitiveInfo *) AcquireQuantumMemory((size_t) number_points,
     sizeof(*primitive_info));
   if (primitive_info == (PrimitiveInfo *) NULL)
@@ -5534,12 +5535,12 @@ static size_t TracePath(PrimitiveInfo *primitive_info,const char *path,
     number_coordinates,
     z_count;
 
+  status=MagickTrue;
   attribute=0;
   number_coordinates=0;
   z_count=0;
   primitive_type=primitive_info->primitive;
   q=primitive_info;
-  status=MagickTrue;
   for (p=path; *p != '\0'; )
   {
     if (status == MagickFalse)
@@ -5876,6 +5877,8 @@ static size_t TracePath(PrimitiveInfo *primitive_info,const char *path,
             end.y=(double) (attribute == (int) 'T' ? y : point.y+y);
             points[i]=end;
           }
+          if (status == MagickFalse)
+            break;
           if (strchr("QqTt",last_attribute) == (char *) NULL)
             {
               points[0]=point;
