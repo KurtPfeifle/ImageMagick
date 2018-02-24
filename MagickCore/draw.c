@@ -1737,6 +1737,7 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
     number_stops;
 
   ssize_t
+    defsDepth,
     j,
     k,
     n;
@@ -1780,7 +1781,7 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
       ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
         image->filename);
     }
-  number_points=8192;
+  number_points=8192+6*BezierQuantum+360;
   primitive_info=(PrimitiveInfo *) AcquireQuantumMemory((size_t) number_points,
     sizeof(*primitive_info));
   if (primitive_info == (PrimitiveInfo *) NULL)
@@ -1803,6 +1804,7 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
   extent=strlen(token)+MagickPathExtent;
   if (SetImageStorageClass(image,DirectClass,exception) == MagickFalse)
     return(MagickFalse);
+  defsDepth=0;
   status=MagickTrue;
   for (q=primitive; *q != '\0'; )
   {
@@ -2287,7 +2289,12 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
             if (LocaleCompare("clip-path",token) == 0)
               break;
             if (LocaleCompare("defs",token) == 0)
-              break;
+              {
+                defsDepth--;
+                graphic_context[n]->render=defsDepth > 0 ? MagickFalse :
+                  MagickTrue;
+                break;
+              }
             if (LocaleCompare("gradient",token) == 0)
               break;
             if (LocaleCompare("graphic-context",token) == 0)
@@ -2506,7 +2513,12 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
                 break;
               }
             if (LocaleCompare("defs",token) == 0)
-              break;
+              {
+                defsDepth++;
+                graphic_context[n]->render=defsDepth > 0 ? MagickFalse :
+                  MagickTrue;
+                break;
+              }
             status=MagickFalse;
             break;
           }
