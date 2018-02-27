@@ -92,7 +92,7 @@ script:
   - echo '#################################'
   #### Prepare Upload( Name)s
   - export _appimage=$(basename $(ls -1 ./ImageMagick*.AppImage))
-  - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./ImageMagick-continuous-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
+  - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./$_appimage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
   - echo VERSION=$VERSION
   - echo IMVERSION=$IMVERSION
   - cp ImageMagick-*.AppImage ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
