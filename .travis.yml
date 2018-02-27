@@ -92,15 +92,15 @@ script:
   - echo '#################################'
   #### Prepare Upload( Name)s
   - export _appimage=$(basename $(ls -1 ./ImageMagick*.AppImage))
-  - cp ./ImageMagick*.AppImage ./ImageMagick-continuous-x86_64.AppImage
   - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./ImageMagick-continuous-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
-  - mv ImageMagick-{latest,continuous}-x86_64.AppImage
-  - cp ./ImageMagick-continuous{,-$IMVERSION-$VERSION}-x86_64.AppImage
+  - echo VERSION=$VERSION
+  - echo IMVERSION=$IMVERSION
+  - cp ImageMagick-*.AppImage ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
-  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
+  - cp ImageMagick-*x86_64.AppImage.zsync ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
   #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
