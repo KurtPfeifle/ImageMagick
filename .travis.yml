@@ -96,18 +96,24 @@ script:
   - echo VERSION=$VERSION
   - echo IMVERSION=$IMVERSION
   - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
-  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync 
+  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync
+  - mv $_appimage ImageMagick-latest-${IMVERSION}.AppImage
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - echo "# AppImage Build Logging Info"  > AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  - echo ""                              >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  - echo "Travis AppImage Build Log URL: https://travis-ci.org/KurtPfeifle/ImageMagick/builds/${TRAVIS_BUILD_ID}" >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  - echo "Travis AppImage Build Log "raw" Text: https://api.travis-ci.org/v3/job/${TRAVIS_BUILD_ID}/log.txt"      >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
   #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
-  ####- bash upload.sh $_appimage
-  ####- bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
-  ####- bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  ####- bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync
+  ####- bash upload.sh ImageMagick-latest-${IMVERSION}.AppImage
+  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$VERSION}-x86_64.AppImage
+  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$VERSION}-x86_64.AppImage.sha512
+  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$VERSION}-x86_64.AppImage.zsync
+  ####- bash upload.sh Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ] ; then
   ####- curl --upload-file ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
@@ -117,6 +123,7 @@ script:
   - find . -name "ImageMagick*.AppImage*"
   - echo '#################################'
   - env | grep -i travis
+  - cat AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
 
 after_success:
   #- Do nothing for now
