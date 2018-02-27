@@ -109,13 +109,13 @@ script:
   - echo ""                                                                                                     >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - ls -l AppImage-Buildinfo-Travis-Job*
   - cat AppImage-Buildinfo-Travis-Job*
-  - echo Travis AppImage Build Log URL: https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID   >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo Travis AppImage Build Log URL  https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID   >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - ls -l AppImage-Buildinfo-Travis-Job*
   - cat AppImage-Buildinfo-Travis-Job*
   - echo ""                                                                                                     >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - ls -l AppImage-Buildinfo-Travis-Job*
   - cat AppImage-Buildinfo-Travis-Job*
-  - echo Travis AppImage Build Log 'raw' Text: https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt        >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo Travis AppImage Build Log 'raw' Text  https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt        >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - ls -l AppImage-Buildinfo-Travis-Job*
   - cat AppImage-Buildinfo-Travis-Job*
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
