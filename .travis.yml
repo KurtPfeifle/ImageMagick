@@ -95,12 +95,12 @@ script:
   - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./$_appimage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
   - echo VERSION=$VERSION
   - echo IMVERSION=$IMVERSION
-  - cp ImageMagick-*.AppImage ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
+  - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
+  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync 
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
   #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
-  - cp ImageMagick-*x86_64.AppImage.zsync ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
   #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
