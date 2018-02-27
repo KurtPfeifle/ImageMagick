@@ -103,10 +103,11 @@ script:
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - echo "# AppImage Build Logging Info"  > AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
-  - echo ""                              >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
-  - echo "Travis AppImage Build Log URL: https://travis-ci.org/KurtPfeifle/ImageMagick/builds/${TRAVIS_BUILD_ID}" >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
-  - echo "Travis AppImage Build Log 'raw' Text: https://api.travis-ci.org/v3/job/${TRAVIS_BUILD_ID}/log.txt"      >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  - echo "# AppImage Build Logging Info"                                                                         > AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo ""                                                                                                     >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo "Travis AppImage Build Log URL: https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID" >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  - echo ""                                                                                                     >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo "Travis AppImage Build Log 'raw' Text: https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt"      >> AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
   #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
   ####- bash upload.sh ImageMagick-latest-${IMVERSION}.AppImage
