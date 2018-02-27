@@ -84,32 +84,38 @@ script:
   #- find config    -type f
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun      # Replace symlink with custom script
   #### Make AppImage
-  #- PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|latest|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
-  - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|latest|ImageMagick-*x86_64.AppImage.zsync' ./appdir/      # -n can be gotten rid off
+  #- PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
+  - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' ./appdir/      # -n can be gotten rid off
   - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
+  - echo '#################################'
+  - find . -name "ImageMagick*.AppImage*"
+  - echo '#################################'
   #### Prepare Upload( Name)s
   - export _appimage=$(basename $(ls -1 ./ImageMagick*.AppImage))
-  - cp ./ImageMagick*.AppImage ./ImageMagick-latest-x86_64.AppImage
-  - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./ImageMagick-latest-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
-  - cp ./ImageMagick-latest{,-$IMVERSION-$VERSION}-x86_64.AppImage
-  - sha512sum ./ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  #- sha512sum ./ImageMagick-latest-x86_64.AppImage                     > ./ImageMagick-latest-x86_64.AppImage.sha512
+  - cp ./ImageMagick*.AppImage ./ImageMagick-continuous-x86_64.AppImage
+  - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./ImageMagick-continuous-x86_64.AppImage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
+  - mv ImageMagick-{latest,continuous}-x86_64.AppImage
+  - cp ./ImageMagick-continuous{,-$IMVERSION-$VERSION}-x86_64.AppImage
+  - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
-  #- ls -l *.AppImage.zsync
-  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
+  - ls -l *.AppImage.zsync
+  - mv ImageMagick-$VERSION-x86_64.AppImage.zsync ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync 
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash upload.sh ImageMagick-latest-x86_64.AppImage
-  #- bash upload.sh ImageMagick-latest-x86_64.AppImage.sha512
-  - bash upload.sh $_appimage
-  - bash upload.sh ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage
-  - bash upload.sh ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  - bash upload.sh ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage.zsync
+  ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
+  #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
+  ####- bash upload.sh $_appimage
+  ####- bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
+  ####- bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  ####- bash upload.sh ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.zsync
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ] ; then
-  - curl --upload-file ./ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-latest-$IMVERSION-$VERSION-x86_64.AppImage
-  - curl --upload-file ./ImageMagick-latest-x86_64.AppImage                      https://transfer.sh/ImageMagick-latest-x86_64.AppImage
+  ####- curl --upload-file ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
+  ####- curl --upload-file ./ImageMagick-continuous-x86_64.AppImage                      https://transfer.sh/ImageMagick-continuous-x86_64.AppImage
   - #; fi
-  - find . -name "ImageMagick-*.AppImage*"
+  - echo '#################################'
+  - find . -name "ImageMagick*.AppImage*"
+  - echo '#################################'
   - env | grep -i travis
 
 after_success:
