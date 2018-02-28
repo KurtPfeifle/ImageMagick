@@ -72,7 +72,7 @@ script:
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt*.AppImage
   - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
-  - export VERSION="git.$(git rev-parse --short HEAD)"       #-$CC"
+  - export GITVERSION="git.$(git rev-parse --short HEAD)"       #-$CC"
   - ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/imagemagick.desktop -bundle-non-qt-libs
   - ./linuxdeployqt*.AppImage --appimage-extract
   #- ls -1d */
@@ -93,41 +93,38 @@ script:
   #### Prepare Upload( Name)s
   - export _appimage=$(basename $(ls -1 ./ImageMagick*.AppImage))
   - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./$_appimage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
-  - echo VERSION=$VERSION
+  - echo GITVERSION=$GITVERSION
   - echo IMVERSION=$IMVERSION
   - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
   - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync
-  - mv $_appimage ImageMagick-latest-${IMVERSION}.AppImage
-  - sha512sum ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  #- sha512sum ./ImageMagick-continuous-x86_64.AppImage                     > ./ImageMagick-continuous-x86_64.AppImage.sha512
+  - mv $_appimage ImageMagick-latest-$IMVERSION.AppImage
+  - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
+  - sha512sum ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync                 > ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - echo '# AppImage Build Logging Info'                                                                         > AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - ls -l AppImage-Buildinfo-Travis-Job*
+  - _colon=":"   # Work around that Travis doesn't like to echo ":" characters...
+  - echo '# AppImage Build Logging Info'                                                                                  > AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo "* Travis AppImage Build Log URL$_colon  https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID" >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo "* Travis AppImage Build Log 'raw' Text$_colon  https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt"      >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - cat AppImage-Buildinfo-Travis-Job*
-  - echo ""                                                                                                     >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - ls -l AppImage-Buildinfo-Travis-Job*
-  - cat AppImage-Buildinfo-Travis-Job*
-  - echo Travis AppImage Build Log URL  https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID   >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - ls -l AppImage-Buildinfo-Travis-Job*
-  - cat AppImage-Buildinfo-Travis-Job*
-  - echo ""                                                                                                     >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - ls -l AppImage-Buildinfo-Travis-Job*
-  - cat AppImage-Buildinfo-Travis-Job*
-  - echo Travis AppImage Build Log 'raw' Text  https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt        >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - ls -l AppImage-Buildinfo-Travis-Job*
-  - cat AppImage-Buildinfo-Travis-Job*
+  - echo 1=ImageMagick-latest-$IMVERSION-x86_64.AppImage
+  - echo 2=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
+  - echo 3=ImageMagick-$GITVERSION-x86_64.AppImage.zsync
+  - echo 4=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
+  - echo 5=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.zsync
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
   #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
   ####- bash upload.sh ImageMagick-latest-${IMVERSION}.AppImage
-  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$VERSION}-x86_64.AppImage
-  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$VERSION}-x86_64.AppImage.sha512
-  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$VERSION}-x86_64.AppImage.zsync
+  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$GITVERSION}-x86_64.AppImage
+  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$GITVERSION}-x86_64.AppImage.sha512
+  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$GITVERSION}-x86_64.AppImage.zsync
   ####- bash upload.sh Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
   - #; fi
   - #if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ] ; then
-  ####- curl --upload-file ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
+  ####- curl --upload-file ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage
   ####- curl --upload-file ./ImageMagick-continuous-x86_64.AppImage                      https://transfer.sh/ImageMagick-continuous-x86_64.AppImage
   - #; fi
   - echo '#################################'
