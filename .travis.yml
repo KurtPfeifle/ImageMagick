@@ -132,7 +132,7 @@ script:
   ##########################################################################  
   - find . -name "ImageMagick-*.AppImage*"
   
-  - bash upload.sh ImageMagick-latest-*x86_64.AppImage*
+  - bash upload.sh ImageMagick-latest-*x86_64.AppImage
   - bash upload.sh ImageMagick-continuous-*x86_64.AppImage*
   - bash upload.sh ImageMagick-x86_64.AppImage*
   - bash upload.sh AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
