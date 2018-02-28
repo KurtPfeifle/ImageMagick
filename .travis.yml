@@ -99,9 +99,9 @@ script:
   - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage.zsync
   - mv $_appimage ImageMagick-latest-$IMVERSION-x64_86.AppImage
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
-  - sha512sum ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync                 > ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync.sha512
+  - sha512sum ./ImageMagick-x86_64.AppImage.zsync                             > ./ImageMagick-x86_64.AppImage.zsync.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
-  - ls -l *.AppImage.zsync
+  - ls -l *.AppImage*
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - _colon=":"   # Work around that Travis doesn't like to echo ":" characters...
   - echo '# AppImage Build Logging Info'                                                                                  > AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
