@@ -95,9 +95,9 @@ script:
   - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./$_appimage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
   - echo GITVERSION=$GITVERSION
   - echo IMVERSION=$IMVERSION
-  - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
-  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync
-  - mv $_appimage ImageMagick-latest-$IMVERSION.AppImage
+  - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage
+  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage.zsync
+  - mv $_appimage ImageMagick-latest-$IMVERSION-x64_86.AppImage
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
   - sha512sum ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync                 > ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
