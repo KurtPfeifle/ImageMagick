@@ -112,17 +112,17 @@ script:
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   
   - _colon=":"   # Work around that Travis doesn't like to echo ":" characters...
-  - echo '# AppImage Build Logging Info'                                                                                  > AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - echo "* Travis AppImage Build Log URL$_colon  https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID" >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
-  - echo "* Travis AppImage Build Log 'raw' Text$_colon  https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt"      >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - echo '# AppImage Build Logging Info'                                                                                  > AppImage-Buildinfo-Travis-Job-$TRAVIS_BUILD_NUMBER.md
+  - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_BUILD_NUMBER.md
+  - echo "* Travis AppImage Build Log URL$_colon  https://travis-ci.org/KurtPfeifle/ImageMagick/builds/$TRAVIS_BUILD_ID" >> AppImage-Buildinfo-Travis-Job-$TRAVIS_BUILD_NUMBER.md
+  - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_BUILD_NUMBER.md
+  - echo "* Travis AppImage Build Log 'raw' Text$_colon  https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt"      >> AppImage-Buildinfo-Travis-Job-$TRAVIS_BUILD_NUMBER.md
   - cat AppImage-Buildinfo-Travis-Job*
   
   ##########################################################################
   # Expected Uploads are:
   # ------------------------------------------------------------------------
-  # ImageMagick-latest-$IMVERSION-$GITVERSION-x86_64.AppImage
+  # ImageMagick-latest-$IMVERSION-x86_64.AppImage
   # ImageMagick-x86_64.AppImage.zsync
   # ImageMagick-x86_64.AppImage.zsync.sha512
   # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
@@ -132,10 +132,11 @@ script:
   ##########################################################################  
   - find . -name "ImageMagick-*.AppImage*"
   
-  - bash upload.sh ImageMagick-latest-*x86_64.AppImage
+  #- bash upload.sh AppImage-Buildinfo-Travis-Job-$TRAVIS_BUILD_NUMBER.md
+  - bash upload.sh ImageMagick-latest-$IMVERSION-x86_64.AppImage
   - bash upload.sh ImageMagick-continuous-*x86_64.AppImage*
   - bash upload.sh ImageMagick-x86_64.AppImage*
-  - bash upload.sh AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  - find . -name "ImageMagick-*.AppImage*"
   - #; fi
   
   - #if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ] ; then
@@ -147,7 +148,7 @@ script:
   - echo '#################################'
   
   - env | grep -i travis
-  - cat AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  - cat AppImage-Buildinfo-Travis-Job-${TRAVIS_BUILD_NUMBER}.md
 
 after_success:
   #- Do nothing for now
