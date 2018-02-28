@@ -122,7 +122,7 @@ script:
   ##########################################################################
   # Expected Uploads are:
   # ------------------------------------------------------------------------
-  # ImageMagick-latest-$IMVERSION-x86_64.AppImage
+  # ImageMagick-latest-$IMVERSION-$GITVERSION-x86_64.AppImage
   # ImageMagick-x86_64.AppImage.zsync
   # ImageMagick-x86_64.AppImage.zsync.sha512
   # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
@@ -132,7 +132,9 @@ script:
   ##########################################################################  
   - find . -name "ImageMagick-*.AppImage*"
   
-  - bash upload.sh ImageMagick-*x86_64.AppImage*
+  - bash upload.sh ImageMagick-latest-*x86_64.AppImage*
+  - bash upload.sh ImageMagick-continuous-*x86_64.AppImage*
+  - bash upload.sh ImageMagick-x86_64.AppImage*
   - bash upload.sh AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - #; fi
   
