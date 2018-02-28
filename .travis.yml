@@ -102,7 +102,7 @@ script:
   - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage
   - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage.zsync
   
-  - mv $_appimage ImageMagick-latest-$IMVERSION-x64_86.AppImage
+  - mv $_appimage ImageMagick-latest-$IMVERSION-x86_64.AppImage
   
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
   - sha512sum ./ImageMagick-x86_64.AppImage.zsync                             > ./ImageMagick-x86_64.AppImage.zsync.sha512
