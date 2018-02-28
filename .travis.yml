@@ -83,6 +83,7 @@ script:
   #- find coders    -type f
   #- find config    -type f
   - rm ./appdir/AppRun ; cp appimage/AppRun appdir/ ; chmod a+x ./appdir/AppRun      # Replace symlink with custom script
+  
   #### Make AppImage
   #- PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' -n ./appdir/
   - PATH=./squashfs-root/usr/bin:$PATH ./squashfs-root/usr/bin/appimagetool -v -u 'gh-releases-zsync|KurtPfeifle|ImageMagick|continuous|ImageMagick-*x86_64.AppImage.zsync' ./appdir/      # -n can be gotten rid off
@@ -90,19 +91,26 @@ script:
   - echo '#################################'
   - find . -name "ImageMagick*.AppImage*"
   - echo '#################################'
+  
   #### Prepare Upload( Name)s
   - export _appimage=$(basename $(ls -1 ./ImageMagick*.AppImage))
   - export IMVERSION=$TRAVIS_BUILD_NUMBER-$(./$_appimage -version | grep "^Version:" | awk '{print $3, $4}' | sed 's/ /-/g')-$(date "+%Y%m%d")
+  
   - echo GITVERSION=$GITVERSION
   - echo IMVERSION=$IMVERSION
-  - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage
-  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync
-  - mv $_appimage ImageMagick-latest-$IMVERSION.AppImage
+  
+  - cp ImageMagick-*.AppImage       ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage
+  - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage.zsync
+  
+  - mv $_appimage ImageMagick-latest-$IMVERSION-x64_86.AppImage
+  
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
-  - sha512sum ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync                 > ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync.sha512
+  - sha512sum ./ImageMagick-x86_64.AppImage.zsync                             > ./ImageMagick-x86_64.AppImage.zsync.sha512
+  
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
-  - ls -l *.AppImage.zsync
+  - ls -l *.AppImage*
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  
   - _colon=":"   # Work around that Travis doesn't like to echo ":" characters...
   - echo '# AppImage Build Logging Info'                                                                                  > AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
@@ -110,27 +118,32 @@ script:
   - echo ""                                                                                                              >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - echo "* Travis AppImage Build Log 'raw' Text$_colon  https://api.travis-ci.org/v3/job/$TRAVIS_BUILD_ID/log.txt"      >> AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - cat AppImage-Buildinfo-Travis-Job*
-  - echo 1=ImageMagick-latest-$IMVERSION-x86_64.AppImage
-  - echo 2=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
-  - echo 3=ImageMagick-$GITVERSION-x86_64.AppImage.zsync
-  - echo 4=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
-  - echo 5=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.zsync
-  - echo 6=ImageMagick-$GITVERSION-x86_64.AppImage.zsync.sha512
-  ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
-  #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
-  ####- bash upload.sh ImageMagick-latest-${IMVERSION}.AppImage
-  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$GITVERSION}-x86_64.AppImage
-  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$GITVERSION}-x86_64.AppImage.sha512
-  ####- bash upload.sh ImageMagick-continuous-${IMVERSION-$GITVERSION}-x86_64.AppImage.zsync
-  ####- bash upload.sh Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
+  
+  ##########################################################################
+  # Expected Uploads are:
+  # ------------------------------------------------------------------------
+  # ImageMagick-latest-$IMVERSION-x86_64.AppImage
+  # ImageMagick-x86_64.AppImage.zsync
+  # ImageMagick-x86_64.AppImage.zsync.sha512
+  # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
+  # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.zsync
+  # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
+  # AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
+  ##########################################################################  
+  - find . -name "ImageMagick-*.AppImage*"
+  
+  - bash upload.sh ImageMagick-*x86_64.AppImage*
+  - bash upload.sh AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   - #; fi
+  
   - #if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ] ; then
-  ####- curl --upload-file ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
-  ####- curl --upload-file ./ImageMagick-continuous-x86_64.AppImage                      https://transfer.sh/ImageMagick-continuous-x86_64.AppImage
+  - curl --upload-file ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage  https://transfer.sh/ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
   - #; fi
+  
   - echo '#################################'
   - find . -name "ImageMagick*.AppImage*"
   - echo '#################################'
+  
   - env | grep -i travis
   - cat AppImage-Buildinfo-Travis-Job-${TRAVIS_JOB_NUMBER}.md
 
