@@ -99,7 +99,7 @@ script:
   - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${VERSION}-x86_64.AppImage.zsync
   - mv $_appimage ImageMagick-latest-$IMVERSION.AppImage
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$VERSION-x86_64.AppImage.sha512
-  - sha512sum ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync                 > ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync
+  - sha512sum ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync                 > ./ImageMagick-$GITVERSION-x86_64.AppImage.zsync.sha512
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage.zsync
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
@@ -115,6 +115,7 @@ script:
   - echo 3=ImageMagick-$GITVERSION-x86_64.AppImage.zsync
   - echo 4=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
   - echo 5=ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.zsync
+  - echo 6=ImageMagick-$GITVERSION-x86_64.AppImage.zsync.sha512
   ####- bash upload.sh ImageMagick-continuous-x86_64.AppImage
   #- bash upload.sh ImageMagick-continuous-x86_64.AppImage.sha512
   ####- bash upload.sh ImageMagick-latest-${IMVERSION}.AppImage
