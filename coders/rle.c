@@ -329,7 +329,13 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
         break;
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
-      return(DestroyImageList(image));
+      {
+        if (colormap != (unsigned char *) NULL)
+          colormap=(unsigned char *) RelinquishMagickMemory(colormap);
+        if (pixel_info != (MemoryInfo *) NULL)
+          pixel_info=RelinquishVirtualMemory(pixel_info);
+        return(DestroyImageList(image));
+      }
     /*
       Allocate RLE pixels.
     */
@@ -441,12 +447,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
           operand++;
           if ((offset < 0) ||
               ((size_t) (offset+operand*number_planes) > pixel_info_length))
-            {
-              if (number_colormaps != 0)
-                colormap=(unsigned char *) RelinquishMagickMemory(colormap);
-              pixel_info=RelinquishVirtualMemory(pixel_info);
-              ThrowRLEException(CorruptImageError,"UnableToReadImageData");
-            }
+            ThrowRLEException(CorruptImageError,"UnableToReadImageData");
           p=pixels+offset;
           for (i=0; i < (ssize_t) operand; i++)
           {
@@ -479,12 +480,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
           operand++;
           if ((offset < 0) ||
               ((size_t) (offset+operand*number_planes) > pixel_info_length))
-            {
-              if (number_colormaps != 0)
-                colormap=(unsigned char *) RelinquishMagickMemory(colormap);
-              pixel_info=RelinquishVirtualMemory(pixel_info);
-              ThrowRLEException(CorruptImageError,"UnableToReadImageData");
-            }
+            ThrowRLEException(CorruptImageError,"UnableToReadImageData");
           p=pixels+offset;
           for (i=0; i < (ssize_t) operand; i++)
           {
@@ -532,11 +528,7 @@ static Image *ReadRLEImage(const ImageInfo *image_info,ExceptionInfo *exception)
                 p++;
               }
         if ((i < (ssize_t) number_pixels) || (x < (ssize_t) number_planes))
-          {
-            colormap=(unsigned char *) RelinquishMagickMemory(colormap);
-            pixel_info=RelinquishVirtualMemory(pixel_info);
-            ThrowRLEException(CorruptImageError,"UnableToReadImageData");
-          }
+          ThrowRLEException(CorruptImageError,"UnableToReadImageData");
       }
     /*
       Initialize image structure.
