@@ -103,9 +103,11 @@ script:
   - cp ImageMagick-*.AppImage.zsync ImageMagick-continuous-${IMVERSION}-${GITVERSION}-x86_64.AppImage.zsync
   
   - mv $_appimage ImageMagick-latest-$IMVERSION-x86_64.AppImage
+  - cp ImageMagick-latest-$IMVERSION-x86_64.AppImage ImageMagick-x86_64.AppImage
   
   - sha512sum ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage > ./ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
   - sha512sum ./ImageMagick-x86_64.AppImage.zsync                             > ./ImageMagick-x86_64.AppImage.zsync.sha512
+  - sha512sum ./ImageMagick-x86_64.AppImage                                   > ./ImageMagick-x86_64.AppImage.sha512
   
   - #if [ "$TRAVIS_BRANCH" == "$TRAVIS_TAG" ] ; then
   - ls -l *.AppImage*
@@ -123,12 +125,13 @@ script:
   # Expected Uploads are:
   # ------------------------------------------------------------------------
   # ImageMagick-latest-$IMVERSION-x86_64.AppImage
+  # ImageMagick-x86_64.AppImage
+  # ImageMagick-x86_64.AppImage.sha512
   # ImageMagick-x86_64.AppImage.zsync
   # ImageMagick-x86_64.AppImage.zsync.sha512
   # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage
   # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.zsync
   # ImageMagick-continuous-$IMVERSION-$GITVERSION-x86_64.AppImage.sha512
-  # AppImage-Buildinfo-Travis-Job-$TRAVIS_JOB_NUMBER.md
   ##########################################################################  
   - find . -name "ImageMagick-*.AppImage*"
   
