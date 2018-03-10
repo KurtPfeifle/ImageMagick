@@ -1177,7 +1177,7 @@ static MagickBooleanType ReadPSDChannelRLE(Image *image,const PSDInfo *psd_info,
         image->filename);
     }
 
-  (void) ResetMagickMemory(compact_pixels,0,length*sizeof(*compact_pixels));
+  (void) memset(compact_pixels,0,length*sizeof(*compact_pixels));
 
   status=MagickTrue;
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -1260,7 +1260,7 @@ static MagickBooleanType ReadPSDChannelZip(Image *image,const size_t channels,
         image->filename);
     }
 
-  ResetMagickMemory(&stream,0,sizeof(stream));
+  memset(&stream,0,sizeof(stream));
   stream.data_type=Z_BINARY;
   stream.next_in=(Bytef *)compact_pixels;
   stream.avail_in=(uInt) compact_size;
@@ -1662,7 +1662,7 @@ static MagickBooleanType ReadPSDLayersInternal(Image *image,
           ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
             image->filename);
         }
-      (void) ResetMagickMemory(layer_info,0,(size_t) number_layers*
+      (void) memset(layer_info,0,(size_t) number_layers*
         sizeof(*layer_info));
 
       for (i=0; i < number_layers; i++)
@@ -2716,7 +2716,7 @@ static size_t WritePSDChannel(const PSDInfo *psd_info,
           quantum_info=DestroyQuantumInfo(quantum_info);
           return(0);
         }
-      ResetMagickMemory(&stream,0,sizeof(stream));
+      memset(&stream,0,sizeof(stream));
       stream.data_type=Z_BINARY;
       level=Z_DEFAULT_COMPRESSION;
       if ((image_info->quality > 0 && image_info->quality < 10))
@@ -3081,7 +3081,7 @@ static void RemoveICCProfileFromResourceBlock(StringInfo *bim_profile)
         if ((quantum >= 12) && (quantum < (ssize_t) length))
           {
             if ((q+quantum < (datum+length-16)))
-              (void) CopyMagickMemory(q,q+quantum,length-quantum-(q-datum));
+              (void) memmove(q,q+quantum,length-quantum-(q-datum));
             SetStringInfoLength(bim_profile,length-quantum);
           }
         break;
@@ -3136,7 +3136,7 @@ static void RemoveResolutionFromResourceBlock(StringInfo *bim_profile)
     if ((id == 0x000003ed) && (cnt < (ssize_t) (length-12)) &&
         ((ssize_t) length-(cnt+12)-(q-datum)) > 0)
       {
-        (void) CopyMagickMemory(q,q+cnt+12,length-(cnt+12)-(q-datum));
+        (void) memmove(q,q+cnt+12,length-(cnt+12)-(q-datum));
         SetStringInfoLength(bim_profile,length-(cnt+12));
         break;
       }
@@ -3232,7 +3232,7 @@ static const StringInfo *GetAdditionalInformation(const ImageInfo *image_info,
     if (found == MagickFalse)
       {
         if (remaining_length > 0)
-          p=(unsigned char *) CopyMagickMemory(p-12,p+size,remaining_length);
+          p=(unsigned char *) memmove(p-12,p+size,remaining_length);
         continue;
       }
     length+=(size_t) size+12;

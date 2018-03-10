@@ -464,7 +464,7 @@ static void Upsample(const size_t width,const size_t height,
   }
   p=pixels+(2*height-2)*scaled_width;
   q=pixels+(2*height-1)*scaled_width;
-  (void) CopyMagickMemory(q,p,(size_t) (2*width));
+  (void) memcpy(q,p,(size_t) (2*width));
 }
 
 static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
@@ -617,11 +617,11 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
         luma=(unsigned char *) RelinquishMagickMemory(luma);
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     }
-  (void) ResetMagickMemory(chroma1,0,(image->columns+1UL)*image->rows*
+  (void) memset(chroma1,0,(image->columns+1UL)*image->rows*
     10*sizeof(*chroma1));
-  (void) ResetMagickMemory(chroma2,0,(image->columns+1UL)*image->rows*
+  (void) memset(chroma2,0,(image->columns+1UL)*image->rows*
     10*sizeof(*chroma2));
-  (void) ResetMagickMemory(luma,0,(image->columns+1UL)*image->rows*
+  (void) memset(luma,0,(image->columns+1UL)*image->rows*
     10*sizeof(*luma));
   /*
     Advance to image data.

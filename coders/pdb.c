@@ -330,7 +330,7 @@ static Image *ReadPDBImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Determine if this a PDB image file.
   */
-  (void) ResetMagickMemory(&pdb_info,0,sizeof(pdb_info));
+  (void) memset(&pdb_info,0,sizeof(pdb_info));
   count=ReadBlob(image,sizeof(pdb_info.name),(unsigned char *) pdb_info.name);
   if (count != sizeof(pdb_info.name))
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -420,6 +420,7 @@ static Image *ReadPDBImage(const ImageInfo *image_info,ExceptionInfo *exception)
     sizeof(*pixels));
   if (pixels == (unsigned char *) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+  (void) memset(pixels,0,(packets+257UL)*image->rows*sizeof(*pixels));
   switch (pdb_image.version & 0x07) 
   {
     case 0:
@@ -707,7 +708,7 @@ static unsigned char *EncodeRLE(unsigned char *destination,
 {
   if (literal > 0)
     *destination++=(unsigned char) (literal-1);
-  (void) CopyMagickMemory(destination,source,literal);
+  (void) memcpy(destination,source,literal);
   destination+=literal;
   if (repeat > 0)
     {
@@ -786,7 +787,8 @@ static MagickBooleanType WritePDBImage(const ImageInfo *image_info,Image *image,
   } else {
     bits_per_pixel=4;
   }
-  (void) ResetMagickMemory(&pdb_info,0,sizeof(pdb_info));
+  (void) memset(&pdb_info,0,sizeof(pdb_info));
+  (void) memset(&pdb_image,0,sizeof(pdb_image));
   (void) CopyMagickString(pdb_info.name,image_info->filename,
     sizeof(pdb_info.name));
   pdb_info.attributes=0;
@@ -797,8 +799,8 @@ static MagickBooleanType WritePDBImage(const ImageInfo *image_info,Image *image,
   pdb_info.modify_number=0;
   pdb_info.application_info=0;
   pdb_info.sort_info=0;
-  (void) CopyMagickMemory(pdb_info.type,"vIMG",4);
-  (void) CopyMagickMemory(pdb_info.id,"View",4);
+  (void) memcpy(pdb_info.type,"vIMG",4);
+  (void) memcpy(pdb_info.id,"View",4);
   pdb_info.seed=0;
   pdb_info.next_record=0;
   comment=GetImageProperty(image,"comment",exception);
@@ -915,7 +917,7 @@ static MagickBooleanType WritePDBImage(const ImageInfo *image_info,Image *image,
               if (0x7f < literal)
                 {
                   q=EncodeRLE(q,buffer,(literal < 0x80 ? literal : 0x80),0);
-                  (void) CopyMagickMemory(buffer,buffer+literal+repeat,0x80);
+                  (void) memmove(buffer,buffer+literal+repeat,0x80);
                   literal-=0x80;
                 }
             }

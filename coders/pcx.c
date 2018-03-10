@@ -417,10 +417,10 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
           pixel_info=RelinquishVirtualMemory(pixel_info);
         ThrowPCXException(ResourceLimitError,"MemoryAllocationFailed");
       }
-    (void) ResetMagickMemory(scanline,0,(size_t) MagickMax(image->columns,
+    (void) memset(scanline,0,(size_t) MagickMax(image->columns,
       pcx_info.bytes_per_line)*MagickMax(8,pcx_info.planes)*sizeof(*scanline));
     pixels=(unsigned char *) GetVirtualMemoryBlob(pixel_info);
-    (void) ResetMagickMemory(pixels,0,(size_t) pcx_packets*(2*sizeof(*pixels)));
+    (void) memset(pixels,0,(size_t) pcx_packets*(2*sizeof(*pixels)));
     /*
       Uncompress image data.
     */
@@ -616,7 +616,7 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
             }
             case 8:
             {
-              (void) CopyMagickMemory(r,p,image->columns);
+              (void) memcpy(r,p,image->columns);
               break;
             }
             default:

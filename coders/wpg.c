@@ -446,7 +446,7 @@ static int UnpackWPGRaster(Image *image,int bpp,ExceptionInfo *exception)
   BImgBuff=(unsigned char *) AcquireQuantumMemory((size_t) ldblk,
     8*sizeof(*BImgBuff));
   if(BImgBuff==NULL) return(-2);
-  (void) ResetMagickMemory(BImgBuff,0,(size_t) ldblk*8*sizeof(*BImgBuff));
+  (void) memset(BImgBuff,0,(size_t) ldblk*8*sizeof(*BImgBuff));
 
   while(y<(ssize_t) image->rows)
     {
@@ -565,7 +565,7 @@ static int UnpackWPG2Raster(Image *image,int bpp,ExceptionInfo *exception)
     sizeof(*BImgBuff));
   if(BImgBuff==NULL)
     return(-2);
-  (void) ResetMagickMemory(BImgBuff,0,ldblk*sizeof(*BImgBuff));
+  (void) memset(BImgBuff,0,ldblk*sizeof(*BImgBuff));
 
   while( y< image->rows)
     {
@@ -749,6 +749,9 @@ static Image *ExtractPostscript(Image *image,const ImageInfo *image_info,
   Image
     *image2;
 
+  MagickBooleanType
+    status;
+
   unsigned char
     magick[2*MagickPathExtent];
 
@@ -759,6 +762,7 @@ static Image *ExtractPostscript(Image *image,const ImageInfo *image_info,
     return(image);
   clone_info->blob=(void *) NULL;
   clone_info->length=0;
+  status=MagickFalse;
 
   /* Obtain temporary file */
   (void) AcquireUniqueFilename(postscript_file);
@@ -808,7 +812,7 @@ static Image *ExtractPostscript(Image *image,const ImageInfo *image_info,
   if(exception->severity>=ErrorException)
   {
     CloseBlob(image2);
-    DestroyImageList(image2); 
+    DestroyImageList(image2);
     goto FINISH_UNL;
   }
 
@@ -853,11 +857,14 @@ static Image *ExtractPostscript(Image *image,const ImageInfo *image_info,
   AppendImageToList(&image,image2);
   while (image->next != NULL)
     image=image->next;
+  status=MagickTrue;
 
  FINISH_UNL:
   (void) RelinquishUniqueFileResource(postscript_file);
  FINISH:
   DestroyImageInfo(clone_info);
+  if (status == MagickFalse)
+    return((Image *) NULL);
   return(image);
 }
 

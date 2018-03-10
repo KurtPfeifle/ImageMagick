@@ -422,6 +422,9 @@ MagickExport char *GetPageGeometry(const char *page_geometry)
       MagickPageSize("c5", "459x649"),
       MagickPageSize("c6", "323x459"),
       MagickPageSize("c7", "230x323"),
+      MagickPageSize("csheet", "1224x1584"),
+      MagickPageSize("dsheet", "1584x2448"),
+      MagickPageSize("esheet", "2448x3168"),
       MagickPageSize("executive", "540x720"),
       MagickPageSize("flsa", "612x936"),
       MagickPageSize("flse", "612x936"),
@@ -449,6 +452,7 @@ MagickExport char *GetPageGeometry(const char *page_geometry)
       MagickPageSize("legal", "612x1008"),
       MagickPageSize("letter", "612x792"),
       MagickPageSize("lettersmall", "612x792"),
+      MagickPageSize("monarch", "279x540"),
       MagickPageSize("quarto", "610x780"),
       MagickPageSize("statement", "396x612"),
       MagickPageSize("tabloid", "792x1224")
@@ -869,7 +873,7 @@ MagickExport MagickStatusType ParseGeometry(const char *geometry,
     Remove whitespaces meta characters from geometry specification.
   */
   assert(geometry_info != (GeometryInfo *) NULL);
-  (void) ResetMagickMemory(geometry_info,0,sizeof(geometry_info));
+  (void) memset(geometry_info,0,sizeof(*geometry_info));
   flags=NoValue;
   if ((geometry == (char *) NULL) || (*geometry == '\0'))
     return(flags);
@@ -1657,7 +1661,7 @@ MagickExport void SetGeometry(const Image *image,RectangleInfo *geometry)
   if (image->debug != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(geometry != (RectangleInfo *) NULL);
-  (void) ResetMagickMemory(geometry,0,sizeof(*geometry));
+  (void) memset(geometry,0,sizeof(*geometry));
   geometry->width=image->columns;
   geometry->height=image->rows;
 }
@@ -1688,5 +1692,5 @@ MagickExport void SetGeometryInfo(GeometryInfo *geometry_info)
 {
   assert(geometry_info != (GeometryInfo *) NULL);
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
-  (void) ResetMagickMemory(geometry_info,0,sizeof(*geometry_info));
+  (void) memset(geometry_info,0,sizeof(*geometry_info));
 }

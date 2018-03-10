@@ -136,6 +136,7 @@ static const CoderMapInfo
     { "GIF87", "GIF" },
     { "G", "RAW" },
     { "GRANITE", "MAGICK" },
+    { "GRAYA", "GRAY" },
     { "GROUP4", "TIFF" },
     { "GV", "DOT" },
     { "HTM", "HTML" },
@@ -374,7 +375,7 @@ static SplayTreeInfo *AcquireCoderCache(const char *filename,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",p->name);
         continue;
       }
-    (void) ResetMagickMemory(coder_info,0,sizeof(*coder_info));
+    (void) memset(coder_info,0,sizeof(*coder_info));
     coder_info->path=(char *) "[built-in]";
     coder_info->magick=(char *) p->magick;
     coder_info->name=(char *) p->name;
@@ -898,7 +899,7 @@ static MagickBooleanType LoadCoderCache(SplayTreeInfo *cache,const char *xml,
           Coder element.
         */
         coder_info=(CoderInfo *) AcquireCriticalMemory(sizeof(*coder_info));
-        (void) ResetMagickMemory(coder_info,0,sizeof(*coder_info));
+        (void) memset(coder_info,0,sizeof(*coder_info));
         coder_info->path=ConstantString(filename);
         coder_info->exempt=MagickFalse;
         coder_info->signature=MagickCoreSignature;

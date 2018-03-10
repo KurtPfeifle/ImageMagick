@@ -708,7 +708,7 @@ static MagickBooleanType Get8BIMProperty(const Image *image,const char *key,
         sizeof(*attribute));
     if (attribute != (char *) NULL)
       {
-        (void) CopyMagickMemory(attribute,(char *) info,(size_t) count);
+        (void) memcpy(attribute,(char *) info,(size_t) count);
         attribute[count]='\0';
         info+=count;
         length-=MagickMin(count,(ssize_t) length);
@@ -1899,9 +1899,9 @@ static char *TracePSClippath(const unsigned char *blob,size_t length)
     The clipping path format is defined in "Adobe Photoshop File Formats
     Specification" version 6.0 downloadable from adobe.com.
   */
-  (void) ResetMagickMemory(point,0,sizeof(point));
-  (void) ResetMagickMemory(first,0,sizeof(first));
-  (void) ResetMagickMemory(last,0,sizeof(last));
+  (void) memset(point,0,sizeof(point));
+  (void) memset(first,0,sizeof(first));
+  (void) memset(last,0,sizeof(last));
   knot_count=0;
   in_subpath=MagickFalse;
   while (length > 0)
@@ -2091,9 +2091,9 @@ static char *TraceSVGClippath(const unsigned char *blob,size_t length,
     "stroke-width:0;stroke-antialiasing:false\" d=\"\n"),(double) columns,
     (double) rows);
   (void) ConcatenateString(&path,message);
-  (void) ResetMagickMemory(point,0,sizeof(point));
-  (void) ResetMagickMemory(first,0,sizeof(first));
-  (void) ResetMagickMemory(last,0,sizeof(last));
+  (void) memset(point,0,sizeof(point));
+  (void) memset(first,0,sizeof(first));
+  (void) memset(last,0,sizeof(last));
   knot_count=0;
   in_subpath=MagickFalse;
   while (length != 0)

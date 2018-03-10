@@ -320,8 +320,8 @@ MagickExport DrawInfo *CloneDrawInfo(const ImageInfo *image_info,
       if (clone_info->dash_pattern == (double *) NULL)
         ThrowFatalException(ResourceLimitFatalError,
           "UnableToAllocateDashPattern");
-      (void) CopyMagickMemory(clone_info->dash_pattern,draw_info->dash_pattern,
-        (size_t) (x+1)*sizeof(*clone_info->dash_pattern));
+      (void) memcpy(clone_info->dash_pattern,draw_info->dash_pattern,(size_t)
+        (x+1)*sizeof(*clone_info->dash_pattern));
     }
   clone_info->gradient=draw_info->gradient;
   if (draw_info->gradient.stops != (StopInfo *) NULL)
@@ -335,7 +335,7 @@ MagickExport DrawInfo *CloneDrawInfo(const ImageInfo *image_info,
       if (clone_info->gradient.stops == (StopInfo *) NULL)
         ThrowFatalException(ResourceLimitFatalError,
           "UnableToAllocateDashPattern");
-      (void) CopyMagickMemory(clone_info->gradient.stops,
+      (void) memcpy(clone_info->gradient.stops,
         draw_info->gradient.stops,(size_t) number_stops*
         sizeof(*clone_info->gradient.stops));
     }
@@ -501,7 +501,7 @@ static PolygonInfo *ConvertPathToPolygon(const PathInfo *path_info)
     sizeof(*polygon_info->edges));
   if (polygon_info->edges == (EdgeInfo *) NULL)
     return((PolygonInfo *) NULL);
-  (void) ResetMagickMemory(polygon_info->edges,0,number_edges*
+  (void) memset(polygon_info->edges,0,number_edges*
     sizeof(*polygon_info->edges));
   direction=0;
   edge=0;
@@ -509,8 +509,8 @@ static PolygonInfo *ConvertPathToPolygon(const PathInfo *path_info)
   n=0;
   number_points=0;
   points=(PointInfo *) NULL;
-  (void) ResetMagickMemory(&point,0,sizeof(point));
-  (void) ResetMagickMemory(&bounds,0,sizeof(bounds));
+  (void) memset(&point,0,sizeof(point));
+  (void) memset(&bounds,0,sizeof(bounds));
   for (i=0; path_info[i].code != EndCode; i++)
   {
     if ((path_info[i].code == MoveToCode) || (path_info[i].code == OpenCode) ||
@@ -899,7 +899,7 @@ static size_t DestroyEdge(PolygonInfo *polygon_info,
     polygon_info->edges[edge].points);
   polygon_info->number_edges--;
   if (edge < polygon_info->number_edges)
-    (void) CopyMagickMemory(polygon_info->edges+edge,polygon_info->edges+edge+1,
+    (void) memmove(polygon_info->edges+edge,polygon_info->edges+edge+1,
       (size_t) (polygon_info->number_edges-edge)*sizeof(*polygon_info->edges));
   return(polygon_info->number_edges);
 }
@@ -1833,7 +1833,7 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
       ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
         image->filename);
     }
-  (void) ResetMagickMemory(primitive_info,0,(size_t) number_points*
+  (void) memset(primitive_info,0,(size_t) number_points*
     sizeof(*primitive_info));
   graphic_context[n]=CloneDrawInfo((ImageInfo *) NULL,draw_info);
   graphic_context[n]->viewbox=image->page;
@@ -3848,7 +3848,7 @@ static PolygonInfo **AcquirePolygonThreadSet(
     sizeof(*polygon_info));
   if (polygon_info == (PolygonInfo **) NULL)
     return((PolygonInfo **) NULL);
-  (void) ResetMagickMemory(polygon_info,0,number_threads*sizeof(*polygon_info));
+  (void) memset(polygon_info,0,number_threads*sizeof(*polygon_info));
   path_info=ConvertPrimitiveToPath(primitive_info);
   if (path_info == (PathInfo *) NULL)
     return(DestroyPolygonThreadSet(polygon_info));
@@ -5008,7 +5008,7 @@ MagickExport void GetAffineMatrix(AffineMatrix *affine_matrix)
 {
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   assert(affine_matrix != (AffineMatrix *) NULL);
-  (void) ResetMagickMemory(affine_matrix,0,sizeof(*affine_matrix));
+  (void) memset(affine_matrix,0,sizeof(*affine_matrix));
   affine_matrix->sx=1.0;
   affine_matrix->sy=1.0;
 }
@@ -5056,7 +5056,7 @@ MagickExport void GetDrawInfo(const ImageInfo *image_info,DrawInfo *draw_info)
   */
   (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   assert(draw_info != (DrawInfo *) NULL);
-  (void) ResetMagickMemory(draw_info,0,sizeof(*draw_info));
+  (void) memset(draw_info,0,sizeof(*draw_info));
   clone_info=CloneImageInfo(image_info);
   GetAffineMatrix(&draw_info->affine);
   exception=AcquireExceptionInfo();
@@ -6213,7 +6213,7 @@ static PrimitiveInfo *TraceStrokePolygon(const DrawInfo *draw_info,
           polygon_primitive);
       return((PrimitiveInfo *) NULL);
     }
-  (void) CopyMagickMemory(polygon_primitive,primitive_info,(size_t)
+  (void) memcpy(polygon_primitive,primitive_info,(size_t)
     number_vertices*sizeof(*polygon_primitive));
   closed_path=
     (fabs(primitive_info[number_vertices-1].point.x-primitive_info[0].point.x) < DrawEpsilon) &&

@@ -605,7 +605,7 @@ MagickExport MagickBooleanType GradientImage(Image *image,
   if (gradient->stops == (StopInfo *) NULL)
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
       image->filename);
-  (void) CopyMagickMemory(gradient->stops,stops,(size_t) number_stops*
+  (void) memcpy(gradient->stops,stops,(size_t) number_stops*
     sizeof(*stops));
   /*
     Draw a gradient on the image.
@@ -673,7 +673,7 @@ static size_t **AcquireHistogramThreadSet(const size_t count)
   histogram=(size_t **) AcquireQuantumMemory(number_threads,sizeof(*histogram));
   if (histogram == (size_t **) NULL)
     return((size_t **) NULL);
-  (void) ResetMagickMemory(histogram,0,number_threads*sizeof(*histogram));
+  (void) memset(histogram,0,number_threads*sizeof(*histogram));
   for (i=0; i < (ssize_t) number_threads; i++)
   {
     histogram[i]=(size_t *) AcquireQuantumMemory(count,sizeof(**histogram));
@@ -804,7 +804,7 @@ MagickExport Image *OilPaintImage(const Image *image,const double radius,
       k=0;
       j=0;
       count=0;
-      (void) ResetMagickMemory(histogram,0,NumberPaintBins* sizeof(*histogram));
+      (void) memset(histogram,0,NumberPaintBins* sizeof(*histogram));
       for (v=0; v < (ssize_t) width; v++)
       {
         for (u=0; u < (ssize_t) width; u++)
