@@ -787,15 +787,11 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
     rotated_image=RotateImage(image,90.0,exception);
     if (rotated_image != (Image *) NULL)
       {
-        void
-          *blob;
-        
         rotated_image->page.x=0;
         rotated_image->page.y=0;
-        blob = rotated_image->blob;
-        rotated_image->blob = image->blob;
         rotated_image->colors = image->colors;
-        image->blob = (BlobInfo *) blob;
+        DestroyBlob(rotated_image);
+        rotated_image->blob=ReferenceBlob(image->blob);
         AppendImageToList(&image,rotated_image);
         DeleteImageFromList(&image);
       }
@@ -876,7 +872,6 @@ static Image *ReadMATImage(const ImageInfo *image_info,ExceptionInfo *exception)
   int logging;
   int sample_size;
   MagickOffsetType filepos=0x80;
-  BlobInfo *blob;
 
   unsigned int (*ReadBlobXXXLong)(Image *image);
   unsigned short (*ReadBlobXXXShort)(Image *image);
@@ -1071,7 +1066,7 @@ MATLAB_KO:
             DeleteImageFromList(&image2);
           }
         if (clone_info != (ImageInfo *) NULL)
-          DestroyImageInfo(clone_info);
+          clone_info=DestroyImageInfo(clone_info);
         ThrowReaderException(CoderError,"UnsupportedCellTypeInTheMatrix");
       }
 
@@ -1145,7 +1140,13 @@ MATLAB_KO:
 DisableMSCWarning(4127)
         if (sizeof(double) != 8)
 RestoreMSCWarning
-          ThrowReaderException(CoderError, "IncompatibleSizeOfDouble");
+          {
+            if (clone_info != (ImageInfo *) NULL)
+              clone_info=DestroyImageInfo(clone_info);
+            if ((image != image2) && (image2 != (Image *) NULL))
+              image2=DestroyImage(image2);
+            ThrowReaderException(CoderError, "IncompatibleSizeOfDouble");
+          }
         if (MATLAB_HDR.StructureFlag & FLAG_COMPLEX)
   {                         /* complex double type cell */
   }
@@ -1189,6 +1190,8 @@ RestoreMSCWarning
     status=SetImageExtent(image,image->columns,image->rows,exception);
     if (status == MagickFalse)
       {
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
         if ((image != image2) && (image2 != (Image *) NULL))
           image2=DestroyImage(image2);
         return(DestroyImageList(image));
@@ -1196,12 +1199,24 @@ RestoreMSCWarning
     (void) SetImageBackgroundColor(image,exception);
     quantum_info=AcquireQuantumInfo(clone_info,image);
     if (quantum_info == (QuantumInfo *) NULL)
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      {
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
+        if ((image != image2) && (image2 != (Image *) NULL))
+          image2=DestroyImage(image2);
+        ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      }
 
   /* ----- Load raster data ----- */
     BImgBuff = (unsigned char *) AcquireQuantumMemory((size_t) (ldblk),sizeof(double));    /* Ldblk was set in the check phase */
     if (BImgBuff == NULL)
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      {
+        if (clone_info != (ImageInfo *) NULL)
+          clone_info=DestroyImageInfo(clone_info);
+        if ((image != image2) && (image2 != (Image *) NULL))
+          image2=DestroyImage(image2);
+        ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+      }
     (void) memset(BImgBuff,0,ldblk*sizeof(double));
 
     MinVal = 0;
@@ -1309,11 +1324,9 @@ ExitLoop:
         /* Remove page offsets added by RotateImage */
       rotated_image->page.x=0;
       rotated_image->page.y=0;
-
-      blob = rotated_image->blob;
-      rotated_image->blob = image->blob;
       rotated_image->colors = image->colors;
-      image->blob = blob;
+      DestroyBlob(rotated_image);
+      rotated_image->blob=ReferenceBlob(image->blob);
       AppendImageToList(&image,rotated_image);
       DeleteImageFromList(&image);
     }
