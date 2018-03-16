@@ -1520,7 +1520,7 @@ static MagickBooleanType DrawDashPolygon(const DrawInfo *draw_info,
   for (i=0; primitive_info[i].primitive != UndefinedPrimitive; i++) ;
   number_vertices=(size_t) i;
   dash_polygon=(PrimitiveInfo *) AcquireQuantumMemory((size_t)
-    (2UL*(number_vertices+1UL)+1UL),sizeof(*dash_polygon));
+    (2UL*(number_vertices+2UL)+1UL),sizeof(*dash_polygon));
   if (dash_polygon == (PrimitiveInfo *) NULL)
     return(MagickFalse);
   clone_info=CloneDrawInfo((ImageInfo *) NULL,draw_info);
@@ -1676,7 +1676,7 @@ static size_t EllipsePoints(const PrimitiveInfo *primitive_info,
   /*
     Ellipses are just short segmented polys.
   */
-  if ((fabs(stop.x) < DrawEpsilon) && (fabs(stop.y) < DrawEpsilon))
+  if ((fabs(stop.x) < DrawEpsilon) || (fabs(stop.y) < DrawEpsilon))
     return(1);
   delta=2.0/MagickMax(stop.x,stop.y);
   step=MagickPI/8.0;
@@ -4968,12 +4968,13 @@ static MagickBooleanType DrawStrokePolygon(Image *image,
     if (stroke_polygon == (PrimitiveInfo *) NULL)
       {
         status=0;
+        stroke_polygon=(PrimitiveInfo *) RelinquishMagickMemory(stroke_polygon);
         break;
       }
     status&=DrawPolygonPrimitive(image,clone_info,stroke_polygon,exception);
+    stroke_polygon=(PrimitiveInfo *) RelinquishMagickMemory(stroke_polygon);
     if (status == 0)
       break;
-    stroke_polygon=(PrimitiveInfo *) RelinquishMagickMemory(stroke_polygon);
     q=p+p->coordinates-1;
     closed_path=(fabs(q->point.x-p->point.x) < DrawEpsilon) &&
       (fabs(q->point.y-p->point.y) < DrawEpsilon) ? MagickTrue : MagickFalse;
@@ -5497,7 +5498,7 @@ static void TraceEllipse(PrimitiveInfo *primitive_info,const PointInfo start,
   /*
     Ellipses are just short segmented polys.
   */
-  if ((fabs(stop.x) < DrawEpsilon) && (fabs(stop.y) < DrawEpsilon))
+  if ((fabs(stop.x) < DrawEpsilon) || (fabs(stop.y) < DrawEpsilon))
     {
       TracePoint(primitive_info,start);
       return;
