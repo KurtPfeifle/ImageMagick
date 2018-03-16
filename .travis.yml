@@ -154,4 +154,4 @@ script:
   - cat AppImage-Buildinfo-Travis-Job-${TRAVIS_BUILD_NUMBER}.md
 
 after_success:
-  #- Do nothing for now
+  #- Do nothing for now.
