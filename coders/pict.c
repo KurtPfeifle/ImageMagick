@@ -500,7 +500,7 @@ static unsigned char *DecodeImage(Image *blob,Image *image,
       scanline_length=ReadBlobMSBShort(blob);
     else
       scanline_length=1UL*ReadBlobByte(blob);
-    if (scanline_length >= row_bytes)
+    if ((scanline_length >= row_bytes) || (scanline_length == 0))
       {
         (void) ThrowMagickException(exception,GetMagickModule(),
           CorruptImageError,"UnableToUncompressImage","`%s'",image->filename);
@@ -930,7 +930,9 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
   if (status == MagickFalse)
     return(DestroyImageList(image));
   image->alpha_trait=BlendPixelTrait;
-  (void) SetImageBackgroundColor(image,exception);
+  status=ResetImagePixels(image,exception);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
   /*
     Interpret PICT opcodes.
   */
@@ -946,6 +948,8 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
       code=ReadBlobMSBSignedShort(image);
     if (code < 0)
       break;
+    if (code == 0)
+      continue;
     if (code > 0xa1)
       {
         if (image->debug != MagickFalse)
@@ -980,7 +984,6 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
             status=SetImageExtent(image,image->columns,image->rows,exception);
             if (status == MagickFalse)
               return(DestroyImageList(image));
-            (void) SetImageBackgroundColor(image,exception);
             break;
           }
           case 0x12:
@@ -1152,7 +1155,6 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
                 if (tile_image->alpha_trait != UndefinedPixelTrait)
                   image->alpha_trait=tile_image->alpha_trait;
               }
-            (void) SetImageBackgroundColor(tile_image,exception);
             if ((code != 0x9a) && (code != 0x9b))
               {
                 /*

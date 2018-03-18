@@ -1165,7 +1165,7 @@ MagickExport MagickBooleanType DrawAffineImage(Image *image,
   source_view=AcquireVirtualCacheView(source,exception);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(source,image,stop-start,1)
 #endif
   for (y=start; y <= stop; y++)
@@ -1520,7 +1520,7 @@ static MagickBooleanType DrawDashPolygon(const DrawInfo *draw_info,
   for (i=0; primitive_info[i].primitive != UndefinedPrimitive; i++) ;
   number_vertices=(size_t) i;
   dash_polygon=(PrimitiveInfo *) AcquireQuantumMemory((size_t)
-    (2UL*(number_vertices+2UL)+1UL),sizeof(*dash_polygon));
+    (2UL*(number_vertices+3UL)+1UL),sizeof(*dash_polygon));
   if (dash_polygon == (PrimitiveInfo *) NULL)
     return(MagickFalse);
   clone_info=CloneDrawInfo((ImageInfo *) NULL,draw_info);
@@ -1676,12 +1676,14 @@ static size_t EllipsePoints(const PrimitiveInfo *primitive_info,
   /*
     Ellipses are just short segmented polys.
   */
-  if ((fabs(stop.x) < DrawEpsilon) || (fabs(stop.y) < DrawEpsilon))
+  if ((fabs(stop.x) < DrawEpsilon) && (fabs(stop.y) < DrawEpsilon))
     return(1);
   delta=2.0/MagickMax(stop.x,stop.y);
   step=MagickPI/8.0;
   if ((delta >= 0.0) && (delta < (MagickPI/8.0)))
-    step=MagickPI/(4*(MagickPI/delta/2+0.5));
+    step=MagickPI/(4.0*(MagickPI*PerceptibleReciprocal(delta)/2.0));
+  if (step < 0.00001)
+    step=0.00001;
   angle.x=DegreesToRadians(degrees.x);
   y=degrees.y;
   while (y < degrees.x)
@@ -3074,7 +3076,7 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
             }
           points_extent++;
         }
-        points_extent=points_extent*BezierQuantum;
+        points_extent*=(6*BezierQuantum)+360.0;
         break;
       }
       case CirclePrimitive:
@@ -3512,7 +3514,7 @@ MagickExport MagickBooleanType DrawGradientImage(Image *image,
   GetPixelInfo(image,&zero);
   image_view=AcquireAuthenticCacheView(image,exception);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,bounding_box.height-bounding_box.y,1)
 #endif
   for (y=bounding_box.y; y < (ssize_t) bounding_box.height; y++)
@@ -4133,7 +4135,7 @@ RestoreMSCWarning
       start_y=(ssize_t) ceil(bounds.y1-0.5);
       stop_y=(ssize_t) floor(bounds.y2+0.5);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         magick_number_threads(image,image,stop_y-start_y+1,1)
 #endif
       for (y=start_y; y <= stop_y; y++)
@@ -4196,7 +4198,7 @@ RestoreMSCWarning
   start_y=(ssize_t) ceil(bounds.y1-0.5);
   stop_y=(ssize_t) floor(bounds.y2+0.5);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,stop_y-start_y+1,1)
 #endif
   for (y=start_y; y <= stop_y; y++)
@@ -5498,7 +5500,7 @@ static void TraceEllipse(PrimitiveInfo *primitive_info,const PointInfo start,
   /*
     Ellipses are just short segmented polys.
   */
-  if ((fabs(stop.x) < DrawEpsilon) || (fabs(stop.y) < DrawEpsilon))
+  if ((fabs(stop.x) < DrawEpsilon) && (fabs(stop.y) < DrawEpsilon))
     {
       TracePoint(primitive_info,start);
       return;
@@ -5506,7 +5508,9 @@ static void TraceEllipse(PrimitiveInfo *primitive_info,const PointInfo start,
   delta=2.0/MagickMax(stop.x,stop.y);
   step=MagickPI/8.0;
   if ((delta >= 0.0) && (delta < (MagickPI/8.0)))
-    step=MagickPI/(4*(MagickPI/delta/2+0.5));
+    step=MagickPI/(4.0*(MagickPI*PerceptibleReciprocal(delta)/2.0));
+  if (step < 0.00001)
+    step=0.00001;
   angle.x=DegreesToRadians(degrees.x);
   y=degrees.y;
   while (y < degrees.x)

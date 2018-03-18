@@ -478,8 +478,10 @@ static int UnpackWPGRaster(Image *image,int bpp,ExceptionInfo *exception)
           {
             for(i=0;i < (int) RunCount;i++)
               {
-                bbuf=ReadBlobByte(image);
-                InsertByte(bbuf);
+                c=ReadBlobByte(image);
+                if (c < 0)
+                  break;
+                InsertByte(c);
               }
           }
         else {  /* repeat previous line runcount* */
@@ -587,8 +589,9 @@ static int UnpackWPG2Raster(Image *image,int bpp,ExceptionInfo *exception)
             }
           break;
         case 0x7E:
-          (void) FormatLocaleFile(stderr,
-            "\nUnsupported WPG token XOR, please report!");
+          if (y == 0)
+            (void) FormatLocaleFile(stderr,
+              "\nUnsupported WPG token XOR, please report!");
           XorMe=!XorMe;
           break;
         case 0x7F:
@@ -1060,6 +1063,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
   image->columns = 1;
   image->rows = 1;
   image->colors = 0;
+  (void) ResetImagePixels(image,exception);
   bpp=0;
   BitmapHeader2.RotAngle=0;
   Rec2.RecordLength=0;
@@ -1176,7 +1180,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
               status=SetImageExtent(image,image->columns,image->rows,exception);
               if (status == MagickFalse)
                 break;
-              (void) SetImageBackgroundColor(image,exception);
+              (void) ResetImagePixels(image,exception);
               if ((image->storage_class != PseudoClass) && (bpp < 24))
                 {
                   image->colors=one << bpp;
@@ -1220,13 +1224,13 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                         image->colormap[1].blue = QuantumRange;
                     }
                 }
-
-              if(UnpackWPGRaster(image,bpp,exception) < 0)
-                /* The raster cannot be unpacked */
-                {
-                DecompressionFailed:
-                  ThrowReaderException(CoderError,"UnableToDecompressImage");
-                    }
+              if(!image_info->ping)
+                if(UnpackWPGRaster(image,bpp,exception) < 0)
+                  /* The raster cannot be unpacked */
+                  {
+                  DecompressionFailed:
+                    ThrowReaderException(CoderError,"UnableToDecompressImage");
+                  }
 
               if(Rec.RecType==0x14 && BitmapHeader2.RotAngle!=0 && !image_info->ping)
                 {
@@ -1382,7 +1386,7 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
               status=SetImageExtent(image,image->columns,image->rows,exception);
               if (status == MagickFalse)
                 break;
-              (void) SetImageBackgroundColor(image,exception);
+              (void) ResetImagePixels(image,exception);
               if ((image->colors == 0) && (bpp != 24))
                 {
                   image->colors=one << bpp;
@@ -1431,8 +1435,9 @@ static Image *ReadWPGImage(const ImageInfo *image_info,
                   }
                 case 1:    /*RLE for WPG2 */
                   {
-                    if( UnpackWPG2Raster(image,bpp,exception) < 0)
-                      goto DecompressionFailed;
+                    if (!image->ping)
+                      if( UnpackWPG2Raster(image,bpp,exception) < 0)
+                        goto DecompressionFailed;
                     break;
                   }
                 }

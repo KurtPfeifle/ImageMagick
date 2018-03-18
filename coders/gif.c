@@ -1028,6 +1028,7 @@ static Image *ReadGIFImage(const ImageInfo *image_info,ExceptionInfo *exception)
   meta_image->page.width=ReadBlobLSBShort(image);
   meta_image->page.height=ReadBlobLSBShort(image);
   flag=(unsigned char) ReadBlobByte(image);
+  profiles=(LinkedListInfo *) NULL;
   background=(unsigned char) ReadBlobByte(image);
   c=(unsigned char) ReadBlobByte(image);  /* reserved */
   one=1;
@@ -1035,24 +1036,15 @@ static Image *ReadGIFImage(const ImageInfo *image_info,ExceptionInfo *exception)
   global_colormap=(unsigned char *) AcquireQuantumMemory((size_t)
     MagickMax(global_colors,256),3UL*sizeof(*global_colormap));
   if (global_colormap == (unsigned char *) NULL)
-    {
-      meta_image=DestroyImage(meta_image);
-      ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
-    }
+    ThrowGIFException(ResourceLimitError,"MemoryAllocationFailed");
   (void) memset(global_colormap,0,3*MagickMax(global_colors,256)*
     sizeof(*global_colormap));
   if (BitSet((int) flag,0x80) != 0)
     {
       count=ReadBlob(image,(size_t) (3*global_colors),global_colormap);
       if (count != (ssize_t) (3*global_colors))
-        {
-          global_colormap=(unsigned char *) RelinquishMagickMemory(
-            global_colormap);
-          meta_image=DestroyImage(meta_image);
-          ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
-        }
+        ThrowGIFException(CorruptImageError,"InsufficientImageDataInFile");
     }
-  profiles=(LinkedListInfo *) NULL;
   duration=0;
   opacity=(-1);
   image_count=0;
@@ -1068,6 +1060,7 @@ static Image *ReadGIFImage(const ImageInfo *image_info,ExceptionInfo *exception)
         /*
           GIF Extension block.
         */
+        (void) memset(buffer,0,sizeof(buffer));
         count=ReadBlob(image,1,&c);
         if (count != 1)
           ThrowGIFException(CorruptImageError,"UnableToReadExtensionBlock");
@@ -1184,7 +1177,7 @@ static Image *ReadGIFImage(const ImageInfo *image_info,ExceptionInfo *exception)
                       if (info == (unsigned char *) NULL)
                         {
                           info=(unsigned char *) RelinquishMagickMemory(info);
-                          ThrowReaderException(ResourceLimitError,
+                          ThrowGIFException(ResourceLimitError,
                             "MemoryAllocationFailed");
                         }
                     }
@@ -1193,7 +1186,7 @@ static Image *ReadGIFImage(const ImageInfo *image_info,ExceptionInfo *exception)
                 if (profile == (StringInfo *) NULL)
                   {
                     info=(unsigned char *) RelinquishMagickMemory(info);
-                    ThrowReaderException(ResourceLimitError,
+                    ThrowGIFException(ResourceLimitError,
                       "MemoryAllocationFailed");
                   }
                 if (i8bim != MagickFalse)
@@ -1276,7 +1269,7 @@ static Image *ReadGIFImage(const ImageInfo *image_info,ExceptionInfo *exception)
     image->ticks_per_second=100;
     image->alpha_trait=opacity >= 0 ? BlendPixelTrait : UndefinedPixelTrait;
     if ((image->columns == 0) || (image->rows == 0))
-      ThrowReaderException(CorruptImageError,"NegativeOrZeroImageSize");
+      ThrowGIFException(CorruptImageError,"NegativeOrZeroImageSize");
     /*
       Inititialize colormap.
     */

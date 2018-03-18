@@ -279,7 +279,7 @@ MagickPrivate NexusInfo **AcquirePixelCacheNexus(const size_t number_threads)
 %                                                                             %
 %                                                                             %
 %                                                                             %
-+   A c q u i r e P i x e l C a c h e P i x e l s                             %
+%   A c q u i r e P i x e l C a c h e P i x e l s                             %
 %                                                                             %
 %                                                                             %
 %                                                                             %
@@ -290,8 +290,8 @@ MagickPrivate NexusInfo **AcquirePixelCacheNexus(const size_t number_threads)
 %
 %  The format of the AcquirePixelCachePixels() method is:
 %
-%      const void *AcquirePixelCachePixels(const Image *image,
-%        MagickSizeType *length,ExceptionInfo *exception)
+%      void *AcquirePixelCachePixels(const Image *image,size_t *length,
+%        ExceptionInfo *exception)
 %
 %  A description of each parameter follows:
 %
@@ -302,8 +302,8 @@ MagickPrivate NexusInfo **AcquirePixelCacheNexus(const size_t number_threads)
 %    o exception: return any errors or warnings in this structure.
 %
 */
-MagickPrivate const void *AcquirePixelCachePixels(const Image *image,
-  MagickSizeType *length,ExceptionInfo *exception)
+MagickExport void *AcquirePixelCachePixels(const Image *image,size_t *length,
+  ExceptionInfo *exception)
 {
   CacheInfo
     *magick_restrict cache_info;
@@ -317,9 +317,9 @@ MagickPrivate const void *AcquirePixelCachePixels(const Image *image,
   assert(cache_info->signature == MagickCoreSignature);
   *length=0;
   if ((cache_info->type != MemoryCache) && (cache_info->type != MapCache))
-    return((const void *) NULL);
-  *length=cache_info->length;
-  return((const void *) cache_info->pixels);
+    return((void *) NULL);
+  *length=(size_t) cache_info->length;
+  return(cache_info->pixels);
 }
 
 /*
@@ -540,10 +540,8 @@ static MagickBooleanType ClonePixelCacheRepository(
 #define MaxCacheThreads  ((size_t) GetMagickResourceLimit(ThreadResource))
 #define cache_number_threads(source,destination,chunk,multithreaded) \
   num_threads((multithreaded) == 0 ? 1 : \
-    (((source)->type != MemoryCache) && \
-     ((source)->type != MapCache)) || \
-    (((destination)->type != MemoryCache) && \
-     ((destination)->type != MapCache)) ? \
+    (((source)->type != MemoryCache) && ((source)->type != MapCache)) || \
+    (((destination)->type != MemoryCache) && ((destination)->type != MapCache)) ? \
     MagickMax(MagickMin(GetMagickResourceLimit(ThreadResource),2),1) : \
     MagickMax(MagickMin((ssize_t) GetMagickResourceLimit(ThreadResource),(ssize_t) (chunk)/256),1))
 
@@ -610,7 +608,7 @@ static MagickBooleanType ClonePixelCacheRepository(
     clone_info->number_channels*clone_info->columns);
   status=MagickTrue;
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     cache_number_threads(cache_info,clone_info,cache_info->rows,1)
 #endif
   for (y=0; y < (ssize_t) cache_info->rows; y++)
@@ -647,8 +645,7 @@ static MagickBooleanType ClonePixelCacheRepository(
       clone_nexus[id],exception);
     if (pixels == (Quantum *) NULL)
       continue;
-    (void) memset(clone_nexus[id]->pixels,0,(size_t)
-      clone_nexus[id]->length);
+    (void) memset(clone_nexus[id]->pixels,0,(size_t) clone_nexus[id]->length);
     if (optimize != MagickFalse)
       (void) memcpy(clone_nexus[id]->pixels,cache_nexus[id]->pixels,length*
         sizeof(Quantum));
@@ -700,7 +697,7 @@ static MagickBooleanType ClonePixelCacheRepository(
       length=(size_t) MagickMin(cache_info->metacontent_extent,
         clone_info->metacontent_extent);
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-      #pragma omp parallel for schedule(static,4) shared(status) \
+      #pragma omp parallel for schedule(static) shared(status) \
         cache_number_threads(cache_info,clone_info,cache_info->rows,1)
 #endif
       for (y=0; y < (ssize_t) cache_info->rows; y++)
@@ -1783,10 +1780,8 @@ MagickExport MagickBooleanType GetOneAuthenticPixel(Image *image,
   cache_info=(CacheInfo *) image->cache;
   assert(cache_info->signature == MagickCoreSignature);
   (void) memset(pixel,0,MaxPixelChannels*sizeof(*pixel));
-  if (cache_info->methods.get_one_authentic_pixel_from_handler !=
-       (GetOneAuthenticPixelFromHandler) NULL)
-    return(cache_info->methods.get_one_authentic_pixel_from_handler(image,x,y,
-      pixel,exception));
+  if (cache_info->methods.get_one_authentic_pixel_from_handler != (GetOneAuthenticPixelFromHandler) NULL)
+    return(cache_info->methods.get_one_authentic_pixel_from_handler(image,x,y,pixel,exception));
   q=GetAuthenticPixelsCache(image,x,y,1UL,1UL,exception);
   return(CopyPixel(image,q,pixel));
 }
@@ -2746,8 +2741,7 @@ MagickPrivate const Quantum *GetVirtualPixelsFromNexus(const Image *image,
                 CacheError,"UnableToGetCacheNexus","`%s'",image->filename);
               return((const Quantum *) NULL);
             }
-          (void) memset(virtual_metacontent,0,
-            cache_info->metacontent_extent);
+          (void) memset(virtual_metacontent,0,cache_info->metacontent_extent);
         }
       switch (virtual_pixel_method)
       {
@@ -4759,8 +4753,7 @@ static inline MagickBooleanType AcquireCacheNexusPixels(
       nexus_info->cache=(Quantum *) MagickAssumeAligned(AcquireAlignedMemory(1,
         (size_t) nexus_info->length));
       if (nexus_info->cache != (Quantum *) NULL)
-        (void) memset(nexus_info->cache,0,(size_t)
-          nexus_info->length);
+        (void) memset(nexus_info->cache,0,(size_t) nexus_info->length);
     }
   else
     {
@@ -4962,7 +4955,7 @@ static MagickBooleanType SetCacheAlphaChannel(Image *image,const Quantum alpha,
   status=MagickTrue;
   image_view=AcquireVirtualCacheView(image,exception);  /* must be virtual */
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-  #pragma omp parallel for schedule(static,4) shared(status) \
+  #pragma omp parallel for schedule(static) shared(status) \
     magick_number_threads(image,image,image->rows,1)
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)

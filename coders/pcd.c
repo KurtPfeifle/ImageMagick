@@ -64,6 +64,7 @@
 #include "MagickCore/montage.h"
 #include "MagickCore/pixel-accessor.h"
 #include "MagickCore/resize.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/quantum-private.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
@@ -537,9 +538,13 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   if (header == (unsigned char *) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   count=ReadBlob(image,3*0x800,header);
+  if (count != (3*0x800))
+    {
+      header=(unsigned char *) RelinquishMagickMemory(header);
+      ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+    }
   overview=LocaleNCompare((char *) header,"PCD_OPA",7) == 0;
-  if ((count != (3*0x800)) ||
-      ((LocaleNCompare((char *) header+0x800,"PCD",3) != 0) && (overview ==0)))
+  if ((LocaleNCompare((char *) header+0x800,"PCD",3) != 0) && (overview == 0))
     {
       header=(unsigned char *) RelinquishMagickMemory(header);
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
@@ -549,6 +554,8 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   header=(unsigned char *) RelinquishMagickMemory(header);
   if (number_images > 65535)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+  if (AcquireMagickResource(ListLengthResource,number_images) == MagickFalse)
+    ThrowReaderException(ResourceLimitError,"ListLengthExceedsLimit");
   /*
     Determine resolution by scene specification.
   */
@@ -703,6 +710,8 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
         image->colorspace=YCCColorspace;
         if (LocaleCompare(image_info->magick,"PCDS") == 0)
           (void) SetImageColorspace(image,sRGBColorspace,exception);
+        if (EOFBlob(image) != MagickFalse)
+          break;
         if (j < (ssize_t) number_images)
           {
             /*
