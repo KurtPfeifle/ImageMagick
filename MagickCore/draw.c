@@ -1521,7 +1521,7 @@ static MagickBooleanType DrawDashPolygon(const DrawInfo *draw_info,
   for (i=0; primitive_info[i].primitive != UndefinedPrimitive; i++) ;
   number_vertices=(size_t) i;
   dash_polygon=(PrimitiveInfo *) AcquireQuantumMemory((size_t)
-    (2UL*(number_vertices+3UL)+3UL),sizeof(*dash_polygon));
+    (2UL*(number_vertices+6UL)+6UL),sizeof(*dash_polygon));
   if (dash_polygon == (PrimitiveInfo *) NULL)
     return(MagickFalse);
   clone_info=CloneDrawInfo((ImageInfo *) NULL,draw_info);
@@ -3105,6 +3105,23 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
       }
       case EllipsePrimitive:
       {
+        double
+          alpha,
+          beta,
+          coordinates,
+          radius;
+
+        alpha=bounds.x2-bounds.x1;
+        beta=bounds.y2-bounds.y1;
+        radius=hypot(alpha,beta);
+        coordinates=2.0*ceil(MagickPI*MagickPI*radius)+6*BezierQuantum+360;
+        if (coordinates > 1048576)
+          { 
+            (void) ThrowMagickException(exception,GetMagickModule(),DrawError,
+              "TooManyBezierCoordinates","`%s'",token);
+            status=MagickFalse;
+            break;
+          }
         points_extent=(double) EllipsePoints(primitive_info+j,
           primitive_info[j].point,primitive_info[j+1].point,
           primitive_info[j+2].point);
