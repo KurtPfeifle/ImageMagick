@@ -1375,6 +1375,7 @@ RestoreMSCWarning
         TIFFClose(tiff);
         ThrowReaderException(CorruptImageError,"ImproperImageHeader");
       }
+    photometric=PHOTOMETRIC_RGB;
     (void) TIFFGetFieldDefaulted(tiff,TIFFTAG_PHOTOMETRIC,&photometric);
     if (sample_format == SAMPLEFORMAT_IEEEFP)
       (void) SetImageProperty(image,"quantum:format","floating-point",
@@ -1728,6 +1729,8 @@ RestoreMSCWarning
           (unsigned int) rows_per_strip);
         (void) SetImageProperty(image,"tiff:rows-per-strip",value,exception);
       }
+    if (rows_per_strip > (image->columns*image->rows))
+      ThrowTIFFException(CorruptImageError,"ImproperImageHeader");
     if ((samples_per_pixel >= 3) && (interlace == PLANARCONFIG_CONTIG))
       if ((image->alpha_trait == UndefinedPixelTrait) ||
           (samples_per_pixel >= 4))
@@ -3512,7 +3515,10 @@ static MagickBooleanType WriteTIFFImage(const ImageInfo *image_info,
       {
         status=SetQuantumFormat(image,quantum_info,FloatingPointQuantumFormat);
         if (status == MagickFalse)
-          ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
+          {
+            quantum_info=DestroyQuantumInfo(quantum_info);
+            ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
+          }
       }
     if ((LocaleCompare(image_info->magick,"PTIF") == 0) &&
         (GetPreviousImageInList(image) != (Image *) NULL))

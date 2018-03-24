@@ -954,7 +954,7 @@ MATLAB_KO:
   while(!EOFBlob(image)) /* object parser loop */
   {
     Frames = 1;
-    (void) SeekBlob(image,filepos,SEEK_SET);
+    if(SeekBlob(image,filepos,SEEK_SET) != filepos) break;
     /* printf("pos=%X\n",TellBlob(image)); */
 
     MATLAB_HDR.DataType = ReadBlobXXXLong(image);
@@ -1217,6 +1217,8 @@ RestoreMSCWarning
           clone_info=DestroyImageInfo(clone_info);
         if ((image != image2) && (image2 != (Image *) NULL))
           image2=DestroyImage(image2);
+        if (quantum_info != (QuantumInfo *) NULL)
+          quantum_info=DestroyQuantumInfo(quantum_info);
         ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
       }
     (void) memset(BImgBuff,0,ldblk*sizeof(double));
@@ -1369,7 +1371,7 @@ done_reading:
     {
       z = z2;
       if(image2==NULL) image2 = image;
-      if (EOFBlob(image) == MagickFalse)
+      if(!EOFBlob(image) && TellBlob(image)<filepos)
         goto NEXT_FRAME;
     }
     if ((image2!=NULL) && (image2!=image))   /* Does shadow temporary decompressed image exist? */
