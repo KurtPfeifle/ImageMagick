@@ -448,6 +448,8 @@ static MagickBooleanType ParseIinfAtom(Image *image, DataBuffer *db,
      item indicies starts from 1
   */
   ctx->idsCount = count;
+  if (ctx->itemInfo != (HEICItemInfo *) NULL)
+    ctx->itemInfo=(HEICItemInfo *) RelinquishMagickMemory(ctx->itemInfo);
   ctx->itemInfo = (HEICItemInfo *)AcquireMagickMemory(sizeof(HEICItemInfo)*(count+1));
   if (ctx->itemInfo == (HEICItemInfo *) NULL)
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
@@ -488,7 +490,7 @@ static MagickBooleanType ParseInfeAtom(Image *image, DataBuffer *db,
   /*
      item indicies starts from 1
   */
-  if (id > (ssize_t) ctx->idsCount) {
+  if (id >= (ssize_t) ctx->idsCount) {
     ThrowAndReturn("item id is incorrect");
   }
 

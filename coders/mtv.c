@@ -143,9 +143,10 @@ static Image *ReadMTVImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read MTV image.
   */
+  (void) memset(buffer,0,sizeof(buffer));
   (void) ReadBlobString(image,buffer);
   count=(ssize_t) sscanf(buffer,"%lu %lu\n",&columns,&rows);
-  if (count <= 0)
+  if (count != 2)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   do
   {
@@ -212,7 +213,8 @@ static Image *ReadMTVImage(const ImageInfo *image_info,ExceptionInfo *exception)
       if (image->scene >= (image_info->scene+image_info->number_scenes-1))
         break;
     *buffer='\0';
-    (void) ReadBlobString(image,buffer);
+    if (ReadBlobString(image,buffer) == (char *) NULL)
+      break;
     count=(ssize_t) sscanf(buffer,"%lu %lu\n",&columns,&rows);
     if (count > 0)
       {
