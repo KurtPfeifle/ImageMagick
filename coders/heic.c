@@ -301,7 +301,8 @@ static MagickBooleanType ParseFullBox(Image *image, DataBuffer *db,
   }
 
   for (i = 0; i < MAX_ATOMS_IN_BOX && DBGetSize(db) > 0; i++) {
-    (void) ParseAtom(image, db, ctx, exception);
+    if (ParseAtom(image, db, ctx, exception) == MagickFalse)
+      return MagickFalse;
   }
 
   return MagickTrue;
@@ -314,7 +315,8 @@ static MagickBooleanType ParseBox(Image *image, DataBuffer *db,
     i;
 
   for (i = 0; i < MAX_ATOMS_IN_BOX && DBGetSize(db) > 0; i++) {
-    (void) ParseAtom(image, db, ctx, exception);
+    if (ParseAtom(image, db, ctx, exception) == MagickFalse)
+      return MagickFalse;
   }
 
   return MagickTrue;
@@ -493,7 +495,7 @@ static MagickBooleanType ParseInfeAtom(Image *image, DataBuffer *db,
   /*
      item indicies starts from 1
   */
-  if (id >= (ssize_t) ctx->idsCount) {
+  if (id > (ssize_t) ctx->idsCount) {
     ThrowAndReturn("item id is incorrect");
   }
 
@@ -686,8 +688,10 @@ static MagickBooleanType ParseAtom(Image *image, DataBuffer *db,
     case ATOM('i', 'd', 'a', 't'):
       {
         ctx->idatSize = atom_size - 8;
+        if (ctx->idat != (uint8_t *) NULL)
+          ctx->idat = (uint8_t *) RelinquishMagickMemory(ctx->idat);
         ctx->idat = (uint8_t *) AcquireMagickMemory(ctx->idatSize);
-        if (ctx->idat == NULL)
+        if (ctx->idat == (uint8_t *) NULL)
           ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
             image->filename);
 
