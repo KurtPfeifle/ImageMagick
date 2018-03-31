@@ -1163,7 +1163,7 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
                 tile_image->resolution.y=(double) pixmap.vertical_resolution;
                 tile_image->units=PixelsPerInchResolution;
                 if (tile_image->alpha_trait != UndefinedPixelTrait)
-                  (void) SetImageAlpha(tile_image,OpaqueAlphaChannel,exception);
+                  (void) SetImageAlpha(tile_image,OpaqueAlpha,exception);
               }
             if ((code != 0x9a) && (code != 0x9b))
               {
@@ -1210,6 +1210,8 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
                     }
                   }
               }
+            if (EOFBlob(image) != MagickFalse)
+              break;
             if (ReadRectangle(image,&source) == MagickFalse)
               ThrowPICTException(CorruptImageError,"ImproperImageHeader");
             if (ReadRectangle(image,&destination) == MagickFalse)
