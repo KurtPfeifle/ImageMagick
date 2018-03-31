@@ -567,13 +567,11 @@ static MagickBooleanType DecodeLabImage(Image *image,ExceptionInfo *exception)
     register ssize_t
       x;
 
-    if (status == MagickFalse)
-      continue;
     q=GetCacheViewAuthenticPixels(image_view,0,y,image->columns,1,exception);
     if (q == (Quantum *) NULL)
       {
         status=MagickFalse;
-        continue;
+        break;
       }
     for (x=0; x < (ssize_t) image->columns; x++)
     {
@@ -592,7 +590,10 @@ static MagickBooleanType DecodeLabImage(Image *image,ExceptionInfo *exception)
       q+=GetPixelChannels(image);
     }
     if (SyncCacheViewAuthenticPixels(image_view,exception) == MagickFalse)
-      status=MagickFalse;
+      {
+        status=MagickFalse;
+        break;
+      }
   }
   image_view=DestroyCacheView(image_view);
   return(status);
@@ -1719,6 +1720,7 @@ RestoreMSCWarning
           }
       }
     method=ReadGenericMethod;
+    rows_per_strip=(uint32) image->rows;
     if (TIFFGetField(tiff,TIFFTAG_ROWSPERSTRIP,&rows_per_strip) == 1)
       {
         char
@@ -1729,7 +1731,7 @@ RestoreMSCWarning
           (unsigned int) rows_per_strip);
         (void) SetImageProperty(image,"tiff:rows-per-strip",value,exception);
       }
-    if (rows_per_strip > (image->columns*image->rows))
+    if (rows_per_strip > (uint32) image->rows)
       ThrowTIFFException(CorruptImageError,"ImproperImageHeader");
     if ((samples_per_pixel >= 3) && (interlace == PLANARCONFIG_CONTIG))
       if ((image->alpha_trait == UndefinedPixelTrait) ||
@@ -2893,13 +2895,11 @@ static MagickBooleanType EncodeLabImage(Image *image,ExceptionInfo *exception)
     register ssize_t
       x;
 
-    if (status == MagickFalse)
-      continue;
     q=GetCacheViewAuthenticPixels(image_view,0,y,image->columns,1,exception);
     if (q == (Quantum *) NULL)
       {
         status=MagickFalse;
-        continue;
+        break;
       }
     for (x=0; x < (ssize_t) image->columns; x++)
     {
@@ -2918,7 +2918,10 @@ static MagickBooleanType EncodeLabImage(Image *image,ExceptionInfo *exception)
       q+=GetPixelChannels(image);
     }
     if (SyncCacheViewAuthenticPixels(image_view,exception) == MagickFalse)
-      status=MagickFalse;
+      {
+        status=MagickFalse;
+        break;
+      }
   }
   image_view=DestroyCacheView(image_view);
   return(status);
