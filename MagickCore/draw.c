@@ -1681,9 +1681,7 @@ static size_t GetEllipseCoordinates(const PointInfo start,const PointInfo stop,
   /*
     Ellipses are just short segmented polys.
   */
-  if ((fabs(stop.x) < DrawEpsilon) && (fabs(stop.y) < DrawEpsilon))
-    return(1);
-  delta=2.0/MagickMax(stop.x,stop.y);
+  delta=2.0*PerceptibleReciprocal(MagickMax(stop.x,stop.y));
   step=MagickPI/8.0;
   if ((delta >= 0.0) && (delta < (MagickPI/8.0)))
     step=MagickPI/(4.0*(MagickPI*PerceptibleReciprocal(delta)/2.0));
@@ -3117,7 +3115,6 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
         break;
       }
       case CirclePrimitive:
-      case ArcPrimitive:
       {
         PointInfo
           degrees;
@@ -3126,6 +3123,20 @@ MagickExport MagickBooleanType DrawImage(Image *image,const DrawInfo *draw_info,
         degrees.y=360.0;
         coordinates=GetEllipseCoordinates(primitive_info[j].point,
           primitive_info[j+1].point,degrees);
+        break;
+      }
+      case ArcPrimitive:
+      {
+        PointInfo
+          center,
+          radii;
+
+        center.x=0.5*(primitive_info[j+1].point.x+primitive_info[j].point.x);
+        center.y=0.5*(primitive_info[j+1].point.y+primitive_info[j].point.y);
+        radii.x=fabs(center.x-primitive_info[j].point.x);
+        radii.y=fabs(center.y-primitive_info[j].point.y);
+        coordinates=GetEllipseCoordinates(center,radii,
+          primitive_info[j+2].point);
         break;
       }
       case EllipsePrimitive:
@@ -5526,12 +5537,7 @@ static void TraceEllipse(PrimitiveInfo *primitive_info,const PointInfo start,
   /*
     Ellipses are just short segmented polys.
   */
-  if ((fabs(stop.x) < DrawEpsilon) && (fabs(stop.y) < DrawEpsilon))
-    {
-      TracePoint(primitive_info,start);
-      return;
-    }
-  delta=2.0/MagickMax(stop.x,stop.y);
+  delta=2.0*PerceptibleReciprocal(MagickMax(stop.x,stop.y));
   step=MagickPI/8.0;
   if ((delta >= 0.0) && (delta < (MagickPI/8.0)))
     step=MagickPI/(4.0*(MagickPI*PerceptibleReciprocal(delta)/2.0));
