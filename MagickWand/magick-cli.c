@@ -22,13 +22,13 @@
 %                               January 2012                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -827,7 +827,7 @@ Magick_Command_Cleanup:
       char
         *text;
   
-      format="%w,%h,%m";   // Get this from image_info Option splaytree
+      format="%w,%h,%m";  /* Get this from image_info Option splaytree */
       text=InterpretImageProperties(image_info,cli_wand->wand.images,format,
         exception);
       if (text == (char *) NULL)

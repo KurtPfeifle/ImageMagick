@@ -324,14 +324,14 @@
           <message name="UnrecognizedAlphaChannelOption">
             alpha de canal l'option non reconnus
           </message>
-          <message name="UnrecognizedBitsPerPixel">
-            bits par pixel non reconnus
-          </message>
           <message name="UnrecognizedImageCompression">
             compression non reconnue
           </message>
           <message name="UnrecognizedNumberOfColors">
             nombre de couleurs non reconnu
+          </message>
+          <message name="UnsupportedBitsPerPixel">
+            bits par pixel non supporté
           </message>
         </error>
         <fatalerror>
@@ -463,6 +463,9 @@
         <message name="URLNotFound">
           URL inaccessible
         </message>
+        <message name="VectorGraphicsNestedTooDeeply">
+          trop d'imbrication de vector graphiques
+        </message>
       </error>
     </draw>
     <file>
@@ -516,6 +519,9 @@
         <message name="ImageListRequired">
           une liste d'images est requise
         </message>
+        <message name="ImageSequenceRequired">
+          une séquence d'images est requise
+        </message>
         <message name="ImageSizeDiffers">
           différences dans la taille de l'image
         </message>
@@ -547,6 +553,9 @@
       <warning>
         <message name="AssociateProfile">
           associate profile with image, a source and destination color profile required for transform
+        </message>
+        <message name="UnableToTransformColorspace">
+          impossible de colorimétrique la transformation
         </message>
       </warning>
     </image>
@@ -607,7 +616,7 @@
         <message name="CompositeImageRequired">
           image composite requise
         </message>
-        <message name="CurlyBrasesNestedTooDeeply">
+        <message name="CurlyBracesNestedTooDeeply">
           trop d'imbrication de curly braces
         </message>
         <message name="DepreciatedOptionNoCode">
@@ -624,6 +633,9 @@
         </message>
         <message name="GeometryDoesNotContainImage">
           image non incluse dans la géométrie
+        </message>
+        <message name="ImageSequenceRequired">
+          une séquence d'images est requise
         </message>
         <message name="InterpretPropertyFailure">
           l'échec d'interpréter s'échappe de propriété d'image
@@ -725,9 +737,6 @@
         <message name="ReferenceIsNotMyType">
           référence de type erroné
         </message>
-        <message name="SetReadOnlyProperty">
-          tenter d'établir propriété en lecture seule
-        </message>
         <message name="SteganoImageRequired">
           image stégano requise
         </message>
@@ -757,6 +766,9 @@
         </message>
         <message name="UnbalancedParenthesis">
           parenthèse non fermée
+        </message>
+        <message name="UndefinedVariable">
+          undefined variable
         </message>
         <message name="UnrecognizedAttribute">
           attribut non reconnu
@@ -975,6 +987,9 @@
         <message name="NoSuchElement">
           élément absent de la liste
         </message>
+        <message name="SetReadOnlyProperty">
+          tenter d'établir propriété en lecture seule
+        </message>
         <message name="UnknownImageProperty">
           image propriété non reconnus
         </message>
@@ -989,7 +1004,7 @@
     <policy>
       <error>
         <message name="NotAuthorized">
-          not authorized
+          attempt to perform an operation not allowed by the security policy
         </message>
       </error>
     </policy>

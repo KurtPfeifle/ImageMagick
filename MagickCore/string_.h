@@ -1,11 +1,11 @@
 /*
-  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
+  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization
   dedicated to making software imaging solutions freely available.
   
-  You may not use this file except in compliance with the License.
+  You may not use this file except in compliance with the License.  You may
   obtain a copy of the License at
   
-    https://www.imagemagick.org/script/license.php
+    https://imagemagick.org/script/license.php
   
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
@@ -69,22 +69,21 @@ extern MagickExport int
   CompareStringInfo(const StringInfo *,const StringInfo *);
 
 extern MagickExport MagickBooleanType
-  ConcatenateString(char **,const char *),
-  IsStringTrue(const char *),
-  IsStringFalse(const char *),
+  ConcatenateString(char **magick_restrict,const char *magick_restrict),
+  IsStringTrue(const char *) magick_attribute((__pure__)),
+  IsStringFalse(const char *) magick_attribute((__pure__)),
   SubstituteString(char **,const char *,const char *);
 
 extern MagickExport size_t
-  ConcatenateMagickString(char *,const char *,const size_t)
-    magick_attribute((__nonnull__)),
-  CopyMagickString(char *,const char *,const size_t)
-    magick_attribute((__nonnull__)),
+  ConcatenateMagickString(char *magick_restrict,const char *magick_restrict,
+    const size_t) magick_attribute((__nonnull__)),
+  CopyMagickString(char *magick_restrict,const char *magick_restrict,
+    const size_t) magick_attribute((__nonnull__)),
   GetStringInfoLength(const StringInfo *);
 
 extern MagickExport ssize_t
   FormatMagickSize(const MagickSizeType,const MagickBooleanType,const char *,
-    const size_t,char *),
-  FormatMagickTime(const time_t,const size_t,char *);
+    const size_t,char *);
 
 extern MagickExport StringInfo
   *AcquireStringInfo(const size_t),

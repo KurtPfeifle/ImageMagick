@@ -25,10 +25,6 @@
 
     <policy domain="coder" rights="none" pattern="HTTP" />
 
-  Lets prevent users from executing any image filters:
-
-    <policy domain="filter" rights="none" pattern="*" />
-
   The /repository file system is restricted to read only.  We use a glob
   expression to match all paths that start with /repository:
 
@@ -73,6 +69,7 @@
   <!-- <policy domain="resource" name="throttle" value="0"/> -->
   <!-- <policy domain="resource" name="time" value="3600"/> -->
   <!-- <policy domain="coder" rights="none" pattern="MVG" /> -->
+  <!-- <policy domain="module" rights="none" pattern="{PS,PDF,XPS}" /> -->
   <!-- <policy domain="delegate" rights="none" pattern="HTTPS" /> -->
   <!-- <policy domain="path" rights="none" pattern="@*" /> -->
   <!-- <policy domain="cache" name="memory-map" value="anonymous"/> -->

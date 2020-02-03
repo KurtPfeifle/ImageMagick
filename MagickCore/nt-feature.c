@@ -18,13 +18,13 @@
 %                                December 1996                                %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -96,8 +96,8 @@ MagickExport MagickBooleanType NTIsMagickConflict(const char *magick)
   assert(magick != (char *) NULL);
   if (strlen(magick) > 1)
     return(MagickFalse);
-  status=(GetLogicalDrives() & (1 << ((toupper((int) (*magick)))-'A'))) != 0 ?
-    MagickTrue : MagickFalse;
+  status=(GetLogicalDrives() & (1 << ((LocaleUppercase((int)
+    (*magick)))-'A'))) != 0 ? MagickTrue : MagickFalse;
   return(status);
 }
 
@@ -191,7 +191,6 @@ MagickExport MagickBooleanType NTAcquireTypeCache(SplayTreeInfo *type_cache,
 
     DWORD
       registry_index = 0,
-      type,
       value_data_size,
       value_name_length;
 
@@ -266,7 +265,7 @@ MagickExport MagickBooleanType NTAcquireTypeCache(SplayTreeInfo *type_cache,
 
         for (q=value_name; *q != '\0'; )
           {
-            GetNextToken(q,(const char **) &q,MagickPathExtent,token);
+            (void) GetNextToken(q,(const char **) &q,MagickPathExtent,token);
             if (*token == '\0')
               break;
 

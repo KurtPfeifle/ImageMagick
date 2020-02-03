@@ -23,13 +23,13 @@
 %                                March 2003                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -918,11 +918,11 @@ WandExport MagickBooleanType PixelSyncIterator(PixelIterator *iterator)
   MagickBooleanType
     status;
 
+  register Quantum
+    *magick_restrict pixels;
+
   register ssize_t
     x;
-
-  register Quantum
-    *_magickcore_restrict pixels;
 
   assert(iterator != (const PixelIterator *) NULL);
   assert(iterator->signature == MagickWandSignature);

@@ -18,13 +18,13 @@
 %                                 June 2000                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -46,6 +46,7 @@
 #include "MagickCore/exception-private.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/memory-private.h"
+#include "MagickCore/mutex.h"
 #include "MagickCore/semaphore.h"
 #include "MagickCore/semaphore-private.h"
 #include "MagickCore/string_.h"
@@ -99,7 +100,6 @@ MagickExport void ActivateSemaphoreInfo(SemaphoreInfo **semaphore_info)
   assert(semaphore_info != (SemaphoreInfo **) NULL);
   if (*semaphore_info == (SemaphoreInfo *) NULL)
     {
-      InitializeMagickMutex();
       LockMagickMutex();
       if (*semaphore_info == (SemaphoreInfo *) NULL)
         *semaphore_info=AcquireSemaphoreInfo();
@@ -353,7 +353,6 @@ MagickExport void RelinquishSemaphoreInfo(SemaphoreInfo **semaphore_info)
   assert(semaphore_info != (SemaphoreInfo **) NULL);
   assert((*semaphore_info) != (SemaphoreInfo *) NULL);
   assert((*semaphore_info)->signature == MagickCoreSignature);
-  InitializeMagickMutex();
   LockMagickMutex();
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
   omp_destroy_lock((omp_lock_t *) &(*semaphore_info)->mutex);

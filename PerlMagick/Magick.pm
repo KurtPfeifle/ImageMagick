@@ -1,12 +1,12 @@
 package Image::Magick;
 
-#  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
+#  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization
 #  dedicated to making software imaging solutions freely available.
 #
 #  You may not use this file except in compliance with the License.  You may
 #  obtain a copy of the License at
 #
-#    http://www.imagemagick.org/script/license.php
+#    https://imagemagick.org/script/license.php
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,7 +44,7 @@ require AutoLoader;
       ConfigureError FatalErrorException
     );
 
-$VERSION = '7.07';
+$VERSION = '7.0.8';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -125,11 +125,11 @@ It was originally developed to be used by CGI scripts for Web pages.
 A web page has been set up for this extension. See:
 
 	 file:///usr/local/share/doc/ImageMagick-7.0.0/www/perl-magick.html
-	 http://www.imagemagick.org/script/perl-magick.php
+	 https://imagemagick.org/script/perl-magick.php
 
 If you have problems, go to
 
-   http://www.imagemagick.org/discourse-server/viewforum.php?f=7
+   https://imagemagick.org/discourse-server/viewforum.php?f=7
 
 =head1 AUTHOR
 

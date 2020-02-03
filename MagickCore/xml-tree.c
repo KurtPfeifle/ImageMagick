@@ -23,13 +23,13 @@
 %                               December 2004                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -1484,18 +1484,20 @@ static char *ParseEntities(char *xml,char **entities,int state)
                     offset=(ssize_t) (xml-p);
                     extent=(size_t) (offset+length+strlen(entity));
                     if (p != q)
-                      p=(char *) ResizeQuantumMemory(p,extent,sizeof(*p));
+                      {
+                        p=(char *) ResizeQuantumMemory(p,extent+1,sizeof(*p));
+                        p[extent]='\0';
+                      }
                     else
                       {
                         char
                           *extent_xml;
 
-                        extent_xml=(char *) AcquireQuantumMemory(extent,
+                        extent_xml=(char *) AcquireQuantumMemory(extent+1,
                           sizeof(*extent_xml));
                         if (extent_xml != (char *) NULL)
                           {
-                            memset(extent_xml,0,extent*
-                              sizeof(*extent_xml));
+                            memset(extent_xml,0,extent*sizeof(*extent_xml));
                             (void) CopyMagickString(extent_xml,p,extent*
                               sizeof(*extent_xml));
                           }
@@ -1508,7 +1510,7 @@ static char *ParseEntities(char *xml,char **entities,int state)
                     entity=strchr(xml,';');
                   }
                 if (entity != (char *) NULL)
-                  (void) memcpy(xml+length,entity+1,strlen(entity));
+                  (void) memmove(xml+length,entity+1,strlen(entity));
                 (void) strncpy(xml,entities[i],length);
               }
         }
@@ -1729,6 +1731,8 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
         if ((isalpha((int) ((unsigned char) *n)) == 0) && (*n != '_'))
           break;
         xml=n+strcspn(n,XMLWhitespace);
+        if (*xml == '\0')
+          break;
         *xml=';';
         v=xml+strspn(xml+1,XMLWhitespace)+1;
         q=(*v);
@@ -2019,7 +2023,7 @@ MagickExport XMLTreeInfo *NewXMLTree(const char *xml,ExceptionInfo *exception)
     attributes=(char **) sentinel;
     tag=p;
     c=(*p);
-    if ((isalpha((int) ((unsigned char) *p)) !=0) || (*p == '_') ||
+    if ((isalpha((int) ((unsigned char) *p)) != 0) || (*p == '_') ||
         (*p == ':') || (c < '\0'))
       {
         /*
@@ -2058,8 +2062,8 @@ MagickExport XMLTreeInfo *NewXMLTree(const char *xml,ExceptionInfo *exception)
                 attributes=(char **) AcquireQuantumMemory(4,
                   sizeof(*attributes));
               else
-                attributes=(char **) ResizeQuantumMemory(attributes,
-                  (size_t) (l+4),sizeof(*attributes));
+                attributes=(char **) ResizeQuantumMemory(attributes,(size_t)
+                  (l+4),sizeof(*attributes));
               if (attributes == (char **) NULL)
                 {
                   (void) ThrowMagickException(exception,GetMagickModule(),
@@ -2137,7 +2141,9 @@ MagickExport XMLTreeInfo *NewXMLTree(const char *xml,ExceptionInfo *exception)
                 utf8=DestroyString(utf8);
                 return(&root->root);
               }
-            if ((ignore_depth == 0) && (IsSkipTag(tag) == MagickFalse))
+            if ((ignore_depth != 0) || (IsSkipTag(tag) != MagickFalse))
+              (void) DestroyXMLTreeAttributes(attributes);
+            else
               {
                 ParseOpenTag(root,tag,attributes);
                 (void) ParseCloseTag(root,tag,exception);
@@ -2377,8 +2383,7 @@ MagickExport XMLTreeInfo *NewXMLTreeTag(const char *tag)
   root->entities=(char **) AcquireMagickMemory(sizeof(predefined_entities));
   if (root->entities == (char **) NULL)
     return((XMLTreeInfo *) NULL);
-  (void) memcpy(root->entities,predefined_entities,
-    sizeof(predefined_entities));
+  (void) memcpy(root->entities,predefined_entities,sizeof(predefined_entities));
   root->root.attributes=sentinel;
   root->attributes=(char ***) root->root.attributes;
   root->processing_instructions=(char ***) root->root.attributes;

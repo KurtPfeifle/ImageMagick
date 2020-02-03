@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -304,9 +304,10 @@ MagickExport Image *ChopImage(const Image *image,const RectangleInfo *chop_info,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_ChopImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,ChopImageTag,progress++,image->rows);
+        progress++;
+        proceed=SetImageProgress(image,ChopImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -369,9 +370,10 @@ MagickExport Image *ChopImage(const Image *image,const RectangleInfo *chop_info,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_ChopImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,ChopImageTag,progress++,image->rows);
+        progress++;
+        proceed=SetImageProgress(image,ChopImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -442,7 +444,7 @@ MagickExport Image *ConsolidateCMYKImages(const Image *images,
       i;
 
     assert(images != (Image *) NULL);
-    cmyk_image=CloneImage(images,images->columns,images->rows,MagickTrue,
+    cmyk_image=CloneImage(images,0,0,MagickTrue,
       exception);
     if (cmyk_image == (Image *) NULL)
       break;
@@ -592,8 +594,8 @@ MagickExport Image *CropImage(const Image *image,const RectangleInfo *geometry,
       crop_image=CloneImage(image,1,1,MagickTrue,exception);
       if (crop_image == (Image *) NULL)
         return((Image *) NULL);
+      crop_image->background_color.alpha_trait=BlendPixelTrait;
       crop_image->background_color.alpha=(MagickRealType) TransparentAlpha;
-      crop_image->alpha_trait=BlendPixelTrait;
       (void) SetImageBackgroundColor(crop_image,exception);
       crop_image->page=bounding_box;
       crop_image->page.x=(-1);
@@ -698,13 +700,6 @@ MagickExport Image *CropImage(const Image *image,const RectangleInfo *geometry,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(crop_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(crop_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -726,9 +721,10 @@ MagickExport Image *CropImage(const Image *image,const RectangleInfo *geometry,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_CropImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,CropImageTag,progress++,image->rows);
+        progress++;
+        proceed=SetImageProgress(image,CropImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -769,14 +765,23 @@ MagickExport Image *CropImage(const Image *image,const RectangleInfo *geometry,
 %
 */
 
-static inline double MagickRound(double x)
+static inline double ConstrainPixelOffset(double x)
+{
+  if (x < (double) -(SSIZE_MAX-512))
+    return((double) -(SSIZE_MAX-512));
+  if (x > (double) (SSIZE_MAX-512))
+    return((double) (SSIZE_MAX-512));
+  return(x);
+}
+
+static inline ssize_t PixelRoundOffset(double x)
 {
   /*
     Round the fraction to nearest integer.
   */
   if ((x-floor(x)) < (ceil(x)-x))
-    return(floor(x));
-  return(ceil(x));
+    return((ssize_t) floor(ConstrainPixelOffset(x)));
+  return((ssize_t) ceil(ConstrainPixelOffset(x)));
 }
 
 MagickExport Image *CropImageToTiles(const Image *image,
@@ -841,18 +846,18 @@ MagickExport Image *CropImageToTiles(const Image *image,
       {
         if ((flags & AspectValue) == 0)
           {
-            crop.y=(ssize_t) MagickRound((double) (offset.y-
+            crop.y=PixelRoundOffset((double) (offset.y-
               (geometry.y > 0 ? 0 : geometry.y)));
             offset.y+=delta.y;   /* increment now to find width */
-            crop.height=(size_t) MagickRound((double) (offset.y+
+            crop.height=(size_t) PixelRoundOffset((double) (offset.y+
               (geometry.y < 0 ? 0 : geometry.y)));
           }
         else
           {
-            crop.y=(ssize_t) MagickRound((double) (offset.y-
+            crop.y=PixelRoundOffset((double) (offset.y-
               (geometry.y > 0 ? geometry.y : 0)));
             offset.y+=delta.y;  /* increment now to find width */
-            crop.height=(size_t) MagickRound((double)
+            crop.height=(size_t) PixelRoundOffset((double)
               (offset.y+(geometry.y < -1 ? geometry.y : 0)));
           }
         crop.height-=crop.y;
@@ -861,18 +866,18 @@ MagickExport Image *CropImageToTiles(const Image *image,
         {
           if ((flags & AspectValue) == 0)
             {
-              crop.x=(ssize_t) MagickRound((double) (offset.x-
+              crop.x=PixelRoundOffset((double) (offset.x-
                 (geometry.x > 0 ? 0 : geometry.x)));
               offset.x+=delta.x;  /* increment now to find height */
-              crop.width=(size_t) MagickRound((double) (offset.x+
+              crop.width=(size_t) PixelRoundOffset((double) (offset.x+
                 (geometry.x < 0 ? 0 : geometry.x)));
             }
           else
             {
-              crop.x=(ssize_t) MagickRound((double) (offset.x-
+              crop.x=PixelRoundOffset((double) (offset.x-
                 (geometry.x > 0 ? geometry.x : 0)));
               offset.x+=delta.x;  /* increment now to find height */
-              crop.width=(size_t) MagickRound((double) (offset.x+
+              crop.width=(size_t) PixelRoundOffset((double) (offset.x+
                 (geometry.x < 0 ? geometry.x : 0)));
             }
           crop.width-=crop.x;
@@ -1051,13 +1056,6 @@ MagickExport Image *ExcerptImage(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(excerpt_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(excerpt_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1079,9 +1077,10 @@ MagickExport Image *ExcerptImage(const Image *image,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_ExcerptImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,ExcerptImageTag,progress++,image->rows);
+        progress++;
+        proceed=SetImageProgress(image,ExcerptImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -1130,6 +1129,9 @@ MagickExport Image *ExtentImage(const Image *image,
   Image
     *extent_image;
 
+  MagickBooleanType
+    status;
+
   /*
     Allocate extent image.
   */
@@ -1140,16 +1142,17 @@ MagickExport Image *ExtentImage(const Image *image,
   assert(geometry != (const RectangleInfo *) NULL);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  if ((image->columns == geometry->width) &&
-      (image->rows == geometry->height) &&
-      (geometry->x == 0) && (geometry->y == 0))
-    return(CloneImage(image,0,0,MagickTrue,exception));
   extent_image=CloneImage(image,geometry->width,geometry->height,MagickTrue,
     exception);
   if (extent_image == (Image *) NULL)
     return((Image *) NULL);
-  (void) SetImageBackgroundColor(extent_image,exception);
-  (void) CompositeImage(extent_image,image,image->compose,MagickTrue,
+  status=SetImageBackgroundColor(extent_image,exception);
+  if (status == MagickFalse)
+    {
+      extent_image=DestroyImage(extent_image);
+      return((Image *) NULL);
+    }
+  status=CompositeImage(extent_image,image,image->compose,MagickTrue,
     -geometry->x,-geometry->y,exception);
   return(extent_image);
 }
@@ -1208,7 +1211,7 @@ MagickExport Image *FlipImage(const Image *image,ExceptionInfo *exception)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  flip_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  flip_image=CloneImage(image,0,0,MagickTrue,exception);
   if (flip_image == (Image *) NULL)
     return((Image *) NULL);
   /*
@@ -1249,13 +1252,6 @@ MagickExport Image *FlipImage(const Image *image,ExceptionInfo *exception)
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(flip_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(flip_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1277,9 +1273,10 @@ MagickExport Image *FlipImage(const Image *image,ExceptionInfo *exception)
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_FlipImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,FlipImageTag,progress++,image->rows);
+        progress++;
+        proceed=SetImageProgress(image,FlipImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -1349,7 +1346,7 @@ MagickExport Image *FlopImage(const Image *image,ExceptionInfo *exception)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  flop_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  flop_image=CloneImage(image,0,0,MagickTrue,exception);
   if (flop_image == (Image *) NULL)
     return((Image *) NULL);
   /*
@@ -1392,11 +1389,6 @@ MagickExport Image *FlopImage(const Image *image,ExceptionInfo *exception)
         i;
 
       q-=GetPixelChannels(flop_image);
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          p+=GetPixelChannels(image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1417,9 +1409,10 @@ MagickExport Image *FlopImage(const Image *image,ExceptionInfo *exception)
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_FlopImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,FlopImageTag,progress++,image->rows);
+        progress++;
+        proceed=SetImageProgress(image,FlopImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -1518,13 +1511,6 @@ static MagickBooleanType CopyImageRegion(Image *destination,const Image *source,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(source,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(destination,q);
-          p+=GetPixelChannels(source);
-          q+=GetPixelChannels(destination);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(source); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(source,i);
@@ -1571,7 +1557,7 @@ MagickExport Image *RollImage(const Image *image,const ssize_t x_offset,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  roll_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  roll_image=CloneImage(image,0,0,MagickTrue,exception);
   if (roll_image == (Image *) NULL)
     return((Image *) NULL);
   offset.x=x_offset;
@@ -1846,13 +1832,6 @@ MagickExport Image *SpliceImage(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(splice_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(splice_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1877,13 +1856,6 @@ MagickExport Image *SpliceImage(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(splice_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(splice_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1909,9 +1881,10 @@ MagickExport Image *SpliceImage(const Image *image,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_TransposeImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,SpliceImageTag,progress++,
+        progress++;
+        proceed=SetImageProgress(image,SpliceImageTag,progress,
           splice_image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
@@ -1951,13 +1924,6 @@ MagickExport Image *SpliceImage(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(splice_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(splice_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -1982,13 +1948,6 @@ MagickExport Image *SpliceImage(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(splice_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(splice_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -2014,9 +1973,10 @@ MagickExport Image *SpliceImage(const Image *image,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_TransposeImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,SpliceImageTag,progress++,
+        progress++;
+        proceed=SetImageProgress(image,SpliceImageTag,progress,
           splice_image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
@@ -2225,13 +2185,6 @@ MagickExport Image *TransposeImage(const Image *image,ExceptionInfo *exception)
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(transpose_image,q);
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(transpose_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -2254,10 +2207,10 @@ MagickExport Image *TransposeImage(const Image *image,ExceptionInfo *exception)
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_TransposeImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,TransposeImageTag,progress++,
-          image->rows);
+        progress++;
+        proceed=SetImageProgress(image,TransposeImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -2374,11 +2327,6 @@ MagickExport Image *TransverseImage(const Image *image,ExceptionInfo *exception)
         i;
 
       q-=GetPixelChannels(transverse_image);
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          p+=GetPixelChannels(image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -2401,10 +2349,10 @@ MagickExport Image *TransverseImage(const Image *image,ExceptionInfo *exception)
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_TransverseImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,TransverseImageTag,progress++,
-          image->rows);
+        progress++;
+        proceed=SetImageProgress(image,TransverseImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -2469,8 +2417,8 @@ MagickExport Image *TrimImage(const Image *image,ExceptionInfo *exception)
       crop_image=CloneImage(image,1,1,MagickTrue,exception);
       if (crop_image == (Image *) NULL)
         return((Image *) NULL);
+      crop_image->background_color.alpha_trait=BlendPixelTrait;
       crop_image->background_color.alpha=(MagickRealType) TransparentAlpha;
-      crop_image->alpha_trait=BlendPixelTrait;
       (void) SetImageBackgroundColor(crop_image,exception);
       crop_image->page=image->page;
       crop_image->page.x=(-1);

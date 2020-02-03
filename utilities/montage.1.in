@@ -7,7 +7,7 @@ montage \- create a composite image by combining several separate images. The im
 .SH OVERVIEW
 The \fBmontage\fP program is a member of the ImageMagick(1) suite of tools.  Use it to create a composite image by combining several separate images. The images are tiled on the composite image optionally adorned with a border, frame, image name, and more.
 
-For more information about the montage command, point your browser to file://@DOCUMENTATION_PATH@/www/montage.html or http://www.imagemagick.org/script/montage.php.
+For more information about the montage command, point your browser to file://@DOCUMENTATION_PATH@/www/montage.html or http://imagemagick.org/script/montage.php.
 .SH DESCRIPTION
 Image Settings:
   \-adjoin              join images into a single multi-image file
@@ -25,6 +25,7 @@ Image Settings:
   \-compress type       type of pixel compression when writing the image
   \-define format:option
                        define one or more image format options
+  \-delay value         display the next image after pausing
   \-density geometry    horizontal and vertical density of the image
   \-depth value         image depth
   \-display server      query font from this X server
@@ -102,6 +103,7 @@ Image Operators:
   \-flip                flip image in the vertical direction
   \-flop                flop image in the horizontal direction
   \-frame geometry      surround image with an ornamental border
+  \-layers method       optimize or compare image layers
   \-monochrome          transform image to black and white
   \-polaroid angle      simulate a Polaroid picture
   \-resize geometry     resize the image
@@ -142,4 +144,4 @@ ImageMagick(1)
 
 .SH COPYRIGHT
 
-\fBCopyright (C) 1999-2018 ImageMagick Studio LLC. Additional copyrights and licenses apply to this software, see file://@DOCUMENTATION_PATH@/www/license.html or http://www.imagemagick.org/script/license.php\fP
+\fBCopyright (C) 1999-2020 ImageMagick Studio LLC. Additional copyrights and licenses apply to this software, see file://@DOCUMENTATION_PATH@/www/license.html or http://imagemagick.org/script/license.php\fP

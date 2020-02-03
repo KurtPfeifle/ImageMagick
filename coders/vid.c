@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -176,8 +176,11 @@ static Image *ReadVIDImage(const ImageInfo *image_info,ExceptionInfo *exception)
       break;
     label=InterpretImageProperties((ImageInfo *) image_info,next_image,
       DefaultTileLabel,exception);
-    (void) SetImageProperty(next_image,"label",label,exception);
-    label=DestroyString(label);
+    if (label != (char *) NULL)
+      {
+        (void) SetImageProperty(next_image,"label",label,exception);
+        label=DestroyString(label);
+      }
     if (image_info->debug != MagickFalse)
       (void) LogMagickEvent(CoderEvent,GetMagickModule(),
         "geometry: %.20gx%.20g",(double) next_image->columns,(double)

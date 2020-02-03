@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -186,8 +186,7 @@ pump_data_until_message(LoadContext *lc,Image *image) /* ddjvu_context_t *contex
 #define DEBUG 0
 
 #if DEBUG
-static const char*
-message_tag_name(ddjvu_message_tag_t tag)
+static const char *message_tag_name(ddjvu_message_tag_t tag)
 {
    static char* names[] =
       {
@@ -819,7 +818,7 @@ static Image *ReadDJVUImage(const ImageInfo *image_info,
   ddjvu_cache_set_size(lc->context, 1); /* right? */
   use_cache = 0;
   /* document: here we don't have a filename, but, for the sake of generality, a FILE* ! */
-  url="http://www.imagemagick.org/fake.djvu";
+  url="https://imagemagick.org/fake.djvu";
   lc->document = ddjvu_document_create(lc->context, url, use_cache); /* don't cache */
   ddjvu_document_set_user_data(lc->document, lc);
 

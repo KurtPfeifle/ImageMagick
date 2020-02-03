@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -125,7 +125,7 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
         count=ReadBlob(image,0x800,buffer); \
         p=buffer; \
       } \
-    sum|=((unsigned int) (*p) << (24-bits)); \
+    sum|=(((unsigned int) (*p)) << (24-bits)); \
     bits+=8; \
     p++; \
   } \
@@ -204,6 +204,8 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
     if (pcd_table[i] == (PCDTable *) NULL)
       {
         buffer=(unsigned char *) RelinquishMagickMemory(buffer);
+        for (j=0; j < i; j++)
+          pcd_table[j]=(PCDTable *) RelinquishMagickMemory(pcd_table[j]);
         ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
           image->filename);
       }
@@ -215,6 +217,8 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
       if (r->length > 16)
         {
           buffer=(unsigned char *) RelinquishMagickMemory(buffer);
+          for (j=0; j <= i; j++)
+            pcd_table[j]=(PCDTable *) RelinquishMagickMemory(pcd_table[j]);
           return(MagickFalse);
         }
       PCDGetBits(16);
@@ -226,17 +230,20 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
     }
     pcd_length[i]=(size_t) length;
   }
-  /*
-    Search for Sync byte.
-  */
-  for (i=0; i < 1; i++)
-    PCDGetBits(16);
-  for (i=0; i < 1; i++)
-    PCDGetBits(16);
-  while ((sum & 0x00fff000UL) != 0x00fff000UL)
-    PCDGetBits(8);
-  while (IsSync(sum) == 0)
-    PCDGetBits(1);
+  if (EOFBlob(image) == MagickFalse)
+    {
+      /*
+        Search for Sync byte.
+      */
+      for (i=0; i < 1; i++)
+        PCDGetBits(16);
+      for (i=0; i < 1; i++)
+        PCDGetBits(16);
+      while ((sum & 0x00fff000UL) != 0x00fff000UL)
+        PCDGetBits(8);
+      while (IsSync(sum) == 0)
+        PCDGetBits(1);
+    }
   /*
     Recover the Huffman encoded luminance and chrominance deltas.
   */
@@ -244,8 +251,7 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
   length=0;
   plane=0;
   row=0;
-  q=luma;
-  for ( ; ; )
+  for (q=luma; EOFBlob(image) == MagickFalse; )
   {
     if (IsSync(sum) != 0)
       {
@@ -283,6 +289,9 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
           }
           default:
           {
+            for (i=0; i < (image->columns > 1536 ? 3 : 1); i++)
+              pcd_table[i]=(PCDTable *) RelinquishMagickMemory(pcd_table[i]);
+            buffer=(unsigned char *) RelinquishMagickMemory(buffer);
             ThrowBinaryException(CorruptImageError,"CorruptImage",
               image->filename);
           }
@@ -722,8 +731,8 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
             AcquireNextImage(image_info,image,exception);
             if (GetNextImageInList(image) == (Image *) NULL)
               {
-                image=DestroyImageList(image);
-                return((Image *) NULL);
+                status=MagickFalse;
+                break;
               }
             image=SyncNextImageInList(image);
           }
@@ -739,8 +748,9 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
       chroma2=(unsigned char *) RelinquishMagickMemory(chroma2);
       chroma1=(unsigned char *) RelinquishMagickMemory(chroma1);
       luma=(unsigned char *) RelinquishMagickMemory(luma);
-      image=GetFirstImageInList(image);
-      return(OverviewImage(image_info,image,exception));
+      if (status == MagickFalse)
+        return(DestroyImageList(image));
+      return(OverviewImage(image_info,GetFirstImageInList(image),exception));
     }
   /*
     Read interleaved image.
@@ -869,6 +879,9 @@ static Image *ReadPCDImage(const ImageInfo *image_info,ExceptionInfo *exception)
   image->colorspace=YCCColorspace;
   if (LocaleCompare(image_info->magick,"PCDS") == 0)
     (void) SetImageColorspace(image,sRGBColorspace,exception);
+  if (image_info->scene != 0)
+    for (i=0; i < (ssize_t) image_info->scene; i++)
+      AppendImageToList(&image,CloneImage(image,0,0,MagickTrue,exception));
   return(GetFirstImageInList(image));
 }
 

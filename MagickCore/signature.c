@@ -16,13 +16,13 @@
 %                              December 1992                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -53,6 +53,7 @@
 #include "MagickCore/signature.h"
 #include "MagickCore/signature-private.h"
 #include "MagickCore/string_.h"
+#include "MagickCore/timer-private.h"
 /*
   Define declarations.
 */
@@ -122,7 +123,8 @@ MagickPrivate SignatureInfo *AcquireSignatureInfo(void)
   unsigned long
     lsb_first;
 
-  signature_info=(SignatureInfo *) AcquireCriticalMemory(sizeof(*signature_info));
+  signature_info=(SignatureInfo *) AcquireCriticalMemory(
+    sizeof(*signature_info));
   (void) memset(signature_info,0,sizeof(*signature_info));
   signature_info->digestsize=SignatureDigestsize;
   signature_info->blocksize=SignatureBlocksize;
@@ -132,10 +134,12 @@ MagickPrivate SignatureInfo *AcquireSignatureInfo(void)
     SignatureBlocksize,sizeof(*signature_info->accumulator));
   if (signature_info->accumulator == (unsigned int *) NULL)
     ThrowFatalException(ResourceLimitFatalError,"MemoryAllocationFailed");
+  (void) memset(signature_info->accumulator,0,SignatureBlocksize*
+    sizeof(*signature_info->accumulator));
   lsb_first=1;
   signature_info->lsb_first=(int) (*(char *) &lsb_first) == 1 ? MagickTrue :
     MagickFalse;
-  signature_info->timestamp=(ssize_t) time((time_t *) NULL);
+  signature_info->timestamp=(ssize_t) GetMagickTime();
   signature_info->signature=MagickCoreSignature;
   InitializeSignature(signature_info);
   return(signature_info);
@@ -472,7 +476,7 @@ MagickExport MagickBooleanType SignatureImage(Image *image,
   char
     *hex_signature;
 
-  double
+  float
     pixel;
 
   register const Quantum
@@ -533,9 +537,9 @@ MagickExport MagickBooleanType SignatureImage(Image *image,
 
         PixelChannel channel = GetPixelChannelChannel(image,i);
         PixelTrait traits = GetPixelChannelTraits(image,channel);
-        if (traits == UndefinedPixelTrait)
+        if ((traits & UpdatePixelTrait) == 0)
           continue;
-        pixel=QuantumScale*p[i];
+        pixel=(float) QuantumScale*p[i];
         if (signature_info->lsb_first == MagickFalse)
           for (j=(ssize_t) sizeof(pixel)-1; j >= 0; j--)
             *q++=(unsigned char) ((unsigned char *) &pixel)[j];
@@ -584,33 +588,16 @@ MagickExport MagickBooleanType SignatureImage(Image *image,
 %    o signature_info: the address of a structure of type SignatureInfo.
 %
 */
-
-static inline unsigned int Ch(unsigned int x,unsigned int y,unsigned int z)
-{
-  return((x & y) ^ (~x & z));
-}
-
-static inline unsigned int Maj(unsigned int x,unsigned int y,unsigned int z)
-{
-  return((x & y) ^ (x & z) ^ (y & z));
-}
-
-static inline unsigned int Trunc32(unsigned int x)
-{
-  return((unsigned int) (x & 0xffffffffU));
-}
-
-static unsigned int RotateRight(unsigned int x,unsigned int n)
-{
-  return(Trunc32((x >> n) | (x << (32-n))));
-}
-
 static void TransformSignature(SignatureInfo *signature_info)
 {
+#define Ch(x,y,z)  (((x) & (y)) ^ (~(x) & (z)))
+#define Maj(x,y,z)  (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+#define RotateRight(x,n)  (Trunc32(((x) >> n) | ((x) << (32-n))))
 #define Sigma0(x)  (RotateRight(x,7) ^ RotateRight(x,18) ^ Trunc32((x) >> 3))
 #define Sigma1(x)  (RotateRight(x,17) ^ RotateRight(x,19) ^ Trunc32((x) >> 10))
 #define Suma0(x)  (RotateRight(x,2) ^ RotateRight(x,13) ^ RotateRight(x,22))
 #define Suma1(x)  (RotateRight(x,6) ^ RotateRight(x,11) ^ RotateRight(x,25))
+#define Trunc32(x)  ((unsigned int) ((x) & 0xffffffffU))
 
   register ssize_t
     i;
@@ -621,7 +608,7 @@ static void TransformSignature(SignatureInfo *signature_info)
   ssize_t
     j;
 
-  static unsigned int
+  static const unsigned int
     K[64] =
     {
       0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU,

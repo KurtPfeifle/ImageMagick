@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -96,8 +96,8 @@ static MagickBooleanType
 */
 static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
 {
-  const unsigned char
-    *pixels;
+  const void
+    *stream;
 
   Image
     *canvas_image,
@@ -121,6 +121,9 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
   ssize_t
     count,
     y;
+
+  unsigned char
+    *pixels;
 
   /*
     Open image file.
@@ -163,7 +166,7 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
       canvas_image=DestroyImage(canvas_image);
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     }
-  pixels=(const unsigned char *) NULL;
+  pixels=GetQuantumPixels(quantum_info);
   if (image_info->number_scenes != 0)
     while (image->scene < image_info->scene)
     {
@@ -174,8 +177,7 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
       length=GetQuantumExtent(canvas_image,quantum_info,quantum_type);
       for (y=0; y < (ssize_t) image->rows; y++)
       {
-        pixels=(const unsigned char *) ReadBlobStream(image,length,
-          GetQuantumPixels(quantum_info),&count);
+        stream=ReadBlobStream(image,length,pixels,&count);
         if (count != (ssize_t) length)
           break;
       }
@@ -184,6 +186,7 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
   count=0;
   length=0;
   status=MagickTrue;
+  stream=NULL;
   do
   {
     /*
@@ -198,8 +201,7 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
     if (scene == 0)
       {
         length=GetQuantumExtent(canvas_image,quantum_info,quantum_type);
-        pixels=(const unsigned char *) ReadBlobStream(image,length,
-          GetQuantumPixels(quantum_info),&count);
+        stream=ReadBlobStream(image,length,pixels,&count);
         if (count != (ssize_t) length)
           break;
       }
@@ -225,7 +227,7 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
       if (q == (Quantum *) NULL)
         break;
       length=ImportQuantumPixels(canvas_image,(CacheView *) NULL,quantum_info,
-        quantum_type,pixels,exception);
+        quantum_type,(unsigned char *) stream,exception);
       if (SyncAuthenticPixels(canvas_image,exception) == MagickFalse)
         break;
       if (((y-image->extract_info.y) >= 0) && 
@@ -255,8 +257,7 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
           if (status == MagickFalse)
             break;
         }
-      pixels=(const unsigned char *) ReadBlobStream(image,length,
-        GetQuantumPixels(quantum_info),&count);
+      stream=ReadBlobStream(image,length,pixels,&count);
       if (count != (ssize_t) length)
         break;
     }
@@ -275,8 +276,8 @@ static Image *ReadRAWImage(const ImageInfo *image_info,ExceptionInfo *exception)
         AcquireNextImage(image_info,image,exception);
         if (GetNextImageInList(image) == (Image *) NULL)
           {
-            image=DestroyImageList(image);
-            return((Image *) NULL);
+            status=MagickFalse;
+            break;
           }
         image=SyncNextImageInList(image);
         status=SetImageProgress(image,LoadImagesTag,TellBlob(image),
@@ -465,6 +466,7 @@ static MagickBooleanType WriteRAWImage(const ImageInfo *image_info,Image *image,
     *p;
 
   size_t
+    imageListLength,
     length;
 
   ssize_t
@@ -565,6 +567,7 @@ static MagickBooleanType WriteRAWImage(const ImageInfo *image_info,Image *image,
     }
   }
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     /*
@@ -596,8 +599,7 @@ static MagickBooleanType WriteRAWImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

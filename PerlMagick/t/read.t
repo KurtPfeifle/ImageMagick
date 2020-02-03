@@ -1,11 +1,11 @@
 #!/usr/bin/perl
-#  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization
+#  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization
 #  dedicated to making software imaging solutions freely available.
 #
 #  You may not use this file except in compliance with the License.  You may
 #  obtain a copy of the License at
 #
-#    http://www.imagemagick.org/script/license.php
+#    https://imagemagick.org/script/license.php
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,7 +45,7 @@ testReadCompare('input.dib', 'reference/read/input_dib.miff', q//, 0.0, 0.0);
 
 print("Flexible Image Transport System ...\n");
 ++$test;
-testReadCompare('input.fits', 'reference/read/input_fits.miff', q//, 0.06, 0.6);
+testReadCompare('input.fits', 'reference/read/input_fits.miff', q//, 0.17, 0.7);
 
 print("CompuServe graphics interchange format ...\n");
 ++$test;
@@ -162,7 +162,7 @@ testReadCompare('sun:input.im24', 'reference/read/input_im24.miff', q//, 0.0, 0.
 
 print("Truevision Targa image file ...\n");
 ++$test;
-testReadCompare('input.tga', 'reference/read/input_tga.miff', q//, 0.0, 0.0);
+testReadCompare('input.tga', 'reference/read/input_tga.miff', q//, 0.1, 0.9);
 
 print("PSX TIM file ...\n");
 ++$test;

@@ -5,10 +5,12 @@
 #include <Magick++/Image.h>
 #include <Magick++/STL.h>
 
-static std::string getInitializer(const std::string module)
+static std::string getInitializer(const std::string magick_module)
 {
-  if ((module == "BGR") || (module == "CMYK") || (module =="RGB") || (module =="YUV"))
+  if ((magick_module == "BGR") || (magick_module == "CMYK") || (magick_module =="RGB") || (magick_module =="YUV"))
     return "interlace";
+  if (magick_module == "PNG")
+    return "png";
   return "";
 }
 

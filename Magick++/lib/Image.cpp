@@ -311,8 +311,7 @@ void Magick::Image::alpha(const bool alphaFlag_)
   // the image already has a matte channel but a matte channel is not
   // desired, then set the matte channel to opaque.
   GetPPException;
-  if ((alphaFlag_ && !constImage()->alpha_trait) ||
-      (constImage()->alpha_trait && !alphaFlag_))
+  if (bool(alphaFlag_) != bool(constImage()->alpha_trait))
     SetImageAlpha(image(),OpaqueAlpha,exceptionInfo);
   ThrowImageException;
 
@@ -3523,6 +3522,20 @@ void Magick::Image::localContrast(const double radius_,const double strength_)
 
   GetPPException;
   newImage=LocalContrastImage(constImage(),radius_,strength_,exceptionInfo);
+  replaceImage(newImage);
+  ThrowImageException;
+}
+
+void Magick::Image::localContrastChannel(const ChannelType channel_,
+  const double radius_,const double strength_)
+{
+  MagickCore::Image
+    *newImage;
+
+  GetPPException;
+  GetAndSetPPChannelMask(channel_);
+  newImage=LocalContrastImage(constImage(),radius_,strength_,exceptionInfo);
+  RestorePPChannelMask;
   replaceImage(newImage);
   ThrowImageException;
 }

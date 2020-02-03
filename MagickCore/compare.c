@@ -17,13 +17,13 @@
 %                               December 2003                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -221,7 +221,9 @@ MagickExport Image *CompareImages(Image *image,const Image *reconstruct_image,
     Generate difference image.
   */
   status=MagickTrue;
-  fuzz=GetFuzzyColorDistance(image,reconstruct_image);
+  fuzz=(double) MagickMin(GetPixelChannels(image),
+    GetPixelChannels(reconstruct_image))*
+    GetFuzzyColorDistance(image,reconstruct_image);
   image_view=AcquireVirtualCacheView(image,exception);
   reconstruct_view=AcquireVirtualCacheView(reconstruct_image,exception);
   highlight_view=AcquireAuthenticCacheView(highlight_image,exception);
@@ -430,7 +432,8 @@ static MagickBooleanType GetAbsoluteDistortion(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
+      if ((GetPixelReadMask(image,p) <= (QuantumRange/2)) ||
+          (GetPixelReadMask(reconstruct_image,q) <= (QuantumRange/2)))
         {
           p+=GetPixelChannels(image);
           q+=GetPixelChannels(reconstruct_image);
@@ -1078,7 +1081,11 @@ static MagickBooleanType GetNormalizedCrossCorrelationDistortion(
         MagickBooleanType
           proceed;
 
-        proceed=SetImageProgress(image,SimilarityImageTag,progress++,rows);
+#if defined(MAGICKCORE_OPENMP_SUPPORT)
+        #pragma omp atomic
+#endif
+        progress++;
+        proceed=SetImageProgress(image,SimilarityImageTag,progress,rows);
         if (proceed == MagickFalse)
           {
             status=MagickFalse;
@@ -1245,7 +1252,7 @@ static MagickBooleanType GetPeakSignalToNoiseRatio(const Image *image,
     if (fabs(distortion[i]) < MagickEpsilon)
       distortion[i]=INFINITY;
     else
-      distortion[i]=20.0*MagickLog10(1.0/sqrt(distortion[i]));
+      distortion[i]=10.0*MagickLog10(1.0)-10.0*MagickLog10(distortion[i]);
   return(status);
 }
 
@@ -1460,21 +1467,18 @@ static MagickBooleanType GetStructuralSimilarityDistortion(const Image *image,
         *magick_restrict reference,
         *magick_restrict target;
 
-      register double
+      register MagickRealType
         *k;
 
       ssize_t
         v;
 
       (void) memset(x_pixel_mu,0,sizeof(x_pixel_mu));
-      (void) memset(x_pixel_sigma_squared,0,
-        sizeof(x_pixel_sigma_squared));
+      (void) memset(x_pixel_sigma_squared,0,sizeof(x_pixel_sigma_squared));
       (void) memset(xy_sigma,0,sizeof(xy_sigma));
-      (void) memset(x_pixel_sigma_squared,0,
-        sizeof(y_pixel_sigma_squared));
+      (void) memset(x_pixel_sigma_squared,0,sizeof(y_pixel_sigma_squared));
       (void) memset(y_pixel_mu,0,sizeof(y_pixel_mu));
-      (void) memset(y_pixel_sigma_squared,0,
-        sizeof(y_pixel_sigma_squared));
+      (void) memset(y_pixel_sigma_squared,0,sizeof(y_pixel_sigma_squared));
       k=kernel_info->values;
       reference=p;
       target=q;
@@ -1919,12 +1923,6 @@ MagickExport MagickBooleanType IsImagesEqual(const Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(reconstruct_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         double
@@ -2058,12 +2056,6 @@ MagickExport MagickBooleanType SetImageColorMetric(Image *image,
       register ssize_t
         i;
 
-      if (GetPixelWriteMask(image,p) <= (QuantumRange/2))
-        {
-          p+=GetPixelChannels(image);
-          q+=GetPixelChannels(reconstruct_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         double
@@ -2276,12 +2268,6 @@ MagickExport Image *SimilarityImage(const Image *image,const Image *reference,
         }
       if (metric == PerceptualHashErrorMetric)
         similarity=MagickMin(0.01*similarity,1.0);
-      if (GetPixelWriteMask(similarity_image,q) <= (QuantumRange/2))
-        {
-          SetPixelBackgoundColor(similarity_image,q);
-          q+=GetPixelChannels(similarity_image);
-          continue;
-        }
       for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
       {
         PixelChannel channel = GetPixelChannelChannel(image,i);
@@ -2305,10 +2291,10 @@ MagickExport Image *SimilarityImage(const Image *image,const Image *reference,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_SimilarityImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,SimilarityImageTag,progress++,
-          image->rows);
+        progress++;
+        proceed=SetImageProgress(image,SimilarityImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }

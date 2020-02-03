@@ -19,13 +19,13 @@
 %                              September 2013                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -1962,8 +1962,9 @@ static MagickBooleanType ReadMipmaps(const ImageInfo *image_info,Image *image,
       for (i = 1; (i < (ssize_t) dds_info->mipmapcount) && w && h; i++)
       {
         AcquireNextImage(image_info,image,exception);
-        if (GetNextImageInList(image) == (Image *) NULL)
+        if (image->next == (Image *) NULL)
           return(MagickFalse);
+        image->next->alpha_trait=image->alpha_trait;
         image=SyncNextImageInList(image);
         status=SetImageExtent(image,w,h,exception);
         if (status == MagickFalse)
@@ -2792,13 +2793,14 @@ static MagickBooleanType WriteDDSImage(const ImageInfo *image_info,
   (void) TransformImageColorspace(image,sRGBColorspace,exception);
   pixelFormat=DDPF_FOURCC;
   compression=FOURCC_DXT5;
-
   if (image->alpha_trait == UndefinedPixelTrait)
     compression=FOURCC_DXT1;
-
   if (LocaleCompare(image_info->magick,"dxt1") == 0)
     compression=FOURCC_DXT1;
-
+  if (image_info->compression == DXT1Compression)
+    compression=FOURCC_DXT1;
+  else if (image_info->compression == NoCompression)
+    pixelFormat=DDPF_RGB;
   option=GetImageOption(image_info,"dds:compression");
   if (option != (char *) NULL)
     {
@@ -2807,10 +2809,8 @@ static MagickBooleanType WriteDDSImage(const ImageInfo *image_info,
        if (LocaleCompare(option,"none") == 0)
          pixelFormat=DDPF_RGB;
     }
-
   clusterFit=MagickFalse;
   weightByAlpha=MagickFalse;
-
   if (pixelFormat == DDPF_FOURCC)
     {
       option=GetImageOption(image_info,"dds:cluster-fit");
@@ -2825,7 +2825,6 @@ static MagickBooleanType WriteDDSImage(const ImageInfo *image_info,
             }
         }
     }
-
   mipmaps=0;
   fromlist=MagickFalse;
   option=GetImageOption(image_info,"dds:mipmaps");
@@ -2845,7 +2844,6 @@ static MagickBooleanType WriteDDSImage(const ImageInfo *image_info,
           }
         }
     }
-
   if ((mipmaps == 0) &&
       ((image->columns & (image->columns - 1)) == 0) &&
       ((image->rows & (image->rows - 1)) == 0))
@@ -2866,16 +2864,16 @@ static MagickBooleanType WriteDDSImage(const ImageInfo *image_info,
           }
         }
     }
-
-  WriteDDSInfo(image,pixelFormat,compression,mipmaps);
-
+  option=GetImageOption(image_info,"dds:raw");
+  if (IsStringTrue(option) == MagickFalse)
+    WriteDDSInfo(image,pixelFormat,compression,mipmaps);
+  else
+    mipmaps=0;
   WriteImageData(image,pixelFormat,compression,clusterFit,weightByAlpha,
     exception);
-
   if ((mipmaps > 0) && (WriteMipmaps(image,image_info,pixelFormat,compression,
        mipmaps,fromlist,clusterFit,weightByAlpha,exception) == MagickFalse))
     return(MagickFalse);
-
   (void) CloseBlob(image);
   return(MagickTrue);
 }
@@ -2950,7 +2948,7 @@ static void WriteDDSInfo(Image *image, const size_t pixelFormat,
   if (pixelFormat == DDPF_FOURCC)
     {
       (void) WriteBlobLSBLong(image,(unsigned int) compression);
-      for(i=0;i < 5;i++) // bitcount / masks
+      for(i=0;i < 5;i++)  /* bitcount / masks */
         (void) WriteBlobLSBLong(image,0x00);
     }
   else
@@ -2975,7 +2973,7 @@ static void WriteDDSInfo(Image *image, const size_t pixelFormat,
     }
   
   (void) WriteBlobLSBLong(image,caps);
-  for(i=0;i < 4;i++) // ddscaps2 + reserved region
+  for(i=0;i < 4;i++)   /* ddscaps2 + reserved region */
     (void) WriteBlobLSBLong(image,0x00);
 }
 

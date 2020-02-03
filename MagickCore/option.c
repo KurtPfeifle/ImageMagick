@@ -17,13 +17,13 @@
 %                                 March 2000                                  %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -52,7 +52,6 @@
 #include "MagickCore/exception.h"
 #include "MagickCore/exception-private.h"
 #include "MagickCore/fourier.h"
-#include "MagickCore/fx.h"
 #include "MagickCore/gem.h"
 #include "MagickCore/geometry.h"
 #include "MagickCore/image.h"
@@ -78,6 +77,7 @@
 #include "MagickCore/threshold.h"
 #include "MagickCore/token.h"
 #include "MagickCore/utility.h"
+#include "MagickCore/visual-effects.h"
 
 /*
   ImageMagick options.
@@ -330,6 +330,7 @@ static const OptionInfo
     { "  gaussian-blur", 0, UndefinedOptionFlag, MagickFalse },
     { "  grayscale", 0, UndefinedOptionFlag, MagickFalse },
     { "  implode", 0, UndefinedOptionFlag, MagickFalse },
+    { "  kmeans", 0, UndefinedOptionFlag, MagickFalse },
     { "  lat", 0, UndefinedOptionFlag, MagickFalse },
     { "  level", 0, UndefinedOptionFlag, MagickFalse },
     { "  map", 0, UndefinedOptionFlag, MagickFalse },
@@ -348,6 +349,7 @@ static const OptionInfo
     { "  radial-blur", 0, UndefinedOptionFlag, MagickFalse },
     { "  raise", 0, UndefinedOptionFlag, MagickFalse },
     { "  random-threshold", 0, UndefinedOptionFlag, MagickFalse },
+    { "  range-threshold", 0, UndefinedOptionFlag, MagickFalse },
     { "  resample", 0, UndefinedOptionFlag, MagickFalse },
     { "  resize", 0, UndefinedOptionFlag, MagickFalse },
     { "  roll", 0, UndefinedOptionFlag, MagickFalse },
@@ -469,6 +471,7 @@ static const OptionInfo
     { "HSL", HSLColorspace, UndefinedOptionFlag, MagickFalse },
     { "HSV", HSVColorspace, UndefinedOptionFlag, MagickFalse },
     { "HWB", HWBColorspace, UndefinedOptionFlag, MagickFalse },
+    { "Jzazbz", JzazbzColorspace, UndefinedOptionFlag, MagickFalse },
     { "Lab", LabColorspace, UndefinedOptionFlag, MagickFalse },
     { "LCH", LCHColorspace, UndefinedOptionFlag, MagickFalse },
     { "LCHab", LCHabColorspace, UndefinedOptionFlag, MagickFalse },
@@ -611,6 +614,8 @@ static const OptionInfo
     { "-charcoal", 1L, SimpleOperatorFlag, MagickFalse },
     { "+chop", 1L, DeprecateOptionFlag, MagickTrue },
     { "-chop", 1L, SimpleOperatorFlag, MagickFalse },
+    { "+clahe", 1L, DeprecateOptionFlag, MagickTrue },
+    { "-clahe", 1L, SimpleOperatorFlag, MagickFalse },
     { "+clamp", 0L, DeprecateOptionFlag, MagickTrue },
     { "-clamp", 0L, SimpleOperatorFlag, MagickFalse },
     { "-clip", 0L, SimpleOperatorFlag, MagickFalse },
@@ -812,6 +817,7 @@ static const OptionInfo
     { "-interword-spacing", 1L, ImageInfoOptionFlag | DrawInfoOptionFlag, MagickFalse },
     { "+kerning", 0L, ImageInfoOptionFlag | DrawInfoOptionFlag, MagickFalse },
     { "-kerning", 1L, ImageInfoOptionFlag | DrawInfoOptionFlag, MagickFalse },
+    { "-kmeans", 1L, SimpleOperatorFlag, MagickFalse },
     { "+kuwahara", 0L, DeprecateOptionFlag, MagickTrue },
     { "-kuwahara", 1L, SimpleOperatorFlag, MagickFalse },
     { "+label", 0L, ImageInfoOptionFlag | NeverInterpretArgsFlag, MagickFalse },
@@ -927,6 +933,8 @@ static const OptionInfo
     { "+raise", 1L, SimpleOperatorFlag, MagickFalse },
     { "+random-threshold", 1L, DeprecateOptionFlag, MagickTrue },
     { "-random-threshold", 1L, SimpleOperatorFlag, MagickFalse },
+    { "+range-threshold", 1L, DeprecateOptionFlag, MagickTrue },
+    { "-range-threshold", 1L, SimpleOperatorFlag, MagickFalse },
     { "-read", 1L, NoImageOperatorFlag | NeverInterpretArgsFlag, MagickFalse },
     { "+read-mask", 0L, SimpleOperatorFlag | NeverInterpretArgsFlag, MagickFalse },
     { "-read-mask", 1L, SimpleOperatorFlag | NeverInterpretArgsFlag, MagickFalse },
@@ -1127,6 +1135,7 @@ static const OptionInfo
   {
     { "Undefined", UndefinedCompliance, UndefinedOptionFlag, MagickTrue },
     { "CSS", CSSCompliance, UndefinedOptionFlag, MagickFalse },
+    { "MVG", MVGCompliance, UndefinedOptionFlag, MagickFalse },
     { "No", NoCompliance, UndefinedOptionFlag, MagickFalse },
     { "SVG", SVGCompliance, UndefinedOptionFlag, MagickFalse },
     { "X11", X11Compliance, UndefinedOptionFlag, MagickFalse },
@@ -1216,9 +1225,11 @@ static const OptionInfo
   CompressOptions[] =
   {
     { "Undefined", UndefinedCompression, UndefinedOptionFlag, MagickTrue },
-    { "B44", B44Compression, UndefinedOptionFlag, MagickFalse },
     { "B44A", B44ACompression, UndefinedOptionFlag, MagickFalse },
+    { "B44", B44Compression, UndefinedOptionFlag, MagickFalse },
     { "BZip", BZipCompression, UndefinedOptionFlag, MagickFalse },
+    { "DWAA", DWAACompression, UndefinedOptionFlag, MagickFalse },
+    { "DWAB", DWABCompression, UndefinedOptionFlag, MagickFalse },
     { "DXT1", DXT1Compression, UndefinedOptionFlag, MagickFalse },
     { "DXT3", DXT3Compression, UndefinedOptionFlag, MagickFalse },
     { "DXT5", DXT5Compression, UndefinedOptionFlag, MagickFalse },
@@ -1226,19 +1237,21 @@ static const OptionInfo
     { "Group4", Group4Compression, UndefinedOptionFlag, MagickFalse },
     { "JBIG1", JBIG1Compression, UndefinedOptionFlag, MagickFalse },
     { "JBIG2", JBIG2Compression, UndefinedOptionFlag, MagickFalse },
-    { "JPEG", JPEGCompression, UndefinedOptionFlag, MagickFalse },
     { "JPEG2000", JPEG2000Compression, UndefinedOptionFlag, MagickFalse },
-    { "Lossless", LosslessJPEGCompression, UndefinedOptionFlag, MagickFalse },
+    { "JPEG", JPEGCompression, UndefinedOptionFlag, MagickFalse },
     { "LosslessJPEG", LosslessJPEGCompression, UndefinedOptionFlag, MagickFalse },
+    { "Lossless", LosslessJPEGCompression, UndefinedOptionFlag, MagickFalse },
     { "LZMA", LZMACompression, UndefinedOptionFlag, MagickFalse },
     { "LZW", LZWCompression, UndefinedOptionFlag, MagickFalse },
     { "None", NoCompression, UndefinedOptionFlag, MagickFalse },
     { "Piz", PizCompression, UndefinedOptionFlag, MagickFalse },
     { "Pxr24", Pxr24Compression, UndefinedOptionFlag, MagickFalse },
     { "RLE", RLECompression, UndefinedOptionFlag, MagickFalse },
-    { "Zip", ZipCompression, UndefinedOptionFlag, MagickFalse },
     { "RunlengthEncoded", RLECompression, UndefinedOptionFlag, MagickFalse },
+    { "WebP", WebPCompression, UndefinedOptionFlag, MagickFalse },
     { "ZipS", ZipSCompression, UndefinedOptionFlag, MagickFalse },
+    { "Zip", ZipCompression, UndefinedOptionFlag, MagickFalse },
+    { "Zstd", ZstdCompression, UndefinedOptionFlag, MagickFalse },
     { (char *) NULL, UndefinedCompression, UndefinedOptionFlag, MagickFalse }
   },
   DataTypeOptions[] =
@@ -1471,7 +1484,6 @@ static const OptionInfo
     { "Nearest", NearestInterpolatePixel, UndefinedOptionFlag, MagickFalse },
     { "NearestNeighbor", NearestInterpolatePixel, UndefinedOptionFlag, MagickTrue },
     { "Spline", SplineInterpolatePixel, UndefinedOptionFlag, MagickFalse },
-/*  { "Filter", FilterInterpolatePixel, UndefinedOptionFlag, MagickFalse }, */
     { (char *) NULL, UndefinedInterpolatePixel, UndefinedOptionFlag, MagickFalse }
   },
   KernelOptions[] =
@@ -1768,6 +1780,7 @@ static const OptionInfo
     { "Blue", BluePixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Cb", CbPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Composite", CompositePixelChannel, UndefinedOptionFlag, MagickFalse },
+    { "CompositeMask", CompositeMaskPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "C", CyanPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Cr", CrPixelChannel, UndefinedOptionFlag, MagickFalse },
     { "Cyan", CyanPixelChannel, UndefinedOptionFlag, MagickFalse },
@@ -1829,6 +1842,7 @@ static const OptionInfo
     { "Coder", CoderPolicyDomain, UndefinedOptionFlag, MagickFalse },
     { "Delegate", DelegatePolicyDomain, UndefinedOptionFlag, MagickFalse },
     { "Filter", FilterPolicyDomain, UndefinedOptionFlag, MagickFalse },
+    { "Module", ModulePolicyDomain, UndefinedOptionFlag, MagickFalse },
     { "Path", PathPolicyDomain, UndefinedOptionFlag, MagickFalse },
     { "Resource", ResourcePolicyDomain, UndefinedOptionFlag, MagickFalse },
     { "System", SystemPolicyDomain, UndefinedOptionFlag, MagickFalse },
@@ -1990,6 +2004,7 @@ static const OptionInfo
   {
     { "Undefined", UndefinedStyle, UndefinedOptionFlag, MagickTrue },
     { "Any", AnyStyle, UndefinedOptionFlag, MagickFalse },
+    { "Bold", BoldStyle, UndefinedOptionFlag, MagickFalse },
     { "Italic", ItalicStyle, UndefinedOptionFlag, MagickFalse },
     { "Normal", NormalStyle, UndefinedOptionFlag, MagickFalse },
     { "Oblique", ObliqueStyle, UndefinedOptionFlag, MagickFalse },
@@ -2434,6 +2449,8 @@ MagickExport ssize_t GetCommandOptionFlags(const CommandOption option,
   ssize_t
     option_types;
 
+  if ((options == (const char *) NULL) || (*options == '\0'))
+    return(-1);
   option_info=GetOptionInfo(option);
   if (option_info == (const OptionInfo *) NULL)
     return(UndefinedOptionFlag);
@@ -2462,7 +2479,7 @@ MagickExport ssize_t GetCommandOptionFlags(const CommandOption option,
       if (LocaleCompare(token,option_info[i].mnemonic) == 0)
         break;
     command_info=option_info+i;
-    if ((command_info->mnemonic == (const char *) NULL) &&
+    if ((command_info->mnemonic == (const char *) NULL) && (*token != '\0') &&
         ((strchr(token+1,'-') != (char *) NULL) ||
          (strchr(token+1,'_') != (char *) NULL)))
       {
@@ -2634,8 +2651,6 @@ MagickExport MagickBooleanType IsCommandOption(const char *option)
     return(((*option == '{') || (*option == '}') || (*option == '[') ||
       (*option == ']')) ? MagickTrue : MagickFalse);
   option++;
-  if (*option == '-')
-    return(MagickTrue);
   if (isalpha((int) ((unsigned char) *option)) == 0)
     return(MagickFalse);
   return(MagickTrue);
@@ -2838,6 +2853,9 @@ MagickExport ssize_t ParseChannelOption(const char *channels)
   register ssize_t
     i;
 
+  size_t
+    length;
+
   ssize_t
     channel;
 
@@ -2845,7 +2863,8 @@ MagickExport ssize_t ParseChannelOption(const char *channels)
   if (channel >= 0)
     return(channel);
   channel=0;
-  for (i=0; i < (ssize_t) strlen(channels); i++)
+  length=strlen(channels);
+  for (i=0; i < (ssize_t) length; i++)
   {
     switch (channels[i])
     {
@@ -3068,7 +3087,7 @@ MagickExport ssize_t ParsePixelChannelOption(const char *channels)
   ssize_t
     channel;
 
-  GetNextToken(channels,(const char **) NULL,MagickPathExtent,token);
+  (void) GetNextToken(channels,(const char **) NULL,MagickPathExtent,token);
   if ((*token == ';') || (*token == '|'))
     return(RedPixelChannel);
   channel=ParseCommandOption(MagickPixelChannelOptions,MagickTrue,token);

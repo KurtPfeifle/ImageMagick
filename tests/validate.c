@@ -18,13 +18,13 @@
 %                               March 2001                                    %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -40,12 +40,7 @@
 /*
   Include declarations.
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <math.h>
-#include <locale.h>
+#include "MagickWand/studio.h"
 #include "MagickWand/MagickWand.h"
 #include "MagickCore/colorspace-private.h"
 #include "MagickCore/gem.h"
@@ -1683,7 +1678,8 @@ static size_t ValidateImageFormatsInMemory(ImageInfo *image_info,
       reference_image->depth=reference_types[j].depth;
       reference_image->compression=reference_formats[i].compression;
       length=8192;
-      blob=ImageToBlob(image_info,reference_image,&length,exception);
+      blob=(unsigned char *) ImageToBlob(image_info,reference_image,&length,
+        exception);
       if ((blob == (unsigned char *) NULL) ||
           (exception->severity >= ErrorException))
         {
@@ -2687,7 +2683,7 @@ int main(int argc,char **argv)
       elapsed_time=GetElapsedTime(timer);
       user_time=GetUserTime(timer);
       (void) FormatLocaleFile(stderr,
-        "Performance: %.20gi %gips %0.3fu %ld:%02ld.%03ld\n",(double)
+        "Performance: %.20gi %.3fips %0.6fu %ld:%02ld.%03ld\n",(double)
         iterations,1.0*iterations/elapsed_time,user_time,(long)
         (elapsed_time/60.0),(long) ceil(fmod(elapsed_time,60.0)),
         (long) (1000.0*(elapsed_time-floor(elapsed_time))));

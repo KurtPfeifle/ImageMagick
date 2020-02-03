@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -319,7 +319,10 @@ static Image *ReadPCLImage(const ImageInfo *image_info,ExceptionInfo *exception)
      else
        delegate_info=GetDelegateInfo("pcl:color",(char *) NULL,exception);
   if (delegate_info == (const DelegateInfo *) NULL)
-    return((Image *) NULL);
+    {
+      image=DestroyImage(image);
+      return((Image *) NULL);
+    }
   if ((page.width == 0) || (page.height == 0))
     (void) ParseAbsoluteGeometry(PSPageGeometry,&page);
   if (image_info->page != (char *) NULL)
@@ -331,7 +334,7 @@ static Image *ReadPCLImage(const ImageInfo *image_info,ExceptionInfo *exception)
   page.width=(size_t) floor(page.width*image->resolution.x/delta.x+0.5);
   page.height=(size_t) floor(page.height*image->resolution.y/delta.y+0.5);
   (void) FormatLocaleString(options,MagickPathExtent,"-g%.20gx%.20g ",(double)
-     page.width,(double) page.height);
+    page.width,(double) page.height);
   image=DestroyImage(image);
   read_info=CloneImageInfo(image_info);
   *read_info->magick='\0';
@@ -677,6 +680,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
 
   size_t
     density,
+    imageListLength,
     length,
     one,
     packets;
@@ -715,6 +719,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
     }
   scene=0;
   one=1;
+  imageListLength=GetImageListLength(image);
   do
   {
     /*
@@ -973,8 +978,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

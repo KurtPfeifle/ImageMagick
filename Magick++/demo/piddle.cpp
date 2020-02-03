@@ -143,12 +143,16 @@ int main( int /*argc*/, char ** argv)
     //
     // Draw text.
     //
+#if MAGICKCORE_FREETYPE_DELEGATE
+    if (getenv("MAGICK_FONT") != 0)
+      drawList.push_back(DrawableFont(string(getenv("MAGICK_FONT"))));
     drawList.push_back(DrawableFillColor("green"));
     drawList.push_back(DrawableStrokeColor(Color())); // unset color
     drawList.push_back(DrawablePointSize(24));
     drawList.push_back(DrawableTranslation(30,140));
     drawList.push_back(DrawableRotation(45.0));
     drawList.push_back(DrawableText(0,0,"This is a test!"));
+#endif
 
     // Finish drawing by popping back to base context.
     drawList.push_back(DrawablePopGraphicContext());

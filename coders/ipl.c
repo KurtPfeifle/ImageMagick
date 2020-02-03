@@ -19,13 +19,13 @@
 %                                  2008.05.07                                 %
 %                                     v 0.9                                   %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -226,8 +226,9 @@ static Image *ReadIPLImage(const ImageInfo *image_info,ExceptionInfo *exception)
     Determine endianness 
    If we get back "iiii", we have LSB,"mmmm", MSB
    */
-  count=ReadBlob(image,4,magick); 
-  (void) count;
+  count=ReadBlob(image,4,magick);
+  if (count != 4)
+    ThrowReaderException(CorruptImageError, "ImproperImageHeader");
   if((LocaleNCompare((char *) magick,"iiii",4) == 0))  
     image->endian=LSBEndian;
   else{
@@ -243,7 +244,7 @@ static Image *ReadIPLImage(const ImageInfo *image_info,ExceptionInfo *exception)
    Excellent, now we read the header unimpeded.
    */
   count=ReadBlob(image,4,magick); 
-  if((LocaleNCompare((char *) magick,"data",4) != 0))  
+  if((count != 4) || (LocaleNCompare((char *) magick,"data",4) != 0))
     ThrowReaderException(CorruptImageError, "ImproperImageHeader");
   ipl_info.size=ReadBlobLong(image); 
   ipl_info.width=ReadBlobLong(image); 
@@ -402,16 +403,17 @@ static Image *ReadIPLImage(const ImageInfo *image_info,ExceptionInfo *exception)
                  image->filename);
       break;
     }
-   if(t_count < ipl_info.z * ipl_info.time){
+   if (t_count < ipl_info.z * ipl_info.time)
+     {
       /*
        Proceed to next image.
        */
       AcquireNextImage(image_info,image,exception);
       if (GetNextImageInList(image) == (Image *) NULL)
-      {
-        image=DestroyImageList(image);
-        return((Image *) NULL);
-      }
+        {
+          status=MagickFalse;
+          break;
+        }
       image=SyncNextImageInList(image); 
       status=SetImageProgress(image,LoadImagesTag,TellBlob(image),
         GetBlobSize(image));
@@ -420,6 +422,8 @@ static Image *ReadIPLImage(const ImageInfo *image_info,ExceptionInfo *exception)
     }
   } while (t_count < ipl_info.z*ipl_info.time);
   CloseBlob(image);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
   return(GetFirstImageInList(image));
 }
 
@@ -523,6 +527,9 @@ static MagickBooleanType WriteIPLImage(const ImageInfo *image_info,Image *image,
   QuantumInfo
     *quantum_info;
 
+  size_t
+    imageListLength;
+
   ssize_t
     y;
   
@@ -579,7 +586,8 @@ static MagickBooleanType WriteIPLImage(const ImageInfo *image_info,Image *image,
     break;
     
   }
-  ipl_info.z = (unsigned int) GetImageListLength(image);
+  imageListLength=GetImageListLength(image);
+  ipl_info.z = (unsigned int) imageListLength;
   /* There is no current method for detecting whether we have T or Z stacks */
   ipl_info.time = 1;
   ipl_info.width = (unsigned int) image->columns;
@@ -679,8 +687,7 @@ static MagickBooleanType WriteIPLImage(const ImageInfo *image_info,Image *image,
   if (GetNextImageInList(image) == (Image *) NULL)
     break;
       image=SyncNextImageInList(image);
-      status=SetImageProgress(image,SaveImagesTag,scene++,
-        GetImageListLength(image));
+      status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
       if (status == MagickFalse)
         break;
     }while (image_info->adjoin != MagickFalse);

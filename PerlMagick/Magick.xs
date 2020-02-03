@@ -23,13 +23,13 @@
 %                             February 1997                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    http://www.imagemagick.org/script/license.php                            %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -75,7 +75,7 @@ extern "C" {
 #define DegreesToRadians(x)  (MagickPI*(x)/180.0)
 #define EndOf(array)  (&array[NumberOf(array)])
 #define MagickPI  3.14159265358979323846264338327950288419716939937510
-#define MaxArguments  33
+#define MaxArguments  34
 #ifndef na
 #define na  PL_na
 #endif
@@ -288,7 +288,8 @@ static struct
       {"tile", ImageReference}, {"kerning", RealReference},
       {"interline-spacing", RealReference},
       {"interword-spacing", RealReference},
-      {"direction", MagickDirectionOptions} } },
+      {"direction", MagickDirectionOptions},
+      {"decorate", MagickDecorateOptions} } },
     { "ColorFloodfill", { {"geometry", StringReference},
       {"x", IntegerReference}, {"y", IntegerReference},
       {"fill", StringReference}, {"bordercolor", StringReference},
@@ -301,7 +302,7 @@ static struct
       {"color", StringReference}, {"mask", ImageReference},
       {"channel", MagickChannelOptions},
       {"interpolate", MagickInterpolateOptions}, {"args", StringReference},
-      {"blend", StringReference}, {"crop-to-self", MagickBooleanOptions} } },
+      {"blend", StringReference}, {"clip-to-self", MagickBooleanOptions} } },
     { "Contrast", { {"sharpen", MagickBooleanOptions} } },
     { "CycleColormap", { {"display", IntegerReference} } },
     { "Draw", { {"primitive", MagickPrimitiveOptions},
@@ -412,7 +413,8 @@ static struct
       {"background", StringReference} } },
     { "Difference", { {"image", ImageReference}, {"fuzz", StringReference} } },
     { "AdaptiveThreshold", { {"geometry", StringReference},
-      {"width", IntegerReference}, {"height", IntegerReference} } },
+      {"width", IntegerReference}, {"height", IntegerReference},
+      {"bias", RealReference} } },
     { "Resample", { {"density", StringReference}, {"x", RealReference},
       {"y", RealReference}, {"filter", MagickFilterOptions},
       {"support", RealReference } } },
@@ -558,7 +560,7 @@ static struct
     { "CopyPixels", { {"image", ImageReference}, {"geometry", StringReference},
       {"width", IntegerReference}, {"height", IntegerReference},
       {"x", IntegerReference}, {"y", IntegerReference},
-      {"gravity", MagickGravityOptions}, {"offset", StringReference}, 
+      {"gravity", MagickGravityOptions}, {"offset", StringReference},
       {"dx", IntegerReference}, {"dy", IntegerReference} } },
     { "Color", { {"color", StringReference} } },
     { "WaveletDenoise", {  {"geometry", StringReference},
@@ -566,6 +568,15 @@ static struct
       {"channel", MagickChannelOptions} } },
     { "Colorspace", { {"colorspace", MagickColorspaceOptions} } },
     { "AutoThreshold", { {"method", MagickAutoThresholdOptions} } },
+    { "RangeThreshold", { {"geometry", StringReference},
+      {"low-black", RealReference}, {"low-white", RealReference},
+      {"high-white", RealReference}, {"high-black", RealReference},
+      {"channel", MagickChannelOptions} } },
+    { "CLAHE", { {"geometry", StringReference}, {"width", IntegerReference},
+      {"height", IntegerReference}, {"number-bins", IntegerReference},
+      {"clip-limit", RealReference} } },
+    { "Kmeans", { {"geometry", StringReference}, {"colors", IntegerReference},
+      {"iterations", IntegerReference}, {"tolerance", RealReference} } },
   };
 
 static SplayTreeInfo
@@ -7634,6 +7645,12 @@ Mogrify(ref,...)
     ColorspaceImage    = 292
     AutoThreshold      = 293
     AutoThresholdImage = 294
+    RangeThreshold     = 295
+    RangeThresholdImage= 296
+    CLAHE              = 297
+    CLAHEImage         = 298
+    Kmeans             = 299
+    KMeansImage        = 300
     MogrifyRegion      = 666
   PPCODE:
   {
@@ -7668,9 +7685,6 @@ Mogrify(ref,...)
     Image
       *image,
       *next;
-
-    MagickBooleanType
-      status;
 
     MagickStatusType
       flags;
@@ -8597,6 +8611,9 @@ Mogrify(ref,...)
           if (attribute_flag[32] != 0)
             draw_info->direction=(DirectionType)
               argument_list[32].integer_reference;
+          if (attribute_flag[33] != 0)
+            draw_info->decorate=(DecorationType)
+              argument_list[33].integer_reference;
           (void) AnnotateImage(image,draw_info,exception);
           draw_info=DestroyDrawInfo(draw_info);
           break;
@@ -8738,6 +8755,27 @@ Mogrify(ref,...)
             (void) SetImageArtifact(composite_image,"compose:args",
               argument_list[14].string_reference);
           clip_to_self=MagickTrue;
+          switch (compose)
+          {
+            case ClearCompositeOp:
+            case SrcCompositeOp:
+            case InCompositeOp:
+            case SrcInCompositeOp:
+            case OutCompositeOp:
+            case SrcOutCompositeOp:
+            case DstInCompositeOp:
+            case DstAtopCompositeOp:
+            case CopyAlphaCompositeOp:
+            case ChangeMaskCompositeOp:
+            case DissolveCompositeOp:
+            case BlendCompositeOp:
+            {
+              clip_to_self=MagickFalse;
+              break;
+            }
+            default:
+              break;
+          }
           if (attribute_flag[15] != 0)
             clip_to_self=(MagickBooleanType)
               argument_list[15].integer_reference;
@@ -8765,12 +8803,6 @@ Mogrify(ref,...)
               /*
                 Tile the composite image.
               */
-             if (attribute_flag[8] != 0)   /* "tile=>" */
-               (void) SetImageArtifact(rotate_image,"compose:outside-overlay",
-                 "false");
-             else
-               (void) SetImageArtifact(composite_image,
-                 "compose:outside-overlay","false");
              for (y=0; y < (ssize_t) image->rows; y+=(ssize_t) composite_image->rows)
                 for (x=0; x < (ssize_t) image->columns; x+=(ssize_t) composite_image->columns)
                 {
@@ -8814,7 +8846,7 @@ Mogrify(ref,...)
                     exception);
                   (void) CompositeImage(composite_image,
                     argument_list[10].image_reference,CopyGreenCompositeOp,
-                    MagickTrue,0,0,exception);
+                    clip_to_self,0,0,exception);
                 }
               else
                 {
@@ -9064,8 +9096,7 @@ Mogrify(ref,...)
             draw_info->pointsize=argument_list[16].real_reference;
           if (attribute_flag[17] != 0)
             {
-              draw_info->stroke_antialias=argument_list[17].integer_reference != 0
-                ? MagickTrue : MagickFalse;
+              draw_info->stroke_antialias=argument_list[17].integer_reference != 0 ? MagickTrue : MagickFalse;
               draw_info->text_antialias=draw_info->stroke_antialias;
             }
           if (attribute_flag[18] != 0)
@@ -9124,7 +9155,7 @@ Mogrify(ref,...)
           if (attribute_flag[32] != 0)
             draw_info->direction=(DirectionType)
               argument_list[32].integer_reference;
-          DrawImage(image,draw_info,exception);
+          (void) DrawImage(image,draw_info,exception);
           draw_info=DestroyDrawInfo(draw_info);
           break;
         }
@@ -9133,7 +9164,7 @@ Mogrify(ref,...)
           if (attribute_flag[0] != 0)
             channel=(ChannelType) argument_list[0].integer_reference;
           channel_mask=SetImageChannelMask(image,channel);
-          EqualizeImage(image,exception);
+          (void) EqualizeImage(image,exception);
           (void) SetImageChannelMask(image,channel_mask);
           break;
         }
@@ -11423,6 +11454,78 @@ Mogrify(ref,...)
           (void) AutoThresholdImage(image,method,exception);
           break;
         }
+        case 148:  /* RangeThreshold */
+        {
+          if (attribute_flag[0] != 0)
+            {
+              flags=ParseGeometry(argument_list[0].string_reference,
+                &geometry_info);
+              if ((flags & SigmaValue) == 0)
+                geometry_info.sigma=geometry_info.rho;
+              if ((flags & XiValue) == 0)
+                geometry_info.xi=geometry_info.sigma;
+              if ((flags & PsiValue) == 0)
+                geometry_info.psi=geometry_info.xi;
+            }
+          if (attribute_flag[1] != 0)
+            geometry_info.rho=argument_list[1].real_reference;
+          if (attribute_flag[2] != 0)
+            geometry_info.sigma=argument_list[2].real_reference;
+          if (attribute_flag[3] != 0)
+            geometry_info.xi=argument_list[3].real_reference;
+          if (attribute_flag[4] != 0)
+            geometry_info.psi=argument_list[4].real_reference;
+          if (attribute_flag[5] != 0)
+            channel=(ChannelType) argument_list[5].integer_reference;
+          channel_mask=SetImageChannelMask(image,channel);
+          (void) RangeThresholdImage(image,geometry_info.rho,
+            geometry_info.sigma,geometry_info.xi,geometry_info.psi,exception);
+          if (image != (Image *) NULL)
+            (void) SetImageChannelMask(image,channel_mask);
+          break;
+        }
+        case 149:  /* CLAHE */
+        {
+          if (attribute_flag[0] != 0)
+            {
+              flags=ParseGeometry(argument_list[0].string_reference,
+                &geometry_info);
+              flags=ParseRegionGeometry(image,argument_list[0].string_reference,
+                &geometry,exception);
+            }
+          if (attribute_flag[1] != 0)
+            geometry.width=argument_list[1].integer_reference;
+          if (attribute_flag[2] != 0)
+            geometry.height=argument_list[2].integer_reference;
+          if (attribute_flag[3] != 0)
+            geometry.x=argument_list[3].integer_reference;
+          if (attribute_flag[4] != 0)
+            geometry_info.psi=argument_list[4].real_reference;
+          (void) CLAHEImage(image,geometry.width,geometry.height,geometry.x,
+            geometry_info.psi,exception);
+          break;
+        }
+        case 150:  /* Kmeans */
+        {
+          if (attribute_flag[0] != 0)
+            {
+              flags=ParseGeometry(argument_list[0].string_reference,
+                &geometry_info);
+              if ((flags & SigmaValue) == 0)
+                geometry_info.sigma=100.0;
+              if ((flags & XiValue) == 0)
+                geometry_info.xi=0.01;
+            }
+          if (attribute_flag[1] != 0)
+            geometry_info.rho=argument_list[1].integer_reference;
+          if (attribute_flag[2] != 0)
+            geometry_info.sigma=argument_list[2].integer_reference;
+          if (attribute_flag[3] != 0)
+            geometry_info.xi=(ChannelType) argument_list[3].real_reference;
+          (void) KmeansImage(image,geometry_info.rho,geometry_info.sigma,
+            geometry_info.xi,exception);
+          break;
+        }
       }
       if (next != (Image *) NULL)
         (void) CatchImageException(next);
@@ -13532,10 +13635,10 @@ QueryFormat(ref,...)
         PUSHs(&sv_undef);
       else
         PUSHs(sv_2mortal(newSVpv(magick_info->description,0)));
-      if (magick_info->module == (char *) NULL)
+      if (magick_info->magick_module == (char *) NULL)
         PUSHs(&sv_undef);
       else
-        PUSHs(sv_2mortal(newSVpv(magick_info->module,0)));
+        PUSHs(sv_2mortal(newSVpv(magick_info->magick_module,0)));
     }
 
   PerlException:
@@ -14182,6 +14285,262 @@ SetPixel(ref,...)
               SvNV(*(av_fetch(av,i,0)))),q);
             i++;
           }
+        (void) SyncAuthenticPixels(image,exception);
+      }
+    (void) SetImageChannelMask(image,channel_mask);
+
+  PerlException:
+    InheritPerlException(exception,perl_exception);
+    exception=DestroyExceptionInfo(exception);
+    SvREFCNT_dec(perl_exception);
+  }
+
+#
+###############################################################################
+#                                                                             #
+#                                                                             #
+#                                                                             #
+#   S e t P i x e l s                                                         #
+#                                                                             #
+#                                                                             #
+#                                                                             #
+###############################################################################
+#
+#
+void
+SetPixels(ref,...)
+  Image::Magick ref=NO_INIT
+  ALIAS:
+    setpixels = 1
+    setPixels = 2
+  PPCODE:
+  {
+    AV
+      *av;
+
+    char
+      *attribute;
+
+    ChannelType
+      channel,
+      channel_mask;
+
+    ExceptionInfo
+      *exception;
+
+    Image
+      *image;
+
+    RectangleInfo
+      region;
+
+    register ssize_t
+      i;
+
+    register Quantum
+      *q;
+
+    struct PackageInfo
+      *info;
+
+    SV
+      *perl_exception,
+      *reference;  /* reference is the SV* of ref=SvIV(reference) */
+
+    PERL_UNUSED_VAR(ref);
+    PERL_UNUSED_VAR(ix);
+    exception=AcquireExceptionInfo();
+    perl_exception=newSVpv("",0);
+    reference=SvRV(ST(0));
+    av=(AV *) reference;
+    info=GetPackageInfo(aTHX_ (void *) av,(struct PackageInfo *) NULL,
+      exception);
+    image=SetupList(aTHX_ reference,&info,(SV ***) NULL,exception);
+    if (image == (Image *) NULL)
+      {
+        ThrowPerlException(exception,OptionError,"NoImagesDefined",
+          PackageName);
+        goto PerlException;
+      }
+    av=(AV *) NULL;
+    region.x=0;
+    region.y=0;
+    region.width=image->columns;
+    region.height=1;
+    if (items == 1)
+      (void) ParseAbsoluteGeometry(SvPV(ST(1),na),&region);
+    channel=DefaultChannels;
+    for (i=2; i < items; i+=2)
+    {
+      attribute=(char *) SvPV(ST(i-1),na);
+      switch (*attribute)
+      {
+        case 'C':
+        case 'c':
+        {
+          if (LocaleCompare(attribute,"channel") == 0)
+            {
+              ssize_t
+                option;
+
+              option=ParseChannelOption(SvPV(ST(i),na));
+              if (option < 0)
+                {
+                  ThrowPerlException(exception,OptionError,"UnrecognizedType",
+                    SvPV(ST(i),na));
+                  return;
+                }
+              channel=(ChannelType) option;
+              break;
+            }
+          if (LocaleCompare(attribute,"color") == 0)
+            {
+              if (SvTYPE(ST(i)) != SVt_RV)
+                {
+                  char
+                    message[MagickPathExtent];
+
+                  (void) FormatLocaleString(message,MagickPathExtent,
+                    "invalid %.60s value",attribute);
+                  ThrowPerlException(exception,OptionError,message,
+                    SvPV(ST(i),na));
+                }
+              av=(AV *) SvRV(ST(i));
+              break;
+            }
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+        case 'g':
+        case 'G':
+        {
+          if (LocaleCompare(attribute,"geometry") == 0)
+            {
+              (void) ParseAbsoluteGeometry(SvPV(ST(i),na),&region);
+              break;
+            }
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+        case 'h':
+        case 'H':
+        {
+          if (LocaleCompare(attribute,"height") == 0)
+            {
+              region.height=SvIV(ST(i));
+              break;
+            }
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+        case 'w':
+        case 'W':
+        {
+          if (LocaleCompare(attribute,"width") == 0)
+            {
+              region.width=SvIV(ST(i));
+              break;
+            }
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+        case 'x':
+        case 'X':
+        {
+          if (LocaleCompare(attribute,"x") == 0)
+            {
+              region.x=SvIV(ST(i));
+              break;
+            }
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+        case 'y':
+        case 'Y':
+        {
+          if (LocaleCompare(attribute,"y") == 0)
+            {
+              region.y=SvIV(ST(i));
+              break;
+            }
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+        default:
+        {
+          ThrowPerlException(exception,OptionError,"UnrecognizedAttribute",
+            attribute);
+          break;
+        }
+      }
+    }
+    (void) SetImageStorageClass(image,DirectClass,exception);
+    channel_mask=SetImageChannelMask(image,channel);
+    q=GetAuthenticPixels(image,region.x,region.y,region.width,region.height,
+      exception);
+    if ((q == (Quantum *) NULL) || (av == (AV *) NULL) ||
+        (SvTYPE(av) != SVt_PVAV))
+      PUSHs(&sv_undef);
+    else
+      {
+        double
+          scale;
+
+        register ssize_t
+          i,
+          n,
+          number_pixels;
+
+        i=0;
+        n=0;
+        scale=(double) QuantumRange;
+        number_pixels=region.width*region.height;
+        while ((n < number_pixels) && (i < av_len(av)))
+        {
+          if (((GetPixelRedTraits(image) & UpdatePixelTrait) != 0) &&
+              (i <= av_len(av)))
+            {
+              SetPixelRed(image,ClampToQuantum(scale*SvNV(*(
+                av_fetch(av,i,0)))),q);
+              i++;
+            }
+          if (((GetPixelGreenTraits(image) & UpdatePixelTrait) != 0) &&
+              (i <= av_len(av)))
+            {
+              SetPixelGreen(image,ClampToQuantum(scale*SvNV(*(
+                av_fetch(av,i,0)))),q);
+              i++;
+            }
+          if (((GetPixelBlueTraits(image) & UpdatePixelTrait) != 0) &&
+              (i <= av_len(av)))
+            {
+              SetPixelBlue(image,ClampToQuantum(scale*SvNV(*(
+                av_fetch(av,i,0)))),q);
+              i++;
+            }
+          if ((((GetPixelBlackTraits(image) & UpdatePixelTrait) != 0) &&
+              (image->colorspace == CMYKColorspace)) && (i <= av_len(av)))
+            {
+             SetPixelBlack(image,ClampToQuantum(scale*
+                SvNV(*(av_fetch(av,i,0)))),q);
+              i++;
+            }
+          if (((GetPixelAlphaTraits(image) & UpdatePixelTrait) != 0) &&
+              (i <= av_len(av)))
+            {
+              SetPixelAlpha(image,ClampToQuantum(scale*
+                SvNV(*(av_fetch(av,i,0)))),q);
+              i++;
+            }
+         	n++;
+         	q+=image->number_channels;
+        }
         (void) SyncAuthenticPixels(image,exception);
       }
     (void) SetImageChannelMask(image,channel_mask);

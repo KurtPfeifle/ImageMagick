@@ -17,13 +17,13 @@
 %                                January 2014                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -723,6 +723,7 @@ static ssize_t PrintChannelStatistics(FILE *file,const PixelChannel channel,
     GetMagickPrecision(),(double) ClampToQuantum(scale*
     channel_statistics[channel].maxima),GetMagickPrecision(),scale*
     channel_statistics[channel].mean,GetMagickPrecision(),scale*
+    IsNaN(channel_statistics[channel].standard_deviation) != 0 ? MagickEpsilon :
     channel_statistics[channel].standard_deviation,GetMagickPrecision(),
     channel_statistics[channel].kurtosis,GetMagickPrecision(),
     channel_statistics[channel].skewness,GetMagickPrecision(),
@@ -1538,10 +1539,6 @@ static MagickBooleanType EncodeImageAttributes(Image *image,FILE *file,
       (void) FormatLocaleFile(file,"],\n");
       image_info=DestroyImageInfo(image_info);
     }
-  (void) GetImageProperty(image,"exif:*",exception);
-  (void) GetImageProperty(image,"icc:*",exception);
-  (void) GetImageProperty(image,"iptc:*",exception);
-  (void) GetImageProperty(image,"xmp:*",exception);
   ResetImagePropertyIterator(image);
   property=GetNextImageProperty(image);
   if (property != (const char *) NULL)
@@ -1691,6 +1688,9 @@ static MagickBooleanType WriteJSONImage(const ImageInfo *image_info,
   MagickOffsetType
     scene;
 
+  size_t
+    imageListLength;
+
   /*
     Open output image file.
   */
@@ -1707,6 +1707,7 @@ static MagickBooleanType WriteJSONImage(const ImageInfo *image_info,
   if (file == (FILE *) NULL)
     file=stdout;
   scene=0;
+  imageListLength=GetImageListLength(image);
   do
   {
     if (scene == 0)
@@ -1721,8 +1722,7 @@ static MagickBooleanType WriteJSONImage(const ImageInfo *image_info,
       }
     (void) WriteBlobString(image,",\n");
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,
-      GetImageListLength(image));
+    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

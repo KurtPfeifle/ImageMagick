@@ -17,13 +17,13 @@
 %                                 July 2001                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -141,17 +141,15 @@ static MagickBooleanType IsMETA(const unsigned char *magick,const size_t length)
 %
 */
 
-typedef struct _html_code
+static const struct
 {
-  const short int
+  const unsigned char
     len;
 
   const char
-    *code,
+    code[7],
     val;
-} html_code;
-
-static const html_code html_codes[] = {
+} html_codes[] = {
 #ifdef HANDLE_GT_LT
   { 4,"&lt;",'<' },
   { 4,"&gt;",'>' },
@@ -179,10 +177,10 @@ static int stringnicmp(const char *p,const char *q,size_t n)
       break;
     i=(*p);
     if (islower(i))
-      i=toupper(i);
+      i=LocaleUppercase(i);
     j=(*q);
     if (islower(j))
-      j=toupper(j);
+      j=LocaleUppercase(j);
     if (i != j)
       break;
     n--;
@@ -191,20 +189,35 @@ static int stringnicmp(const char *p,const char *q,size_t n)
     p++;
     q++;
   }
-  return(toupper((int) *p)-toupper((int) *q));
+  return(LocaleUppercase((int) *p)-LocaleUppercase((int) *q));
 }
 
-static size_t convertHTMLcodes(char *s, const size_t len)
+static size_t convertHTMLcodes(char *s)
 {
   int
     value;
 
-  if ((len == 0) || (s == (char*) NULL) || (*s=='\0'))
+  register size_t
+    i;
+
+  size_t
+    length;
+
+  length=0;
+  for (i=0; (i < 7U) && (s[i] != '\0'); i++)
+    if (s[i] == ';')
+      {
+        length=i+1;
+        break;
+      }
+  if ((length == 0) || (s == (char *) NULL) || (*s == '\0'))
     return(0);
-  if ((len > 3) && (s[1] == '#') && (strchr(s,';') != (char *) NULL) &&
-      (sscanf(s,"&#%d;",&value) == 1))
+  if ((length > 3) && (s[1] == '#') && (sscanf(s,"&#%d;",&value) == 1))
     {
-      size_t o = 3;
+      size_t
+        o;
+
+      o=3;
       while (s[o] != ';')
       {
         o++;
@@ -216,25 +229,16 @@ static size_t convertHTMLcodes(char *s, const size_t len)
       *s=value;
       return(o);
     }
-  else
-    {
-      int
-        i,
-        codes;
-
-      codes=sizeof(html_codes)/sizeof(html_code);
-      for (i=0; i < codes; i++)
-      {
-        if (html_codes[i].len <= (ssize_t) len)
-          if (stringnicmp(s, html_codes[i].code,(size_t) (html_codes[i].len)) == 0)
-            {
-              (void) memmove(s+1,s+html_codes[i].len,
-                strlen(s+html_codes[i].len)+1);
-              *s=html_codes[i].val;
-              return(html_codes[i].len-1);
-            }
-      }
-    }
+  for (i=0; i < (ssize_t) (sizeof(html_codes)/sizeof(html_codes[0])); i++)
+  {
+    if (html_codes[i].len <= (ssize_t) length)
+      if (stringnicmp(s,html_codes[i].code,(size_t) (html_codes[i].len)) == 0)
+        {
+          (void) memmove(s+1,s+html_codes[i].len,strlen(s+html_codes[i].len)+1);
+          *s=html_codes[i].val;
+          return(html_codes[i].len-1);
+        }
+  }
   return(0);
 }
 
@@ -406,7 +410,7 @@ static ssize_t parse8BIM(Image *ifile, Image *ofile)
                   char
                     *s = &token[next-1];
 
-                  codes_length=convertHTMLcodes(s, strlen(s));
+                  codes_length=convertHTMLcodes(s);
                   if ((ssize_t) codes_length > len)
                     len=0;
                   else
@@ -430,14 +434,23 @@ static ssize_t parse8BIM(Image *ifile, Image *ofile)
                     ssize_t diff = outputlen - savedolen;
                     currentpos = TellBlob(ofile);
                     if (currentpos < 0)
-                      return(-1);
+                      {
+                        line=DestroyString(line);
+                        return(-1);
+                      }
                     offset=SeekBlob(ofile,savedpos,SEEK_SET);
                     if (offset < 0)
-                      return(-1);
+                      {
+                        line=DestroyString(line);
+                        return(-1);
+                      }
                     (void) WriteBlobMSBLong(ofile,(unsigned int) diff);
                     offset=SeekBlob(ofile,currentpos,SEEK_SET);
                     if (offset < 0)
-                      return(-1);
+                      {
+                        line=DestroyString(line);
+                        return(-1);
+                      }
                     savedolen = 0L;
                   }
                 if (outputlen & 1)
@@ -709,7 +722,7 @@ static ssize_t parse8BIMW(Image *ifile, Image *ofile)
                   char
                     *s = &token[next-1];
 
-                  codes_length=convertHTMLcodes(s, strlen(s));
+                  codes_length=convertHTMLcodes(s);
                   if ((ssize_t) codes_length > len)
                     len=0;
                   else
@@ -921,7 +934,7 @@ static int jpeg_skip_variable(Image *ifile, Image *ofile)
   if ((c2 = jpeg_transfer_1(ifile, ofile)) == EOF)
     return M_EOI;
 
-  length = (((unsigned char) c1) << 8) + ((unsigned char) c2);
+  length = (((unsigned int) c1) << 8) + ((unsigned int) c2);
   length -= 2;
 
   while (length--)
@@ -940,7 +953,7 @@ static int jpeg_skip_variable2(Image *ifile, Image *ofile)
   if ((c1 = ReadBlobByte(ifile)) == EOF) return M_EOI;
   if ((c2 = ReadBlobByte(ifile)) == EOF) return M_EOI;
 
-  length = (((unsigned char) c1) << 8) + ((unsigned char) c2);
+  length = (((unsigned int) c1) << 8) + ((unsigned int) c2);
   length -= 2;
 
   while (length--)
@@ -1133,6 +1146,7 @@ static inline void CopyBlob(Image *source,Image *destination)
     sizeof(*buffer));
   if (buffer != (unsigned char *) NULL)
     {
+      (void) memset(buffer,0,MagickMaxBufferExtent*sizeof(*buffer));
       i=0;
       while ((length=ReadBlob(source,MagickMaxBufferExtent,buffer)) != 0)
       {
@@ -1208,16 +1222,31 @@ static Image *ReadMETAImage(const ImageInfo *image_info,
           buff=DestroyImage(buff);
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
         }
+      (void) memset(blob,0,length);
       AttachBlob(buff->blob,blob,length);
       if (LocaleCompare(image_info->magick,"8BIMTEXT") == 0)
         {
           length=(size_t) parse8BIM(image, buff);
+          if (length == 0)
+            {
+              blob=DetachBlob(buff->blob);
+              blob=(unsigned char *) RelinquishMagickMemory(blob);
+              buff=DestroyImage(buff);
+              ThrowReaderException(CorruptImageError,"CorruptImage");
+            }
           if (length & 1)
             (void) WriteBlobByte(buff,0x0);
         }
       else if (LocaleCompare(image_info->magick,"8BIMWTEXT") == 0)
         {
           length=(size_t) parse8BIMW(image, buff);
+          if (length == 0)
+            {
+              blob=DetachBlob(buff->blob);
+              blob=(unsigned char *) RelinquishMagickMemory(blob);
+              buff=DestroyImage(buff);
+              ThrowReaderException(CorruptImageError,"CorruptImage");
+            }
           if (length & 1)
             (void) WriteBlobByte(buff,0x0);
         }
@@ -1362,7 +1391,7 @@ static Image *ReadMETAImage(const ImageInfo *image_info,
           buff=DestroyImage(buff);
           ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
         }
-      (void) SetImageProfile(image,"8bim",profile,exception);
+      (void) SetImageProfile(image,"iptc",profile,exception);
       profile=DestroyStringInfo(profile);
       blob=DetachBlob(buff->blob);
       blob=(unsigned char *) RelinquishMagickMemory(blob);
@@ -1881,7 +1910,7 @@ static int formatIPTC(Image *ifile, Image *ofile)
 
   int
     i,
-    tagcount = (int) (sizeof(tags) / sizeof(tag_spec));
+    tagcount = (int) (sizeof(tags) / sizeof(tags[0]));
 
   int
     c;
@@ -1945,8 +1974,8 @@ static int formatIPTC(Image *ifile, Image *ofile)
     if (taglen < 0)
       return(-1);
     /* make a buffer to hold the tag datand snag it from the input stream */
-    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+MagickPathExtent),
-      sizeof(*str));
+    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+
+      MagickPathExtent),sizeof(*str));
     if (str == (unsigned char *) NULL)
       return(0);
     for (tagindx=0; tagindx<taglen; tagindx++)
@@ -2021,7 +2050,7 @@ static int formatIPTCfromBuffer(Image *ofile, char *s, ssize_t len)
 
   int
     i,
-    tagcount = (int) (sizeof(tags) / sizeof(tag_spec));
+    tagcount = (int) (sizeof(tags) / sizeof(tags[0]));
 
   int
     c;
@@ -2078,15 +2107,21 @@ static int formatIPTCfromBuffer(Image *ofile, char *s, ssize_t len)
     if (taglen > 65535)
       return(-1);
     /* make a buffer to hold the tag datand snag it from the input stream */
-    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+MagickPathExtent),
-      sizeof(*str));
+    str=(unsigned char *) AcquireQuantumMemory((size_t) (taglen+
+      MagickPathExtent),sizeof(*str));
     if (str == (unsigned char *) NULL)
-      printf("MemoryAllocationFailed");
+      {
+        (void) printf("MemoryAllocationFailed");
+        return 0;
+      }
     for (tagindx=0; tagindx<taglen; tagindx++)
     {
       c = *s++; len--;
       if (len < 0)
-        return(-1);
+        {
+          str=(unsigned char *) RelinquishMagickMemory(str);
+          return(-1);
+        }
       str[tagindx]=(unsigned char) c;
     }
     str[taglen]=0;
@@ -2198,7 +2233,7 @@ static int format8BIM(Image *ifile, Image *ofile)
       }
     }
     count=(ssize_t) ReadBlobMSBSignedLong(ifile);
-    if ((count < 0) || (count > GetBlobSize(ifile)))
+    if ((count < 0) || (count > (ssize_t) GetBlobSize(ifile)))
       {
         PString=(unsigned char *) RelinquishMagickMemory(PString);
         return -1;

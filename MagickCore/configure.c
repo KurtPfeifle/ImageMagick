@@ -17,13 +17,13 @@
 %                                 July 2003                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -49,13 +49,13 @@
 #include "MagickCore/linked-list.h"
 #include "MagickCore/log.h"
 #include "MagickCore/memory_.h"
-#include "MagickCore/memory-private.h"
 #include "MagickCore/semaphore.h"
 #include "MagickCore/string_.h"
 #include "MagickCore/string-private.h"
 #include "MagickCore/token.h"
 #include "MagickCore/utility.h"
 #include "MagickCore/utility-private.h"
+#include "MagickCore/version.h"
 #include "MagickCore/xml-tree.h"
 #include "MagickCore/xml-tree-private.h"
 
@@ -63,29 +63,6 @@
   Define declarations.
 */
 #define ConfigureFilename  "configure.xml"
-
-#ifdef _OPENMP
-#define MAGICKCORE_FEATURE_OPENMP_STR "OpenMP "
-#else
-#define MAGICKCORE_FEATURE_OPENMP_STR ""
-#endif
-#ifdef _OPENCL
-#define MAGICKCORE_FEATURE_OPENCL_STR "OpenCL "
-#else
-#define MAGICKCORE_FEATURE_OPENCL_STR ""
-#endif
-#ifdef MAGICKCORE_ZERO_CONFIGURATION_SUPPORT
-#define MAGICKCORE_FEATURE_ZERO_CONFIGURATION_STR "Zero-Configuration "
-#else
-#define MAGICKCORE_FEATURE_ZERO_CONFIGURATION_STR ""
-#endif
-#ifdef HDRI_SUPPORT
-#define MAGICKCORE_FEATURE_HDRI_STR "HDRI"
-#else
-#define MAGICKCORE_FEATURE_HDRI_STR ""
-#endif
-
-#define MAGICKCORE_FEATURES_STR MAGICKCORE_FEATURE_OPENMP_STR MAGICKCORE_FEATURE_OPENCL_STR MAGICKCORE_FEATURE_ZERO_CONFIGURATION_STR MAGICKCORE_FEATURE_HDRI_STR
 
 /*
   Typedef declarations.
@@ -100,13 +77,6 @@ typedef struct _ConfigureMapInfo
 /*
   Static declarations.
 */
-static const ConfigureMapInfo
-  ConfigureMap[] =
-  {
-    { "NAME", "ImageMagick" },
-    { "QuantumDepth", MAGICKCORE_STRING_XQUOTE(MAGICKCORE_QUANTUM_DEPTH) } ,
-    { "FEATURES", MAGICKCORE_FEATURES_STR }
-  };
 
 static LinkedListInfo
   *configure_cache = (LinkedListInfo *) NULL;
@@ -118,9 +88,13 @@ static SemaphoreInfo
   Forward declarations.
 */
 static MagickBooleanType
-  IsConfigureCacheInstantiated(ExceptionInfo *),
+  IsConfigureCacheInstantiated(ExceptionInfo *);
+
+#if !MAGICKCORE_ZERO_CONFIGURATION_SUPPORT
+static MagickBooleanType
   LoadConfigureCache(LinkedListInfo *,const char *,const char *,const size_t,
     ExceptionInfo *);
+#endif
 
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,24 +122,48 @@ static MagickBooleanType
 %    o exception: return any errors or warnings in this structure.
 %
 */
+static inline void AddConfigureKey(LinkedListInfo *cache,const char *path,
+  const char *name,const char *value,MagickBooleanType exempt)
+{
+  ConfigureInfo
+    *configure_info;
+
+  configure_info=(ConfigureInfo *) AcquireMagickMemory(sizeof(*configure_info));
+  if (configure_info == (ConfigureInfo *) NULL)
+    return;
+  (void) memset(configure_info,0,sizeof(*configure_info));
+  if (exempt == MagickTrue)
+    {
+      configure_info->path=(char *) path;
+      configure_info->name=(char *) name;
+      configure_info->value=(char *) value;
+    }
+  else
+    {
+      configure_info->path=ConstantString(path);
+      configure_info->name=ConstantString(name);
+      configure_info->value=ConstantString(value);
+    }
+  configure_info->exempt=exempt;
+  configure_info->signature=MagickCoreSignature;
+  (void) AppendValueToLinkedList(cache,configure_info);
+}
+
 static LinkedListInfo *AcquireConfigureCache(const char *filename,
   ExceptionInfo *exception)
 {
+  char
+    head_path[MagickPathExtent],
+    path[MagickPathExtent];
+
   LinkedListInfo
     *cache;
-
-  MagickStatusType
-    status;
-
-  register ssize_t
-    i;
 
   /*
     Load external configure map.
   */
   cache=NewLinkedList(0);
-  status=MagickTrue;
-#if !defined(MAGICKCORE_ZERO_CONFIGURATION_SUPPORT)
+#if !MAGICKCORE_ZERO_CONFIGURATION_SUPPORT
   {
     const StringInfo
       *option;
@@ -173,49 +171,39 @@ static LinkedListInfo *AcquireConfigureCache(const char *filename,
     LinkedListInfo
       *options;
 
+    MagickBooleanType
+      status;
+
     options=GetConfigureOptions(filename,exception);
     option=(const StringInfo *) GetNextValueInLinkedList(options);
     while (option != (const StringInfo *) NULL)
     {
-      status&=LoadConfigureCache(cache,(const char *)
+      status=LoadConfigureCache(cache,(const char *)
         GetStringInfoDatum(option),GetStringInfoPath(option),0,exception);
+      if (status == MagickTrue)
+        break;
       option=(const StringInfo *) GetNextValueInLinkedList(options);
     }
     options=DestroyConfigureOptions(options);
   }
 #endif
   /*
-    Load built-in configure map.
+    Load built-in configure.
   */
-  for (i=0; i < (ssize_t) (sizeof(ConfigureMap)/sizeof(*ConfigureMap)); i++)
-  {
-    ConfigureInfo
-      *configure_info;
-
-    register const ConfigureMapInfo
-      *p;
-
-    p=ConfigureMap+i;
-    configure_info=(ConfigureInfo *) AcquireMagickMemory(
-      sizeof(*configure_info));
-    if (configure_info == (ConfigureInfo *) NULL)
-      {
-        (void) ThrowMagickException(exception,GetMagickModule(),
-          ResourceLimitError,"MemoryAllocationFailed","`%s'",p->name);
-        continue;
-      }
-    (void) memset(configure_info,0,sizeof(*configure_info));
-    configure_info->path=(char *) "[built-in]";
-    configure_info->name=(char *) p->name;
-    configure_info->value=(char *) p->value;
-    configure_info->exempt=MagickTrue;
-    configure_info->signature=MagickCoreSignature;
-    status&=AppendValueToLinkedList(cache,configure_info);
-    if (status == MagickFalse)
-      (void) ThrowMagickException(exception,GetMagickModule(),
-        ResourceLimitError,"MemoryAllocationFailed","`%s'",
-        configure_info->name);
-  }
+  AddConfigureKey(cache,"[built-in]","NAME","ImageMagick",MagickTrue);
+  /*
+    Load runtime configuration.
+  */
+  AddConfigureKey(cache,"[built-in]","QuantumDepth",GetMagickQuantumDepth(
+    (size_t *)NULL),MagickTrue);
+  AddConfigureKey(cache,"[built-in]","FEATURES",GetMagickFeatures(),
+    MagickTrue);
+  AddConfigureKey(cache,"[built-in]","DELEGATES",GetMagickDelegates(),
+    MagickTrue);
+  (void) AcquireUniqueFilename(path);
+  GetPathComponent(path,HeadPath,head_path);
+  AddConfigureKey(cache,"[built-in]","MAGICK_TEMPORARY_PATH",head_path,
+    MagickFalse);
   return(cache);
 }
 
@@ -890,12 +878,14 @@ MagickExport LinkedListInfo *GetConfigurePaths(const char *filename,
       *home;
 
     home=GetEnvironmentValue("XDG_CONFIG_HOME");
+#if defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__MINGW32__)
     if (home == (char *) NULL)
       home=GetEnvironmentValue("LOCALAPPDATA");
     if (home == (char *) NULL)
       home=GetEnvironmentValue("APPDATA");
     if (home == (char *) NULL)
       home=GetEnvironmentValue("USERPROFILE");
+#endif
     if (home != (char *) NULL)
       {
         /*
@@ -1088,7 +1078,7 @@ MagickExport MagickBooleanType ListConfigureInfo(FILE *file,
         if (configure_info[i]->path != (char *) NULL)
           (void) FormatLocaleFile(file,"\nPath: %s\n\n",
             configure_info[i]->path);
-        (void) FormatLocaleFile(file,"Name           Value\n");
+        (void) FormatLocaleFile(file,"Name                  Value\n");
         (void) FormatLocaleFile(file,
           "-------------------------------------------------"
           "------------------------------\n");
@@ -1098,7 +1088,7 @@ MagickExport MagickBooleanType ListConfigureInfo(FILE *file,
     if (configure_info[i]->name != (char *) NULL)
       name=configure_info[i]->name;
     (void) FormatLocaleFile(file,"%s",name);
-    for (j=(ssize_t) strlen(name); j <= 13; j++)
+    for (j=(ssize_t) strlen(name); j <= 20; j++)
       (void) FormatLocaleFile(file," ");
     (void) FormatLocaleFile(file," ");
     value="unknown";
@@ -1113,6 +1103,7 @@ MagickExport MagickBooleanType ListConfigureInfo(FILE *file,
   return(MagickTrue);
 }
 
+#if !MAGICKCORE_ZERO_CONFIGURATION_SUPPORT
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
@@ -1178,7 +1169,7 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
     /*
       Interpret XML.
     */
-    GetNextToken(q,&q,extent,token);
+    (void) GetNextToken(q,&q,extent,token);
     if (*token == '\0')
       break;
     (void) CopyMagickString(keyword,token,MagickPathExtent);
@@ -1188,7 +1179,7 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
           Doctype element.
         */
         while ((LocaleNCompare(q,"]>",2) != 0) && (*q != '\0'))
-          GetNextToken(q,&q,extent,token);
+          (void) GetNextToken(q,&q,extent,token);
         continue;
       }
     if (LocaleNCompare(keyword,"<!--",4) == 0)
@@ -1197,7 +1188,7 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
           Comment element.
         */
         while ((LocaleNCompare(q,"->",2) != 0) && (*q != '\0'))
-          GetNextToken(q,&q,extent,token);
+          (void) GetNextToken(q,&q,extent,token);
         continue;
       }
     if (LocaleCompare(keyword,"<include") == 0)
@@ -1208,10 +1199,10 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
         while (((*token != '/') && (*(token+1) != '>')) && (*q != '\0'))
         {
           (void) CopyMagickString(keyword,token,MagickPathExtent);
-          GetNextToken(q,&q,extent,token);
+          (void) GetNextToken(q,&q,extent,token);
           if (*token != '=')
             continue;
-          GetNextToken(q,&q,extent,token);
+          (void) GetNextToken(q,&q,extent,token);
           if (LocaleCompare(keyword,"file") == 0)
             {
               if (depth > MagickMaxRecursionDepth)
@@ -1272,11 +1263,11 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
     /*
       Parse configure element.
     */
-    GetNextToken(q,(const char **) NULL,extent,token);
+    (void) GetNextToken(q,(const char **) NULL,extent,token);
     if (*token != '=')
       continue;
-    GetNextToken(q,&q,extent,token);
-    GetNextToken(q,&q,extent,token);
+    (void) GetNextToken(q,&q,extent,token);
+    (void) GetNextToken(q,&q,extent,token);
     switch (*keyword)
     {
       case 'N':
@@ -1316,3 +1307,4 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
   token=(char *) RelinquishMagickMemory(token);
   return(status != 0 ? MagickTrue : MagickFalse);
 }
+#endif

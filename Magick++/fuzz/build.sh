@@ -7,7 +7,7 @@ make -j$(nproc) CFLAGS="$CFLAGS -fPIC"
 make install
 popd
 
-# build xz
+# Build xz
 pushd "$SRC/xz"
 ./autogen.sh
 ./configure --disable-xz --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-lzma-links --disable-scripts --disable-doc --disable-shared --with-pic=yes --prefix="$WORK"
@@ -15,17 +15,32 @@ make -j$(nproc)
 make install
 popd
 
-# Build libtiff
-pushd "$SRC/libtiff"
-./autogen.sh
-./configure --enable-static --disable-shared --prefix="$WORK"
+# Build png
+pushd "$SRC/libpng"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DPNG_SHARED=off
 make -j$(nproc)
 make install
 popd
 
 # Build libjpeg-turbo
 pushd "$SRC/libjpeg-turbo"
-cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DENABLE_STATIC=on -DENABLE_SHARED=off
+CFLAGS="$CFLAGS -fPIC" cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DENABLE_STATIC=on -DENABLE_SHARED=off
+make -j$(nproc)
+make install
+popd
+
+# Build libtiff
+pushd "$SRC/libtiff"
+autoreconf -fiv
+./configure --prefix="$WORK"
+make -j$(nproc)
+make install
+popd
+
+# Build liblcms2
+pushd "$SRC/Little-CMS"
+autoreconf -fiv
+./configure --disable-shared --prefix="$WORK"
 make -j$(nproc)
 make install
 popd
@@ -33,7 +48,7 @@ popd
 # build libraw
 pushd "$SRC/libraw"
 autoreconf -fiv
-./configure --prefix="$WORK" --disable-shared --with-pic=yes --disable-examples PKG_CONFIG_PATH="$WORK/lib/pkgconfig"
+./configure --prefix="$WORK" --disable-shared --with-pic=yes --disable-examples PKG_CONFIG_PATH="$WORK/lib/pkgconfig" CXXFLAGS="$CXXFLAGS -DLIBRAW_USE_CALLOC_INSTEAD_OF_MALLOC=on"
 make -j$(nproc)
 make install
 popd
@@ -50,6 +65,14 @@ popd
 pushd "$SRC/libde265"
 ./autogen.sh
 ./configure --disable-shared --prefix="$WORK"
+make -j$(nproc)
+make install
+popd
+
+# Build libheif
+pushd "$SRC/libheif"
+./autogen.sh
+./configure --disable-shared --disable-go --prefix="$WORK" PKG_CONFIG_PATH="$WORK/lib/pkgconfig"
 make -j$(nproc)
 make install
 popd
@@ -79,7 +102,8 @@ MAGICK_COMPILER=$CXX
 MAGICK_COMPILER_FLAGS=$CXXFLAGS
 MAGICK_INCLUDE="$WORK/include/ImageMagick-7"
 MAGICK_SRC="$SRC/imagemagick/Magick++/fuzz"
-MAGICK_LIBS="-lFuzzingEngine $WORK/lib/libMagick++-7.Q16HDRI.a $WORK/lib/libMagickWand-7.Q16HDRI.a $WORK/lib/libMagickCore-7.Q16HDRI.a $WORK/lib/libz.a $WORK/lib/liblzma.a $WORK/lib/libtiff.a $WORK/lib/libde265.a $WORK/lib/libopenjp2.a $WORK/lib/libwebp.a $WORK/lib/libturbojpeg.a $WORK/lib/libjpeg.a $WORK/lib/libfreetype.a $WORK/lib/libraw.a"
+MAGICK_LIBS_NO_FUZZ="$WORK/lib/libMagick++-7.Q16HDRI.a $WORK/lib/libMagickWand-7.Q16HDRI.a $WORK/lib/libMagickCore-7.Q16HDRI.a $WORK/lib/libpng.a $WORK/lib/libtiff.a $WORK/lib/libheif.a $WORK/lib/libde265.a $WORK/lib/libopenjp2.a $WORK/lib/libwebp.a $WORK/lib/libturbojpeg.a $WORK/lib/libjpeg.a $WORK/lib/libfreetype.a $WORK/lib/libraw.a $WORK/lib/liblzma.a $WORK/lib/liblcms2.a $WORK/lib/libz.a"
+MAGICK_LIBS="$LIB_FUZZING_ENGINE $MAGICK_LIBS_NO_FUZZ"
 MAGICK_OUTPUT=$OUT
 MAGICK_FAST_BUILD=0
 
@@ -93,3 +117,5 @@ for format in gif jpg png bmp ico webp tif; do
     zip -rj $format.zip $format/
     cp $format.zip "$OUT/encoder_${format}_fuzzer_seed_corpus.zip"
 done
+
+zip -rj "$OUT/encoder_heic_fuzzer_seed_corpus.zip" "$SRC/heic_corpus"

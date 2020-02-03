@@ -17,13 +17,13 @@
 %                                October 2002                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -40,7 +40,7 @@
 /*
   Include declarations.
 */
-#if defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__CYGWIN__)
+#if defined(MAGICKCORE_WINDOWS_SUPPORT)
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <windows.h>
@@ -128,7 +128,7 @@ MagickExport MagickBooleanType GetMagickSeekableStream(
     MagickTrue);
 }
 
-#if defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__CYGWIN__)
+#if defined(MAGICKCORE_WINDOWS_SUPPORT)
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
@@ -286,7 +286,7 @@ MagickExport void *CropImageToHBITMAP(Image *image,
 }
 #endif
 
-#if defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__CYGWIN__)
+#if defined(MAGICKCORE_WINDOWS_SUPPORT)
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %

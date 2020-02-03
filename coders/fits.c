@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -331,7 +331,7 @@ static Image *ReadFITSImage(const ImageInfo *image_info,
       {
         if (isspace((int) ((unsigned char) keyword[i])) != 0)
           break;
-        keyword[i]=tolower((int) ((unsigned char) keyword[i]));
+        keyword[i]=LocaleLowercase((int) ((unsigned char) keyword[i]));
       }
       keyword[i]='\0';
       count=ReadBlob(image,72,(unsigned char *) value);
@@ -500,8 +500,8 @@ static Image *ReadFITSImage(const ImageInfo *image_info,
         AcquireNextImage(image_info,image,exception);
         if (GetNextImageInList(image) == (Image *) NULL)
           {
-            image=DestroyImageList(image);
-            return((Image *) NULL);
+            status=MagickFalse;
+            break;
           }
         image=SyncNextImageInList(image);
         status=SetImageProgress(image,LoadImagesTag,TellBlob(image),
@@ -511,6 +511,8 @@ static Image *ReadFITSImage(const ImageInfo *image_info,
       }
   }
   (void) CloseBlob(image);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
   return(GetFirstImageInList(image));
 }
 
@@ -612,6 +614,21 @@ ModuleExport void UnregisterFITSImage(void)
 %    o exception: return any errors or warnings in this structure.
 %
 */
+
+static inline void CopyFitsRecord(char *buffer,const char *data,
+  const ssize_t offset)
+{
+  size_t
+    length;
+
+  if (data == (char *) NULL)
+    return;
+  length=MagickMin(strlen(data),80);
+  if (length > (size_t) (FITSBlocksize-offset))
+    length=FITSBlocksize-offset;
+  (void) strncpy(buffer+offset,data,length);
+}
+
 static MagickBooleanType WriteFITSImage(const ImageInfo *image_info,
   Image *image,ExceptionInfo *exception)
 {
@@ -676,59 +693,59 @@ static MagickBooleanType WriteFITSImage(const ImageInfo *image_info,
   offset=0;
   (void) FormatLocaleString(header,FITSBlocksize,
     "SIMPLE  =                    T");
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"BITPIX  =           %10ld",
     (long) ((quantum_info->format == FloatingPointQuantumFormat ? -1 : 1)*
     image->depth));
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"NAXIS   =           %10lu",
     SetImageGray(image,exception) != MagickFalse ? 2UL : 3UL);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"NAXIS1  =           %10lu",
     (unsigned long) image->columns);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"NAXIS2  =           %10lu",
     (unsigned long) image->rows);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   if (SetImageGray(image,exception) == MagickFalse)
     {
       (void) FormatLocaleString(header,FITSBlocksize,
         "NAXIS3  =           %10lu",3UL);
-      (void) strncpy(fits_info+offset,header,strlen(header));
+      CopyFitsRecord(fits_info,header,offset);
       offset+=80;
     }
   (void) FormatLocaleString(header,FITSBlocksize,"BSCALE  =         %E",1.0);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"BZERO   =         %E",
-    image->depth > 8 ? GetFITSPixelRange(image->depth)/2.0 : 0.0);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+    image->depth > 8 ? (GetFITSPixelRange(image->depth)+1)/2.0 : 0.0);
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"DATAMAX =         %E",
     1.0*((MagickOffsetType) GetQuantumRange(image->depth)));
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) FormatLocaleString(header,FITSBlocksize,"DATAMIN =         %E",0.0);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   if (image->endian == LSBEndian)
     {
       (void) FormatLocaleString(header,FITSBlocksize,"XENDIAN = 'SMALL'");
-      (void) strncpy(fits_info+offset,header,strlen(header));
+      CopyFitsRecord(fits_info,header,offset);
       offset+=80;
     }
   url=GetMagickHomeURL();
   (void) FormatLocaleString(header,FITSBlocksize,"HISTORY %.72s",url);
   url=DestroyString(url);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) strncpy(header,"END",FITSBlocksize);
-  (void) strncpy(fits_info+offset,header,strlen(header));
+  CopyFitsRecord(fits_info,header,offset);
   offset+=80;
   (void) WriteBlob(image,FITSBlocksize,(unsigned char *) fits_info);
   /*

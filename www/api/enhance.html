@@ -6,11 +6,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"  />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"  />
-  <title>MagickCore, C API: Enhance an Image @ ImageMagick</title>
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,shrink-to-fit=no"  />
+  <title>ImageMagick - MagickCore, C API: Enhance an Image</title>
   <meta name="application-name" content="ImageMagick" />
-  <meta name="description" content="ImageMagick® is a software suite to create, edit, compose, or convert bitmap images. It can read and write images in a variety of formats (over 200) including PNG, JPEG, JPEG-2000, GIF, WebP, Postscript, PDF, and SVG. Use ImageMagick to resize, flip, mirror, rotate, distort, shear and transform images, adjust image colors, apply various special effects, or draw text, lines, polygons, ellipses and Bézier curves." />
-  <meta name="application-url" content="https://www.imagemagick.org" />
+  <meta name="description" content="Use ImageMagick® to create, edit, compose, and convert bitmap images. Resize an image, crop it, change its shades and colors, add captions, and more." />
+  <meta name="application-url" content="https://imagemagick.org" />
   <meta name="generator" content="PHP" />
   <meta name="keywords" content="magickcore, c, api:, enhance, an, image, ImageMagick, PerlMagick, image processing, image, photo, software, Magick++, OpenMP, convert" />
   <meta name="rating" content="GENERAL" />
@@ -19,10 +19,15 @@
   <meta name="author" content="ImageMagick Studio LLC" />
   <meta name="revisit-after" content="2 DAYS" />
   <meta name="resource-type" content="document" />
-  <meta name="copyright" content="Copyright (c) 1999-2017 ImageMagick Studio LLC" />
+  <meta name="copyright" content="Copyright (c) 1999-2020 ImageMagick Studio LLC" />
   <meta name="distribution" content="Global" />
   <meta name="magick-serial" content="P131-S030410-R485315270133-P82224-A6668-G1245-1" />
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta property='og:url' content='../../' />
+  <meta property='og:title' content='ImageMagick' />
+  <meta property='og:image' content='../../images/logo.png' />
+  <meta property='og:type' content='website' />
+  <meta property='og:site_name' content='ImageMagick' />
+  <meta property='og:description' content="Convert, Edit, or Compose Bitmap Images" />
   <meta name="google-site-verification" content="_bMOCDpkx9ZAzBwb2kF3PRHbfUUdFj2uO8Jd1AXArz4" />
   <link href="enhance.html" rel="canonical" />
   <link href="../../images/wand.png" rel="icon" />
@@ -30,17 +35,16 @@
   <link href="../assets/magick.css" rel="stylesheet" />
 </head>
 <body>
-  <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-    <a class="navbar-brand" href="../../"><img class="d-block" id="logo" name="ImageMagick" alt="ImageMagick" width="32" height="32" src="../../images/wand.ico"/></a>
-    <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="../../"><img class="d-block" id="icon" alt="ImageMagick" width="32" height="32" src="../../images/wand.ico"/></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsMagick" aria-controls="navbarsMagick" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="navbar-collapse collapse" id="navbarsExampleDefault" style="">
+    <div class="navbar-collapse collapse" id="navbarsMagick" style="">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item ">
-        <a class="nav-link" href="../../index.html">Home <span class="sr-only">(current)</span></a>
+        <a class="nav-link" href="../../">Home <span class="sr-only">(current)</span></a>
       </li>
       <li class="nav-item ">
         <a class="nav-link" href="../../www/download.html">Download</a>
@@ -58,10 +62,10 @@
         <a class="nav-link" href="../../www/develop.html">Develop</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" target="_blank" href="https://www.imagemagick.org/discourse-server/">Community</a>
+        <a class="nav-link" target="_blank" href="https://imagemagick.org/discourse-server/">Community</a>
       </li>
     </ul>
-    <form class="form-inline my-2 my-lg-0" action="../https://www.imagemagick.org/script/search.php">
+    <form class="form-inline my-2 my-lg-0" action="../https://imagemagick.org/script/search.php">
       <input class="form-control mr-sm-2" type="text" name="q" placeholder="Search" aria-label="Search">
       <button class="btn btn-outline-success my-2 my-sm-0" type="submit" name="sa">Search</button>
     </form>
@@ -72,16 +76,18 @@
          style="display:block"
          data-ad-client="ca-pub-3129977114552745"
          data-ad-slot="6345125851"
-         data-ad-format="auto"></ins>
+         data-full-width-responsive="true"
+         data-ad-format="horizontal"></ins>
     <script>
       (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
+
   </div>
-  </header>
-  <main role="main" class="container">
+
+  <main class="container">
     <div class="magick-template">
 <div class="magick-header">
-<p class="text-center"><a href="enhance.html#AutoGammaImage">AutoGammaImage</a> &#8226; <a href="enhance.html#AutoLevelImage">AutoLevelImage</a> &#8226; <a href="enhance.html#BrightnessContrastImage">BrightnessContrastImage</a> &#8226; <a href="enhance.html#ClutImage">ClutImage</a> &#8226; <a href="enhance.html#ColorDecisionListImage">ColorDecisionListImage</a> &#8226; <a href="enhance.html#ContrastImage">ContrastImage</a> &#8226; <a href="enhance.html#ContrastStretchImage">ContrastStretchImage</a> &#8226; <a href="enhance.html#EnhanceImage">EnhanceImage</a> &#8226; <a href="enhance.html#EqualizeImage">EqualizeImage</a> &#8226; <a href="enhance.html#GammaImage">GammaImage</a> &#8226; <a href="enhance.html#GrayscaleImage">GrayscaleImage</a> &#8226; <a href="enhance.html#HaldClutImage">HaldClutImage</a> &#8226; <a href="enhance.html#LevelImage">LevelImage</a> &#8226; <a href="enhance.html#LevelizeImage">LevelizeImage</a> &#8226; <a href="enhance.html#LevelImageColors">LevelImageColors</a> &#8226; <a href="enhance.html#LinearStretchImage">LinearStretchImage</a> &#8226; <a href="enhance.html#ModulateImage">ModulateImage</a> &#8226; <a href="enhance.html#NegateImage">NegateImage</a> &#8226; <a href="enhance.html#The NormalizeImage">The NormalizeImage</a> &#8226; <a href="enhance.html#SigmoidalContrastImage">SigmoidalContrastImage</a></p>
+<p class="text-center"><a href="enhance.html#AutoGammaImage">AutoGammaImage</a> &#8226; <a href="enhance.html#AutoLevelImage">AutoLevelImage</a> &#8226; <a href="enhance.html#BrightnessContrastImage">BrightnessContrastImage</a> &#8226; <a href="enhance.html#CLAHEImage">CLAHEImage</a> &#8226; <a href="enhance.html#ClutImage">ClutImage</a> &#8226; <a href="enhance.html#ColorDecisionListImage">ColorDecisionListImage</a> &#8226; <a href="enhance.html#ContrastImage">ContrastImage</a> &#8226; <a href="enhance.html#ContrastStretchImage">ContrastStretchImage</a> &#8226; <a href="enhance.html#EnhanceImage">EnhanceImage</a> &#8226; <a href="enhance.html#EqualizeImage">EqualizeImage</a> &#8226; <a href="enhance.html#GammaImage">GammaImage</a> &#8226; <a href="enhance.html#GrayscaleImage">GrayscaleImage</a> &#8226; <a href="enhance.html#HaldClutImage">HaldClutImage</a> &#8226; <a href="enhance.html#LevelImage">LevelImage</a> &#8226; <a href="enhance.html#LevelizeImage">LevelizeImage</a> &#8226; <a href="enhance.html#LevelImageColors">LevelImageColors</a> &#8226; <a href="enhance.html#LinearStretchImage">LinearStretchImage</a> &#8226; <a href="enhance.html#ModulateImage">ModulateImage</a> &#8226; <a href="enhance.html#NegateImage">NegateImage</a> &#8226; <a href="enhance.html#The NormalizeImage">The NormalizeImage</a> &#8226; <a href="enhance.html#SigmoidalContrastImage">SigmoidalContrastImage</a></p>
 
 <h2><a href="../../api/MagickCore/enhance_8c.html" id="AutoGammaImage">AutoGammaImage</a></h2>
 
@@ -163,6 +169,52 @@ MagickBooleanType BrightnessContrastImage(Image *image,
 <dd> </dd>
 <dt>contrast</dt>
 <dd>the contrast percent (-100 .. 100). </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="CLAHEImage">CLAHEImage</a></h2>
+
+<p>CLAHEImage() is a variant of adaptive histogram equalization in which the contrast amplification is limited, so as to reduce this problem of noise amplification.</p>
+
+<p>Adapted from implementation by Karel Zuiderveld, karel@cv.ruu.nl in "Graphics Gems IV", Academic Press, 1994.</p>
+
+<p>The format of the CLAHEImage method is:</p>
+
+<pre class="text">
+MagickBooleanType CLAHEImage(Image *image,const size_t width,
+  const size_t height,const size_t number_bins,const double clip_limit,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>width</dt>
+<dd>the width of the tile divisions to use in horizontal direction. </dd>
+
+<dd> </dd>
+<dt>height</dt>
+<dd>the height of the tile divisions to use in vertical direction. </dd>
+
+<dd> </dd>
+<dt>number_bins</dt>
+<dd>number of bins for histogram ("dynamic range"). </dd>
+
+<dd> </dd>
+<dt>clip_limit</dt>
+<dd>contrast limit for localised changes in contrast. A limit less than 1 results in standard non-contrast limited AHE. </dd>
 
 <dd> </dd>
 <dt>exception</dt>
@@ -769,22 +821,23 @@ MagickBooleanType SigmoidalContrastImage(Image *image,
   </main><!-- /.container -->
   <footer class="magick-footer">
     <p><a href="../../www/security-policy.html">Security</a> •
-    <a href="../../www/architecture.html">Architecture</a> •
+    <a href="../../www/architecture.html">Architecture</a>
+     
+    <a href="enhance.html#"><img class="d-inline" id="wand" alt="And Now a Touch of Magick" width="16" height="16" src="../../images/wand.ico"/></a>
+     
     <a href="../../www/links.html">Related</a> •
      <a href="../../www/sitemap.html">Sitemap</a>
-       
-    <a href="enhance.html#"><img class="d-inline" id="logo" alt="And Now a Touch of Magick" width="16" height="16" src="../../images/wand.ico"/></a>
-       
-    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
-    <a href="../../www/support.html">Donate</a> •
-    <a href="../../www/contact.html">Contact Us</a>
     <br/>
-        <small>© 1999-2018 ImageMagick Studio LLC</small></p>
+    <a href="../../www/support.html">Donate</a> •
+    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
+    <a href="../../www/contact.html">Contact Us</a> 
+    <br/>
+    <small>© 1999-2020 ImageMagick Studio LLC</small></p>
   </footer>
 
   <!-- Javascript assets -->
   <script src="../assets/magick.js" crossorigin="anonymous"></script>
-  <script>window.jQuery || document.write('<script src="../assets/jquery.min.js"><\/script>')</script>
+  <script>window.jQuery || document.write('<script src="https://localhost/ajax/libs/jquery/3.4.1/jquery.min.js"><\/script>')</script>
 </body>
 </html>
-<!-- Magick Cache 16th February 2018 10:03 -->
+<!-- Magick Cache 4th January 2020 19:27 -->

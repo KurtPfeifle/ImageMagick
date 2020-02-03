@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -227,8 +227,7 @@ static Image *MaskImage(const Image *image,ExceptionInfo *exception)
   ssize_t
     y;
 
-  mask_image=CloneImage(image,image->columns,image->rows,MagickTrue,
-    exception);
+  mask_image=CloneImage(image,0,0,MagickTrue,exception);
   if (mask_image == (Image *) NULL)
     return((Image *) NULL);
   if (SetImageStorageClass(mask_image,DirectClass,exception) == MagickFalse)

@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -225,9 +225,9 @@ static MagickBooleanType WriteCLIPImage(const ImageInfo *image_info,
   MagickBooleanType
     status;
 
-  if (image->write_mask == MagickFalse)
-    (void) ClipImage(image,exception);
-  if (image->write_mask == MagickFalse)
+  if ((image->channels & WriteMaskChannel) == 0)
+    status=ClipImage(image,exception);
+  if ((image->channels & WriteMaskChannel) == 0)
     ThrowWriterException(CoderError,"ImageDoesNotHaveAClipMask");
   clip_image=GetImageMask(image,WritePixelMask,exception);
   if (clip_image == (Image *) NULL)

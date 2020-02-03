@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -555,10 +555,10 @@ MagickExport Image *CannyEdgeImage(const Image *image,const double radius,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_CannyEdgeImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,CannyEdgeImageTag,progress++,
-          image->rows);
+        progress++;
+        proceed=SetImageProgress(image,CannyEdgeImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -1643,25 +1643,35 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
           /*
             Maximum Correlation Coefficient.
           */
-          Q[z][y].direction[i].red+=cooccurrence[z][x].direction[i].red*
-            cooccurrence[y][x].direction[i].red/density_x[z].direction[i].red/
-            density_y[x].direction[i].red;
-          Q[z][y].direction[i].green+=cooccurrence[z][x].direction[i].green*
-            cooccurrence[y][x].direction[i].green/
-            density_x[z].direction[i].green/density_y[x].direction[i].red;
-          Q[z][y].direction[i].blue+=cooccurrence[z][x].direction[i].blue*
-            cooccurrence[y][x].direction[i].blue/density_x[z].direction[i].blue/
-            density_y[x].direction[i].blue;
+          if ((fabs(density_x[z].direction[i].red) > MagickEpsilon) &&
+              (fabs(density_y[x].direction[i].red) > MagickEpsilon))
+            Q[z][y].direction[i].red+=cooccurrence[z][x].direction[i].red*
+              cooccurrence[y][x].direction[i].red/density_x[z].direction[i].red/
+              density_y[x].direction[i].red;
+          if ((fabs(density_x[z].direction[i].green) > MagickEpsilon) &&
+              (fabs(density_y[x].direction[i].red) > MagickEpsilon))
+            Q[z][y].direction[i].green+=cooccurrence[z][x].direction[i].green*
+              cooccurrence[y][x].direction[i].green/
+              density_x[z].direction[i].green/density_y[x].direction[i].red;
+          if ((fabs(density_x[z].direction[i].blue) > MagickEpsilon) &&
+              (fabs(density_y[x].direction[i].blue) > MagickEpsilon))
+            Q[z][y].direction[i].blue+=cooccurrence[z][x].direction[i].blue*
+              cooccurrence[y][x].direction[i].blue/
+              density_x[z].direction[i].blue/density_y[x].direction[i].blue;
           if (image->colorspace == CMYKColorspace)
-            Q[z][y].direction[i].black+=cooccurrence[z][x].direction[i].black*
-              cooccurrence[y][x].direction[i].black/
-              density_x[z].direction[i].black/density_y[x].direction[i].black;
+            if ((fabs(density_x[z].direction[i].black) > MagickEpsilon) &&
+                (fabs(density_y[x].direction[i].black) > MagickEpsilon))
+              Q[z][y].direction[i].black+=cooccurrence[z][x].direction[i].black*
+                cooccurrence[y][x].direction[i].black/
+                density_x[z].direction[i].black/density_y[x].direction[i].black;
           if (image->alpha_trait != UndefinedPixelTrait)
-            Q[z][y].direction[i].alpha+=
-              cooccurrence[z][x].direction[i].alpha*
-              cooccurrence[y][x].direction[i].alpha/
-              density_x[z].direction[i].alpha/
-              density_y[x].direction[i].alpha;
+            if ((fabs(density_x[z].direction[i].alpha) > MagickEpsilon) &&
+                (fabs(density_y[x].direction[i].alpha) > MagickEpsilon))
+              Q[z][y].direction[i].alpha+=
+                cooccurrence[z][x].direction[i].alpha*
+                cooccurrence[y][x].direction[i].alpha/
+                density_x[z].direction[i].alpha/
+                density_y[x].direction[i].alpha;
         }
       }
       channel_features[RedPixelChannel].contrast[i]+=z*z*
@@ -1726,12 +1736,13 @@ MagickExport ChannelFeatures *GetImageFeatures(const Image *image,
 %  recommand Canny) to identify lines in the image.  The algorithm accumulates
 %  counts for every white pixel for every possible orientation (for angles from
 %  0 to 179 in 1 degree increments) and distance from the center of the image to
-%  the corner (in 1 px increments) and stores the counts in an accumulator matrix
-%  of angle vs distance. The size of the accumulator is 180x(diagonal/2). Next
-%  it searches this space for peaks in counts and converts the locations of the
-%  peaks to slope and intercept in the normal x,y input image space. Use the
-%  slope/intercepts to find the endpoints clipped to the bounds of the image. The
-%  lines are then drawn. The counts are a measure of the length of the lines
+%  the corner (in 1 px increments) and stores the counts in an accumulator
+%  matrix of angle vs distance. The size of the accumulator is 180x(diagonal/2).
+%  Next it searches this space for peaks in counts and converts the locations
+%  of the peaks to slope and intercept in the normal x,y input image space. Use
+%  the slope/intercepts to find the endpoints clipped to the bounds of the
+%  image. The lines are then drawn. The counts are a measure of the length of
+%  the lines.
 %
 %  The format of the HoughLineImage method is:
 %
@@ -1946,10 +1957,10 @@ MagickExport Image *HoughLineImage(const Image *image,const size_t width,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_CannyEdgeImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,CannyEdgeImageTag,progress++,
-          image->rows);
+        progress++;
+        proceed=SetImageProgress(image,CannyEdgeImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }
@@ -1976,6 +1987,10 @@ MagickExport Image *HoughLineImage(const Image *image,const size_t width,
     status=MagickFalse;
   (void) FormatLocaleString(message,MagickPathExtent,
     "viewbox 0 0 %.20g %.20g\n",(double) image->columns,(double) image->rows);
+  if (write(file,message,strlen(message)) != (ssize_t) strlen(message))
+    status=MagickFalse;
+  (void) FormatLocaleString(message,MagickPathExtent,
+    "# x1,y1 x2,y2 # count angle distance\n");
   if (write(file,message,strlen(message)) != (ssize_t) strlen(message))
     status=MagickFalse;
   line_count=image->columns > image->rows ? image->columns/4 : image->rows/4;
@@ -2059,7 +2074,8 @@ MagickExport Image *HoughLineImage(const Image *image,const size_t width,
                 cos(DegreesToRadians((double) x))+(image->columns/2.0);
             }
           (void) FormatLocaleString(message,MagickPathExtent,
-            "line %g,%g %g,%g  # %g\n",line.x1,line.y1,line.x2,line.y2,maxima);
+            "line %g,%g %g,%g  # %g %g %g\n",line.x1,line.y1,line.x2,line.y2,
+            maxima,(double) x,(double) y);
           if (write(file,message,strlen(message)) != (ssize_t) strlen(message))
             status=MagickFalse;
         }
@@ -2174,7 +2190,7 @@ MagickExport Image *MeanShiftImage(const Image *image,const size_t width,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   assert(exception != (ExceptionInfo *) NULL);
   assert(exception->signature == MagickCoreSignature);
-  mean_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  mean_image=CloneImage(image,0,0,MagickTrue,exception);
   if (mean_image == (Image *) NULL)
     return((Image *) NULL);
   if (SetImageStorageClass(mean_image,DirectClass,exception) == MagickFalse)
@@ -2282,7 +2298,7 @@ MagickExport Image *MeanShiftImage(const Image *image,const size_t width,
               }
           }
         }
-        gamma=1.0/count;
+        gamma=PerceptibleReciprocal(count);
         mean_location.x=gamma*sum_location.x;
         mean_location.y=gamma*sum_location.y;
         mean_pixel.red=gamma*sum_pixel.red;
@@ -2317,10 +2333,10 @@ MagickExport Image *MeanShiftImage(const Image *image,const size_t width,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_MeanShiftImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,MeanShiftImageTag,progress++,
-          image->rows);
+        progress++;
+        proceed=SetImageProgress(image,MeanShiftImageTag,progress,image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
       }

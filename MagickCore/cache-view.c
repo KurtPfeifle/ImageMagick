@@ -23,13 +23,13 @@
 %                               February 2000                                 %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -584,7 +584,7 @@ MagickExport const void *GetCacheViewVirtualMetacontent(
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  GetCacheViewVirtualPixelQueue() returns the the pixels associated with
+%  GetCacheViewVirtualPixelQueue() returns the pixels associated with
 %  the last call to GetCacheViewVirtualPixels().  The pixels are virtual
 %  and therefore cannot be updated.
 %
@@ -661,7 +661,7 @@ MagickExport const Quantum *GetCacheViewVirtualPixels(
   assert(cache_view != (CacheView *) NULL);
   assert(cache_view->signature == MagickCoreSignature);
   assert(id < (int) cache_view->number_threads);
-  pixels=GetVirtualPixelsFromNexus(cache_view->image,
+  pixels=GetVirtualPixelCacheNexus(cache_view->image,
     cache_view->virtual_pixel_method,x,y,columns,rows,
     cache_view->nexus_info[id],exception);
   return(pixels);
@@ -787,7 +787,7 @@ MagickExport MagickBooleanType GetOneCacheViewVirtualPixel(
   assert(cache_view->signature == MagickCoreSignature);
   assert(id < (int) cache_view->number_threads);
   (void) memset(pixel,0,MaxPixelChannels*sizeof(*pixel));
-  p=GetVirtualPixelsFromNexus(cache_view->image,
+  p=GetVirtualPixelCacheNexus(cache_view->image,
     cache_view->virtual_pixel_method,x,y,1,1,cache_view->nexus_info[id],
     exception);
   if (p == (const Quantum *) NULL)
@@ -857,7 +857,7 @@ MagickExport MagickBooleanType GetOneCacheViewVirtualPixelInfo(
   assert(cache_view->signature == MagickCoreSignature);
   assert(id < (int) cache_view->number_threads);
   GetPixelInfo(cache_view->image,pixel);
-  p=GetVirtualPixelsFromNexus(cache_view->image,
+  p=GetVirtualPixelCacheNexus(cache_view->image,
     cache_view->virtual_pixel_method,x,y,1,1,cache_view->nexus_info[id],
     exception);
   if (p == (const Quantum *) NULL)
@@ -919,7 +919,7 @@ MagickExport MagickBooleanType GetOneCacheViewVirtualMethodPixel(
   assert(cache_view->signature == MagickCoreSignature);
   assert(id < (int) cache_view->number_threads);
   (void) memset(pixel,0,MaxPixelChannels*sizeof(*pixel));
-  p=GetVirtualPixelsFromNexus(cache_view->image,virtual_pixel_method,x,y,1,1,
+  p=GetVirtualPixelCacheNexus(cache_view->image,virtual_pixel_method,x,y,1,1,
     cache_view->nexus_info[id],exception);
   if (p == (const Quantum *) NULL)
     {

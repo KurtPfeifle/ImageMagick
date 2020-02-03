@@ -6,11 +6,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"  />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"  />
-  <title>Resources @ ImageMagick</title>
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,shrink-to-fit=no"  />
+  <title>ImageMagick - Resources</title>
   <meta name="application-name" content="ImageMagick" />
-  <meta name="description" content="ImageMagick® is a software suite to create, edit, compose, or convert bitmap images. It can read and write images in a variety of formats (over 200) including PNG, JPEG, JPEG-2000, GIF, WebP, Postscript, PDF, and SVG. Use ImageMagick to resize, flip, mirror, rotate, distort, shear and transform images, adjust image colors, apply various special effects, or draw text, lines, polygons, ellipses and Bézier curves." />
-  <meta name="application-url" content="https://www.imagemagick.org" />
+  <meta name="description" content="Use ImageMagick® to create, edit, compose, and convert bitmap images. Resize an image, crop it, change its shades and colors, add captions, and more." />
+  <meta name="application-url" content="https://imagemagick.org" />
   <meta name="generator" content="PHP" />
   <meta name="keywords" content="resources, ImageMagick, PerlMagick, image processing, image, photo, software, Magick++, OpenMP, convert" />
   <meta name="rating" content="GENERAL" />
@@ -19,10 +19,15 @@
   <meta name="author" content="ImageMagick Studio LLC" />
   <meta name="revisit-after" content="2 DAYS" />
   <meta name="resource-type" content="document" />
-  <meta name="copyright" content="Copyright (c) 1999-2017 ImageMagick Studio LLC" />
+  <meta name="copyright" content="Copyright (c) 1999-2020 ImageMagick Studio LLC" />
   <meta name="distribution" content="Global" />
   <meta name="magick-serial" content="P131-S030410-R485315270133-P82224-A6668-G1245-1" />
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta property='og:url' content='../' />
+  <meta property='og:title' content='ImageMagick' />
+  <meta property='og:image' content='../images/logo.png' />
+  <meta property='og:type' content='website' />
+  <meta property='og:site_name' content='ImageMagick' />
+  <meta property='og:description' content="Convert, Edit, or Compose Bitmap Images" />
   <meta name="google-site-verification" content="_bMOCDpkx9ZAzBwb2kF3PRHbfUUdFj2uO8Jd1AXArz4" />
   <link href="../www/resources.html" rel="canonical" />
   <link href="../images/wand.png" rel="icon" />
@@ -30,14 +35,13 @@
   <link href="assets/magick.css" rel="stylesheet" />
 </head>
 <body>
-  <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-    <a class="navbar-brand" href="../index.html"><img class="d-block" id="logo" name="ImageMagick" alt="ImageMagick" width="32" height="32" src="../images/wand.ico"/></a>
-    <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="../index.html"><img class="d-block" id="icon" alt="ImageMagick" width="32" height="32" src="../images/wand.ico"/></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsMagick" aria-controls="navbarsMagick" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="navbar-collapse collapse" id="navbarsExampleDefault" style="">
+    <div class="navbar-collapse collapse" id="navbarsMagick" style="">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item ">
         <a class="nav-link" href="../index.html">Home <span class="sr-only">(current)</span></a>
@@ -58,10 +62,10 @@
         <a class="nav-link" href="develop.html">Develop</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" target="_blank" href="https://www.imagemagick.org/discourse-server/">Community</a>
+        <a class="nav-link" target="_blank" href="https://imagemagick.org/discourse-server/">Community</a>
       </li>
     </ul>
-    <form class="form-inline my-2 my-lg-0" action="https://www.imagemagick.org/script/search.php">
+    <form class="form-inline my-2 my-lg-0" action="https://imagemagick.org/script/search.php">
       <input class="form-control mr-sm-2" type="text" name="q" placeholder="Search" aria-label="Search">
       <button class="btn btn-outline-success my-2 my-sm-0" type="submit" name="sa">Search</button>
     </form>
@@ -72,71 +76,68 @@
          style="display:block"
          data-ad-client="ca-pub-3129977114552745"
          data-ad-slot="6345125851"
-         data-ad-format="auto"></ins>
+         data-full-width-responsive="true"
+         data-ad-format="horizontal"></ins>
     <script>
       (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
+
   </div>
-  </header>
-  <main role="main" class="container">
+
+  <main class="container">
     <div class="magick-template">
 <div class="magick-header">
 <p class="text-center"><a href="resources.html#configure">Configuration Files</a> • <a href="resources.html#modules">Modules</a> • <a href="resources.html#fonts">Fonts</a> • <a href="resources.html#environment">Environment Variables</a></p>
 
 <p class="lead magick-description">ImageMagick depends on a number of external resources including configuration files, loadable modules, fonts, and environment variables.</p>
 
-<h2 class="magick-post-title"><a class="anchor" id="configure"></a>Configuration Files</h2>
+<h2><a class="anchor" id="configure"></a>Configuration Files</h2>
 
 <p>ImageMagick depends on a number of external configuration files detailed here:</p>
 
 <dl class="row">
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/coder.xml">coder.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/coder.xml">coder.xml</a></dt>
   <dd class="col-md-8">Associate an image format with the specified coder module.
 
   ImageMagick has a number of coder modules to support the reading and/or writing of an image format (e.g. JPEG).  Some coder modules support more than one associated image format and the mapping between an associated format and its respective coder module is defined in this configuration file.  For example, the PNG coder module not only supports the PNG image format, but the JNG and MNG formats as well.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/colors.xml">colors.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/colors.xml">colors.xml</a></dt>
   <dd class="col-md-8">Associate a color name with its red, green, blue, and alpha intensities.
 
   A number of command line options require a <a href="color.html">color parameter</a>.  It is often convenient to refer to a color by name (e.g. white) rather than by hex value (e.g. #fff).  This file maps a color name to its equivalent red, green, blue, and alpha intensities (e.g. for white, red = 255, green = 255, blue = 255, and alpha = 0).
   </dd>
 
-<dt class="col-md-4"><a class="anchor" id="configure.xml"/><a href="https://www.imagemagick.org/source/configure.xml">configure.xml</a></dt>
+<dt class="col-md-4"><a class="anchor" id="configure.xml"/><a href="https://imagemagick.org/source/configure.xml">configure.xml</a></dt>
   <dd class="col-md-8">Set ImageMagick build parameters and system-wide environment variables (e.g. MAGICK_TEMPORARY_PATH).
   As ImageMagick is built, a number of build parameters are saved to this configuration file.  They include the version, release date, dependent delegate libraries, and quantum depth among others.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/delegates.xml">delegates.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/delegates.xml">delegates.xml</a></dt>
   <dd class="col-md-8">Associate delegate programs with certain image formats.
 
   ImageMagick relies on a number of delegate programs to support certain image formats such as <a href="http://ufraw.sourceforge.net/">ufraw-batch</a> to read raw camera formats or <a href="http://www.cs.wisc.edu/~ghost/">Ghostscript</a> to read Postscript images.  Use this configuration file to map an input or output format to an external delegate program.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/english.xml">english.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/english.xml">english.xml</a></dt>
   <dd class="col-md-8">Associate message tags with English translations.</dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/francais.xml">francais.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/francais.xml">francais.xml</a></dt>
   <dd class="col-md-8">Associate message tags with French translations.  </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/locale.xml">locale.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/locale.xml">locale.xml</a></dt>
   <dd class="col-md-8">Associate message tags with a  translation for your locale.
 
   ImageMagick has a number of informational, warning, and error messages that are represented as tags.  Tags are short descriptions of a message such as
   <var>FileNotFound</var> or <var>MemoryAllocationFailed</var>.  This configuration file lists locales that have a translation for each tag recognized by ImageMagick.  Currently only English and French translations are available in the <code>english.xml</code> and <code>francais.xml</code> configuration files.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/log.xml">log.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/log.xml">log.xml</a></dt>
   <dd class="col-md-8">Configure logging parameters.
   ImageMagick is capable of spewing copious amounts of informational or debugging statements.  Use this file to configure how the information will appear in a log message and where you want the logging messages posted.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/magic.xml">magic.xml</a></dt>
-  <dd class="col-md-8">Associate an image format with a unique identifier.
-  Many image formats have identifiers that uniquely identify a particular image format.  For example, the GIF image format always begins with <code>GIF8</code> as the first 4 characters of the image.  ImageMagick uses this information to quickly determine the type of image it is dealing with when it reads an image.
-  </dd>
-
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/mime.xml">mime.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/mime.xml">mime.xml</a></dt>
   <dd class="col-md-8">Associate an internet media type with a unique identifier.
   Many files and data streams have identifiers that uniquely identify a
 particular internet media type. For example, files in the "Corel Draw
@@ -147,7 +148,7 @@ when available, to attempt to quickly determine the internet media type of a
 file or data stream.
 </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/policy.xml">policy.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/policy.xml">policy.xml</a></dt>
   <dd class="col-md-8">Configure ImageMagick policies.
   By default any coder, delegate, filter, or file path is permitted.  Use a policy to deny access to, for example, the MPEG video delegate, or permit reading images from a file system but deny writing to that same file system.  Or use the resource policy to set resource limits.  Policies are useful for multi-user servers that want to limit the overall impact ImageMagick has on the system.  For example, to limit the maximum image size in memory to 100MP:
 
@@ -164,23 +165,23 @@ To limit the elapsed time of any ImageMagick command to 5 minutes, use this poli
 <pre class="highlight"><code>&lt;policy domain="resource" name="time" value="300"/></code></pre>
 Define arguments for the memory, map, and disk resources with SI prefixes (.e.g 100MB).  In addition, resource policies are maximums for each instance of ImageMagick (e.g. policy memory limit 1GB, the <code>-limit 2GB</code> option exceeds policy maximum so memory limit is 1GB). </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/quantization-table.xml">quantization-table.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/quantization-table.xml">quantization-table.xml</a></dt>
   <dd class="col-md-8">Custom JPEG quantization tables. Activate with <code>-define:q-table=quantization-table.xml</code>.</dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/thresholds.xml">thresholds.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/thresholds.xml">thresholds.xml</a></dt>
   <dd class="col-md-8">Set threshold maps for ordered posterized dither.</dd>
 
-<dt class="col-md-4"><a class="anchor" id="type.xml"></a><a href="https://www.imagemagick.org/source/type.xml">type.xml</a></dt>
+<dt class="col-md-4"><a class="anchor" id="type.xml"></a><a href="https://imagemagick.org/source/type.xml">type.xml</a></dt>
   <dd class="col-md-8">Configure fonts.
   Define the font name, family, foundry, style, format, metrics, and glyphs for any font you want to use within ImageMagick.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/type-ghostscript.xml">type-ghostscript.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/type-ghostscript.xml">type-ghostscript.xml</a></dt>
   <dd class="col-md-8">Configure <a href="http://www.cs.wisc.edu/~ghost/">Ghostscript</a> fonts.
   The Ghostscript package includes a number of <a href="https://sourceforge.net/projects/gs-fonts/">fonts</a> that can be accessed with ImageMagick.
   </dd>
 
-<dt class="col-md-4"><a href="https://www.imagemagick.org/source/type-windows.xml">type-windows.xml</a></dt>
+<dt class="col-md-4"><a href="https://imagemagick.org/source/type-windows.xml">type-windows.xml</a></dt>
   <dd class="col-md-8">Associate names with Windows font glyphs.</dd>
 </dl>
 
@@ -214,7 +215,7 @@ $PREFIX/config
 $USERPROFILE/.config/ImageMagick
 &lt;<var>client path</var>&gt;</code></pre>
 
-<p>Above, $PREFIX is the default install path, typically <code>c:\\Program Files\\ImageMagick-7.0.7</code>.</p>
+<p>Above, $PREFIX is the default install path, typically <code>c:\\Program Files\\ImageMagick-7.0.9</code>.</p>
 
 <p>For an uninstalled Windows installation, the configuration load order is:</p>
 
@@ -226,46 +227,46 @@ $USERPROFILE/.config/ImageMagick
 
 <p>If a configuration file cannot not be found, ImageMagick relies on built-in default values.</p>
 
-<h2 class="magick-post-title"><a class="anchor" id="modules"></a>Modules</h2>
+<h2><a class="anchor" id="modules"></a>Modules</h2>
 
-<h4>Coders</h4>
+<h5>Coders</h5>
 <p>An image coder (i.e. encoder / decoder) is responsible for registering, optionally classifying, optionally reading, optionally writing, and unregistering one image format (e.g. PNG, GIF, JPEG, etc.).  ImageMagick searches for coders in the following order and it uses the first match found:</p>
 
-<pre class="highlight"><code>$MAGICK_HOME/lib/ImageMagick-7.0.7/modules-Q16/coders
-&lt;<var>client path</var>&gt;/../lib/ImageMagick-7.0.7/modules-Q16/coders
-$MAGICK_HOME/lib/ImageMagick-7.0.7/modules-Q16/coders
-$MAGICK_HOME/share/ImageMagick-7.0.7/modules-Q16/coders
+<pre class="highlight"><code>$MAGICK_HOME/lib/ImageMagick-7.0.9/modules-Q16/coders
+&lt;<var>client path</var>&gt;/../lib/ImageMagick-7.0.9/modules-Q16/coders
+$MAGICK_HOME/lib/ImageMagick-7.0.9/modules-Q16/coders
+$MAGICK_HOME/share/ImageMagick-7.0.9/modules-Q16/coders
 $XDG_CACHE_HOME/ImageMagick
 $HOME/.config/ImageMagick
-&lt;<var>client path</var>&gt;/lib/ImageMagick-7.0.7/modules-Q16/coders</code></pre>
+&lt;<var>client path</var>&gt;/lib/ImageMagick-7.0.9/modules-Q16/coders</code></pre>
 
-<h4>Filters</h4>
+<h5>Filters</h5>
 <p>ImageMagick provides a convenient mechanism for adding your own custom image processing algorithms.  ImageMagick searches for filters in the following order and it uses the first match found:</p>
-<pre class="highlight"><code>$MAGICK_HOME/lib/ImageMagick-7.0.7/modules-Q16/filters
-&lt;<var>client path</var>&gt;/../lib/ImageMagick-7.0.7/modules-Q16/filters
-$MAGICK_HOME/lib/ImageMagick-7.0.7/modules-Q16/filters
-$MAGICK_HOME/share/ImageMagick-7.0.7/modules-Q16/filters
+<pre class="highlight"><code>$MAGICK_HOME/lib/ImageMagick-7.0.9/modules-Q16/filters
+&lt;<var>client path</var>&gt;/../lib/ImageMagick-7.0.9/modules-Q16/filters
+$MAGICK_HOME/lib/ImageMagick-7.0.9/modules-Q16/filters
+$MAGICK_HOME/share/ImageMagick-7.0.9/modules-Q16/filters
 $XDG_CACHE_HOME/ImageMagick
 $HOME/.config/ImageMagick
-&lt;<var>client path</var>&gt;/lib/ImageMagick-7.0.7/modules-Q16/filters</code></pre>
+&lt;<var>client path</var>&gt;/lib/ImageMagick-7.0.9/modules-Q16/filters</code></pre>
 
-<h2 class="magick-post-title"><a class="anchor" id="fonts"></a>Fonts</h2>
+<h2><a class="anchor" id="fonts"></a>Fonts</h2>
 
 <p>ImageMagick is able to load raw TrueType and Postscript font files.  It searches for the font configuration file, <a href="resources.html#type.xml">type.xml</a>, in the following order, and loads them if found:</p>
 
 <pre class="highlight"><code>$MAGICK_CONFIGURE_PATH
-$MAGICK_HOME/etc/ImageMagick/-7.0.7
-$MAGICK_HOME/share/ImageMagick-7.0.7
+$MAGICK_HOME/etc/ImageMagick/-7.0.9
+$MAGICK_HOME/share/ImageMagick-7.0.9
 $XDG_CACHE_HOME/ImageMagick
 $HOME/.config/ImageMagick
 &lt;<var>client path</var>&gt;/etc/ImageMagick
 $MAGICK_FONT_PATH</code></pre>
 
-<h2 class="magick-post-title"><a class="anchor" id="environment"></a>Environment Variables</h2>
+<h2><a class="anchor" id="environment"></a>Environment Variables</h2>
 
 <p>Environment variables recognized by ImageMagick include:</p>
 
-<div class="table-responsive">
+<div class="table-responsive" style="font-size:87.5% !important;">
 <table class="table table-sm table-striped">
   <tr>
     <td>HOME</td>
@@ -376,22 +377,23 @@ $MAGICK_FONT_PATH</code></pre>
   </main><!-- /.container -->
   <footer class="magick-footer">
     <p><a href="security-policy.html">Security</a> •
-    <a href="architecture.html">Architecture</a> •
+    <a href="architecture.html">Architecture</a>
+     
+    <a href="resources.html#"><img class="d-inline" id="wand" alt="And Now a Touch of Magick" width="16" height="16" src="../images/wand.ico"/></a>
+     
     <a href="links.html">Related</a> •
      <a href="sitemap.html">Sitemap</a>
-       
-    <a href="resources.html#"><img class="d-inline" id="logo" alt="And Now a Touch of Magick" width="16" height="16" src="../images/wand.ico"/></a>
-       
-    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
-    <a href="support.html">Donate</a> •
-    <a href="https://www.imagemagick.org/script/contact.php">Contact Us</a>
     <br/>
-        <small>© 1999-2018 ImageMagick Studio LLC</small></p>
+    <a href="support.html">Donate</a> •
+    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
+    <a href="https://imagemagick.org/script/contact.php">Contact Us</a> 
+    <br/>
+    <small>© 1999-2020 ImageMagick Studio LLC</small></p>
   </footer>
 
   <!-- Javascript assets -->
   <script src="assets/magick.js" crossorigin="anonymous"></script>
-  <script>window.jQuery || document.write('<script src="assets/jquery.min.js"><\/script>')</script>
+  <script>window.jQuery || document.write('<script src="https://localhost/ajax/libs/jquery/3.4.1/jquery.min.js"><\/script>')</script>
 </body>
 </html>
-<!-- Magick Cache 18th February 2018 12:52 -->
+<!-- Magick Cache 5th January 2020 11:21 -->

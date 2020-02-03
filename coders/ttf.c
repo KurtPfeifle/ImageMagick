@@ -17,13 +17,13 @@
 %                                 July 1992                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -51,11 +51,12 @@
 #include "MagickCore/magick.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/quantum-private.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
 #include "MagickCore/module.h"
 #include "MagickCore/type.h"
-#include "MagickWand/MagickWand.h"
+#include "MagickCore/utility.h"
 #if defined(MAGICKCORE_FREETYPE_DELEGATE)
 #include <ft2build.h>
 #if defined(FT_FREETYPE_H)
@@ -171,7 +172,7 @@ static Image *ReadTTFImage(const ImageInfo *image_info,ExceptionInfo *exception)
     *text;
 
   const char
-    *Text = (char *)
+    Text[] =
       "abcdefghijklmnopqrstuvwxyz\n"
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
       "0123456789.:,;(*!?}^)#${%^&-+@\n";
@@ -252,7 +253,8 @@ static Image *ReadTTFImage(const ImageInfo *image_info,ExceptionInfo *exception)
   */
   y=20;
   draw_info=CloneDrawInfo(image_info,(DrawInfo *) NULL);
-  draw_info->font=AcquireString(image->filename);
+  draw_info->font=AcquireString("");
+  (void) ImageToFile(image,draw_info->font,exception);
   ConcatenateString(&draw_info->primitive,"push graphic-context\n");
   (void) FormatLocaleString(buffer,MagickPathExtent,
     " viewbox 0 0 %.20g %.20g\n",(double) image->columns,(double) image->rows);
@@ -288,6 +290,7 @@ static Image *ReadTTFImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Relinquish resources.
   */
+  (void) RelinquishUniqueFileResource(draw_info->font);  
   draw_info=DestroyDrawInfo(draw_info);
   (void) CloseBlob(image);
   return(GetFirstImageInList(image));

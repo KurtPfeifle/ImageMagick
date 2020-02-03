@@ -10,19 +10,25 @@
 %                        H   H  EEEEE  IIIII   CCCC                           %
 %                                                                             %
 %                                                                             %
-%                         Read/Write Heic Image Format                        %
+%                        Read/Write Heic Image Format                         %
 %                                                                             %
-%                              Software Design                                %
+%                                 Dirk Farin                                  %
+%                                 April 2018                                  %
+%                                                                             %
+%                         Copyright 2018 Struktur AG                          %
+%                                                                             %
 %                               Anton Kortunov                                %
 %                               December 2017                                 %
 %                                                                             %
-%                                                                             %
 %                      Copyright 2017-2018 YANDEX LLC.                        %
+%                                                                             %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
+%  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -56,6 +62,7 @@
 #include "MagickCore/monitor-private.h"
 #include "MagickCore/montage.h"
 #include "MagickCore/transform.h"
+#include "MagickCore/distort.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/memory-private.h"
 #include "MagickCore/option.h"
@@ -67,992 +74,34 @@
 #include "MagickCore/module.h"
 #include "MagickCore/utility.h"
 #if defined(MAGICKCORE_HEIC_DELEGATE)
-#include <libde265/de265.h>
+#if defined(MAGICKCORE_WINDOWS_SUPPORT)
+#include <heif.h>
+#else
+#include <libheif/heif.h>
+#endif
 #endif
 
-/*
-  Typedef declarations.
-*/
 #if defined(MAGICKCORE_HEIC_DELEGATE)
-
-#define MAX_ASSOCS_COUNT 10
-#define MAX_ITEM_PROPS 100
-#define MAX_HVCC_ATOM_SIZE 1024
-#define MAX_ATOMS_IN_BOX 100
-#define BUFFER_SIZE 100
-
-typedef struct _HEICItemInfo
-{
-  unsigned int
-    type;
-
-  unsigned int
-    assocsCount;
-
-  uint8_t
-    assocs[MAX_ASSOCS_COUNT];
-
-  unsigned int
-    dataSource;
-
-  unsigned int
-    offset;
-
-  unsigned int
-    size;
-} HEICItemInfo;
-
-typedef struct _HEICItemProp
-{
-  unsigned int
-    type;
-
-  unsigned int
-    size;
-
-  uint8_t
-    *data;
-} HEICItemProp;
-
-typedef struct _HEICGrid
-{
-  unsigned int
-    id;
-
-  unsigned int
-    rowsMinusOne;
-
-  unsigned int
-    columnsMinusOne;
-
-  unsigned int
-    imageWidth;
-
-  unsigned int
-    imageHeight;
-} HEICGrid;
-
-typedef struct _HEICImageContext
-{
-  MagickBooleanType
-    finished;
-
-  int
-    idsCount;
-
-  HEICItemInfo
-    *itemInfo;
-
-  int
-    itemPropsCount;
-
-  HEICItemProp
-    itemProps[MAX_ITEM_PROPS];
-
-  unsigned int
-    idatSize;
-
-  uint8_t
-    *idat;
-
-  HEICGrid
-    grid;
-
-  de265_decoder_context
-    *h265Ctx;
-
-  Image
-    *tmp;
-} HEICImageContext;
-
-typedef struct _DataBuffer {
-    unsigned char
-        *data;
-
-    off_t
-        pos;
-
-    size_t
-        size;
-} DataBuffer;
-
-
-#define ATOM(a,b,c,d) ((a << 24) + (b << 16) + (c << 8) + d)
-#define ThrowImproperImageHeader(msg) { \
-  (void) ThrowMagickException(exception,GetMagickModule(),CorruptImageError, \
-    "ImproperImageHeader","`%s'",msg); \
-}
-#define ThrowAndReturn(msg) { \
-  ThrowImproperImageHeader(msg) \
-  return(MagickFalse); \
-}
-
-inline static unsigned int readInt(const unsigned char* data)
-{
-  unsigned int val = 0;
-
-  val=(unsigned int)(data[0]) << 24;
-  val|=(unsigned int)(data[1]) << 16;
-  val|=(unsigned int)(data[2]) << 8;
-  val|=(unsigned int)(data[3]);
-
-  return val;
-}
-
-inline static MagickSizeType DBChop(DataBuffer *head, DataBuffer *db, size_t size)
-{
-  if (size > (db->size - db->pos)) {
-    return MagickFalse;
-  }
-
-  head->data = db->data + db->pos;
-  head->pos = 0;
-  head->size = size;
-
-  db->pos += size;
-
-  return MagickTrue;
-}
-
-inline static uint32_t DBReadUInt(DataBuffer *db)
-{
-  uint32_t val = 0;
-
-  if (db->size - db->pos < 4) {
-    db->pos = db->size;
-    return 0;
-  }
-
-  val=(uint32_t) db->data[db->pos+0] << 24;
-  val|=(uint32_t) db->data[db->pos+1] << 16;
-  val|=(uint32_t) db->data[db->pos+2] << 8;
-  val|=(uint32_t) db->data[db->pos+3];
-
-  db->pos += 4;
-
-  return val;
-}
-
-inline static uint16_t DBReadUShort(DataBuffer *db)
-{
-  uint16_t val = 0;
-
-  if (db->size - db->pos < 2) {
-    db->pos = db->size;
-    return 0;
-  }
-
-  val=(uint16_t) db->data[db->pos+0] << 8;
-  val|=(uint16_t) db->data[db->pos+1];
-
-  db->pos += 2;
-
-  return val;
-}
-
-inline static uint8_t DBReadUChar(DataBuffer *db)
-{
-  uint8_t val;
-
-  if (db->size - db->pos < 2) {
-    db->pos = db->size;
-    return 0;
-  }
-
-  val=(uint8_t) db->data[db->pos];
-  db->pos += 1;
-
-  return val;
-}
-
-inline static size_t DBGetSize(DataBuffer *db)
-{
-  return db->size - db->pos;
-}
-
-inline static void DBSkip(DataBuffer *db, size_t skip)
-{
-  if (db->pos + skip > db->size)
-  {
-    db->pos = db->size;
-  } else {
-    db->pos += skip;
-  }
-}
-
-static MagickBooleanType ParseAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception);
-
-static MagickBooleanType ParseFullBox(Image *image, DataBuffer *db,
-    unsigned int atom, HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    version, flags, i;
-
-  flags = DBReadUInt(db);
-  version = flags >> 24;
-  flags &= 0xffffff;
-
-  (void) flags;
-  (void) version;
-
-  if (DBGetSize(db) < 4) {
-    ThrowAndReturn("atom is too short");
-  }
-
-  for (i = 0; i < MAX_ATOMS_IN_BOX && DBGetSize(db) > 0; i++) {
-    if (ParseAtom(image, db, ctx, exception) == MagickFalse)
-      return MagickFalse;
-  }
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseBox(Image *image, DataBuffer *db,
-    unsigned int atom, HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    i;
-
-  for (i = 0; i < MAX_ATOMS_IN_BOX && DBGetSize(db) > 0; i++) {
-    if (ParseAtom(image, db, ctx, exception) == MagickFalse)
-      return MagickFalse;
-  }
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseHvcCAtom(HEICItemProp *prop, ExceptionInfo *exception)
-{
-  size_t
-    size, pos, count, i;
-
-  uint8_t
-    buffer[MAX_HVCC_ATOM_SIZE];
-
-  uint8_t
-    *p;
-
-  p = prop->data;
-
-  size = prop->size;
-  memcpy(buffer, prop->data, size);
-
-  pos = 22;
-  if (pos >= size) {
-    ThrowAndReturn("hvcC atom is too short");
-  }
-
-  count = buffer[pos++];
-
-  for (i = 0; i < count && pos < size-3; i++) {
-    size_t
-      naluType, num, j;
-
-    naluType = buffer[pos++] & 0x3f;
-    (void) naluType;
-    num = buffer[pos++] << 8;
-    num += buffer[pos++];
-
-    for (j = 0; j < num && pos < size-2; j++) {
-      size_t
-        naluSize;
-
-      naluSize = buffer[pos++] << 8;
-      naluSize += buffer[pos++];
-
-      if ((pos + naluSize > size) ||
-          (p + naluSize > prop->data + prop->size)) {
-        ThrowAndReturn("hvcC atom is too short");
-      }
-
-      /* AnnexB NALU header */
-      *p++ = 0;
-      *p++ = 0;
-      *p++ = 0;
-      *p++ = 1;
-
-      memcpy(p, buffer + pos, naluSize);
-      p += naluSize;
-      pos += naluSize;
-    }
-  }
-
-  prop->size = p - prop->data;
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseIpcoAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    length, atom;
-
-  HEICItemProp
-    *prop;
-
-  /*
-     property indicies starts from 1
-  */
-  for (ctx->itemPropsCount = 1; ctx->itemPropsCount < MAX_ITEM_PROPS && DBGetSize(db) > 8; ctx->itemPropsCount++) {
-    DataBuffer
-      propDb;
-
-    length = DBReadUInt(db);
-    atom = DBReadUInt(db);
-
-    if (ctx->itemPropsCount == MAX_ITEM_PROPS) {
-      ThrowAndReturn("too many item properties");
-    }
-
-    prop = &(ctx->itemProps[ctx->itemPropsCount]);
-    prop->type = atom;
-    prop->size = length - 8;
-    if (prop->size > DBGetSize(db))
-      ThrowAndReturn("insufficient data");
-    if (prop->data != (uint8_t *) NULL)
-      prop->data=(uint8_t *) RelinquishMagickMemory(prop->data);
-    prop->data = (uint8_t *) AcquireCriticalMemory(prop->size);
-    if (DBChop(&propDb, db, prop->size) != MagickTrue) {
-      ThrowAndReturn("incorrect read size");
-    }
-    memcpy(prop->data, propDb.data, prop->size);
-
-    switch (prop->type) {
-      case ATOM('h', 'v', 'c', 'C'):
-        ParseHvcCAtom(prop, exception);
-        break;
-      default:
-        break;
-    }
-  }
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseIinfAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    version, flags, count, i;
-
-  if (DBGetSize(db) < 4) {
-    ThrowAndReturn("atom is too short");
-  }
-
-  flags = DBReadUInt(db);
-  version = flags >> 24;
-  flags = 0xffffff;
-
-  if (version == 0) {
-   count = DBReadUShort(db);
-  } else {
-    count = DBReadUInt(db);
-  }
-
-  /*
-     item indicies starts from 1
-  */
-  ctx->idsCount = count;
-  if (ctx->itemInfo != (HEICItemInfo *) NULL)
-    ctx->itemInfo=(HEICItemInfo *) RelinquishMagickMemory(ctx->itemInfo);
-  if ((8.0*count) > (double)DBGetSize(db))
-    ThrowBinaryException(CorruptImageError,"InsufficientImageDataInFile",
-      image->filename);
-  ctx->itemInfo = (HEICItemInfo *)AcquireMagickMemory(sizeof(HEICItemInfo)*(count+1));
-  if (ctx->itemInfo == (HEICItemInfo *) NULL)
-    ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
-      image->filename);
-
-  memset(ctx->itemInfo, 0, sizeof(HEICItemInfo)*(count+1));
-
-  for (i = 0; i < count && DBGetSize(db) > 0; i++)
-  {
-    (void) ParseAtom(image, db, ctx, exception);
-  }
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseInfeAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    version, flags, id, type;
-
-  if (DBGetSize(db) < 9) {
-    ThrowAndReturn("atom is too short");
-  }
-
-  flags = DBReadUInt(db);
-  version = flags >> 24;
-  flags = 0xffffff;
-
-  if (version != 2) {
-    ThrowAndReturn("unsupported infe atom version");
-  }
-
-  id = DBReadUShort(db);
-  DBSkip(db, 2);   /* item protection index */
-  type = DBReadUInt(db);
-
-  /*
-     item indicies starts from 1
-  */
-  if ((id > (ssize_t) ctx->idsCount) ||
-      (ctx->itemInfo == (HEICItemInfo *) NULL))
-    ThrowAndReturn("item id is incorrect");
-
-  ctx->itemInfo[id].type = type;
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseIpmaAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    version, flags, count, i;
-
-  if (DBGetSize(db) < 9) {
-    ThrowAndReturn("atom is too short");
-  }
-
-  flags = DBReadUInt(db);
-  version = flags >> 24;
-  flags = 0xffffff;
-
-  count = DBReadUInt(db);
-
-  for (i = 0; i < count && DBGetSize(db) > 2; i++) {
-    unsigned int
-      id, assoc_count, j;
-
-    if (version < 1) {
-      id = DBReadUShort(db);
-    } else {
-      id = DBReadUInt(db);
-    }
-
-    /*
-       item indicies starts from 1
-       */
-    if ((id > (ssize_t) ctx->idsCount) ||
-        (ctx->itemInfo == (HEICItemInfo *) NULL))
-      ThrowAndReturn("item id is incorrect");
-
-    assoc_count = DBReadUChar(db);
-
-    if (assoc_count >= MAX_ASSOCS_COUNT) {
-      ThrowAndReturn("too many associations");
-    }
-
-    for (j = 0; j < assoc_count && DBGetSize(db) > 0; j++) {
-      ctx->itemInfo[id].assocs[j] = DBReadUChar(db);
-    }
-
-    ctx->itemInfo[id].assocsCount = j;
-  }
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseIlocAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  unsigned int
-    version, flags, tmp, count, i;
-
-  if (DBGetSize(db) < 9) {
-    ThrowAndReturn("atom is too short");
-  }
-
-  flags = DBReadUInt(db);
-  version = flags >> 24;
-  flags = 0xffffff;
-
-  tmp = DBReadUChar(db);
-  if (tmp != 0x44) {
-    ThrowAndReturn("only offset_size=4 and length_size=4 are supported");
-  }
-  tmp = DBReadUChar(db);
-  if (tmp != 0x00) {
-    ThrowAndReturn("only base_offset_size=0 and index_size=0 are supported");
-  }
-
-  if (version < 2) {
-    count = DBReadUShort(db);
-  } else {
-    count = DBReadUInt(db);
-  }
-
-  for (i = 0; i < count && DBGetSize(db) > 2; i++) {
-    unsigned int
-      id, ext_count;
-
-    HEICItemInfo
-      *item;
-
-    id = DBReadUShort(db);
-
-    /*
-       item indicies starts from 1
-    */
-    if ((id > (ssize_t) ctx->idsCount) ||
-        (ctx->itemInfo == (HEICItemInfo *) NULL))
-      ThrowAndReturn("item id is incorrect");
-
-    item = &ctx->itemInfo[id];
-
-    if (version == 1 || version == 2) {
-      item->dataSource = DBReadUShort(db);
-    }
-
-    /*
-     * data ref index
-     */
-    DBSkip(db, 2);
-    ext_count = DBReadUShort(db);
-
-    if (ext_count != 1) {
-      ThrowAndReturn("only one excention per item is supported");
-    }
-
-    item->offset = DBReadUInt(db);
-    item->size = DBReadUInt(db);
-  }
-
-  return MagickTrue;
-}
-
-static MagickBooleanType ParseAtom(Image *image, DataBuffer *db,
-    HEICImageContext *ctx, ExceptionInfo *exception)
-{
-  DataBuffer
-    atomDb;
-
-  MagickBooleanType
-    status;
-
-  MagickSizeType
-    atom_size;
-
-  unsigned int
-    atom;
-
-  if (DBGetSize(db) < 8)
-  {
-    ThrowAndReturn("atom is too short");
-  }
-
-  atom_size = DBReadUInt(db);
-  atom = DBReadUInt(db);
-
-  if (atom_size == 1) {
-    /* Only 32 bit atom size are supported */
-    DBReadUInt(db);
-    atom_size = DBReadUInt(db);
-  }
-
-  if (atom_size - 8 > DBGetSize(db))
-  {
-    ThrowAndReturn("atom is too short");
-  }
-
-  if (DBChop(&atomDb, db, atom_size - 8) != MagickTrue)
-  {
-    ThrowAndReturn("unable to read atom");
-  }
-
-  status = MagickTrue;
-
-  switch (atom)
-  {
-    case ATOM('i', 'r', 'e', 'f'):
-      status = ParseFullBox(image, &atomDb, atom, ctx, exception);
-      break;
-    case ATOM('i', 'p', 'r', 'p'):
-      status = ParseBox(image, &atomDb, atom, ctx, exception);
-      break;
-    case ATOM('i', 'i', 'n', 'f'):
-      status = ParseIinfAtom(image, &atomDb, ctx, exception);
-      break;
-    case ATOM('i', 'n', 'f', 'e'):
-      status = ParseInfeAtom(image, &atomDb, ctx, exception);
-      break;
-    case ATOM('i', 'p', 'c', 'o'):
-      status = ParseIpcoAtom(image, &atomDb, ctx, exception);
-      break;
-    case ATOM('i', 'p', 'm', 'a'):
-      status = ParseIpmaAtom(image, &atomDb, ctx, exception);
-      break;
-    case ATOM('i', 'l', 'o', 'c'):
-      status = ParseIlocAtom(image, &atomDb, ctx, exception);
-      break;
-    case ATOM('i', 'd', 'a', 't'):
-      {
-        ctx->idatSize = atom_size - 8;
-        if (ctx->idat != (uint8_t *) NULL)
-          ctx->idat = (uint8_t *) RelinquishMagickMemory(ctx->idat);
-        ctx->idat = (uint8_t *) AcquireMagickMemory(ctx->idatSize);
-        if (ctx->idat == (uint8_t *) NULL)
-          ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
-            image->filename);
-
-        memcpy(ctx->idat, atomDb.data, ctx->idatSize);
-      }
-      break;
-    default:
-      break;
-  }
-
-  return status;
-}
-
-
-static MagickBooleanType ParseRootAtom(Image *image,MagickSizeType *size,
-  HEICImageContext *ctx,ExceptionInfo *exception)
-{
-  MagickBooleanType
-    status;
-
-  MagickSizeType
-    atom_size;
-
-  unsigned int
-    atom;
-
-  if (*size < 8)
-    ThrowAndReturn("atom is too short");
-
-  atom_size = ReadBlobMSBLong(image);
-  atom = ReadBlobMSBLong(image);
-
-  if (atom_size == 1) {
-    ReadBlobMSBLong(image);
-    atom_size = ReadBlobMSBLong(image);
-  }
-
-
-  if (atom_size > *size)
-    ThrowAndReturn("atom is too short");
-
-  status = MagickTrue;
-
-  switch (atom)
-  {
-    case ATOM('f', 't', 'y', 'p'):
-      DiscardBlobBytes(image, atom_size-8);
-      break;
-    case ATOM('m', 'e', 't', 'a'):
-      {
-        DataBuffer
-          db;
-
-        size_t
-          count;
-
-        db.pos = 0;
-        db.size = atom_size - 8;
-        db.data = (unsigned char *) AcquireMagickMemory(db.size);
-        if (db.data == NULL)
-          ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
-            image->filename);
-
-        count = ReadBlob(image, db.size, db.data);
-        if (count != db.size) {
-          RelinquishMagickMemory((void *)db.data);
-          ThrowAndReturn("unable to read data");
-        }
-
-        /*
-         * Meta flags and version
-         */
-        /* DBSkip(&db, 4); */
-        status = ParseFullBox(image, &db, atom, ctx, exception);
-        RelinquishMagickMemory((void *)db.data);
-      }
-      break;
-    case ATOM('m', 'd', 'a', 't'):
-      ctx->finished = MagickTrue;
-      break;
-    default:
-      DiscardBlobBytes(image, atom_size-8);
-      break;
-  }
-  *size=*size-atom_size;
-  return(status);
-}
-
-static MagickBooleanType decodeGrid(HEICImageContext *ctx,
-  ExceptionInfo *exception)
-{
-  unsigned int
-    i, flags;
-
-  if (ctx->itemInfo == (HEICItemInfo *) NULL)
-    ThrowAndReturn("no atoms defined");
-  for (i = 1; i <= (ssize_t) ctx->idsCount; i++) {
-    HEICItemInfo
-      *info = &ctx->itemInfo[i];
-    if (info->type != ATOM('g','r','i','d'))
-      continue;
-    if (info->dataSource != 1) {
-      ThrowAndReturn("unsupport data source type");
-    }
-
-    if (ctx->idatSize < 8) {
-      ThrowAndReturn("idat is too small");
-    }
-
-    flags = ctx->idat[1];
-
-    ctx->grid.rowsMinusOne = ctx->idat[2];
-    ctx->grid.columnsMinusOne = ctx->idat[3];
-
-    if (flags & 1) {
-      ThrowAndReturn("Only 16 bits sizes are supported");
-    }
-
-    ctx->grid.imageWidth = (ctx->idat[4] << 8) + ctx->idat[5];
-    ctx->grid.imageHeight = (ctx->idat[6] << 8) + ctx->idat[7];
-
-    ctx->grid.id = i;
-
-    return MagickTrue;
-  }
-  return MagickFalse;
-}
-
-static MagickBooleanType decodeH265Image(Image *image, HEICImageContext *ctx, unsigned int id, ExceptionInfo *exception)
-{
-  unsigned char
-    *buffer = NULL;
-
-  unsigned char
-    *p;
-
-  size_t
-    count, pos, nal_unit_size;
-
-  int
-    more, i;
-
-  unsigned int
-    x_offset, y_offset;
-
-  de265_error
-    err;
-
-  pos = 0;
-  de265_reset(ctx->h265Ctx);
-
-  x_offset = 512 * ((id-1) % (ctx->grid.columnsMinusOne + 1));
-  y_offset = 512 * ((id-1) / (ctx->grid.columnsMinusOne + 1));
-
-  for (i = 0; i < (ssize_t) ctx->itemInfo[id].assocsCount; i++) {
-    ssize_t
-      assoc;
-
-    assoc = ctx->itemInfo[id].assocs[i] & 0x7f;
-    if (assoc > ctx->itemPropsCount) {
-      ThrowImproperImageHeader("incorrect item property index");
-      goto err_out_free;
-    }
-
-    switch (ctx->itemProps[assoc].type) {
-      case ATOM('h', 'v', 'c', 'C'):
-        err = de265_push_data(ctx->h265Ctx, ctx->itemProps[assoc].data, ctx->itemProps[assoc].size, pos, (void*)2);
-        if (err != DE265_OK) {
-          ThrowImproperImageHeader("unable to push data");
-          goto err_out_free;
-        }
-
-        pos += ctx->itemProps[assoc].size;
-        break;
-      case ATOM('c', 'o', 'l', 'r'):
-        {
-          StringInfo
-            *profile;
-
-          if (ctx->itemProps[assoc].size < 16)
-              continue;
-
-          profile=BlobToStringInfo(ctx->itemProps[assoc].data + 4, ctx->itemProps[assoc].size - 4);
-          (void) SetImageProfile(image, "icc", profile, exception);
-          profile=DestroyStringInfo(profile);
-          break;
-        }
-    }
-  }
-
-  buffer = (unsigned char *) AcquireMagickMemory(ctx->itemInfo[id].size);
-  if (buffer == NULL) {
-    (void) ThrowMagickException(exception,GetMagickModule(),ResourceLimitError,
-      "MemoryAllocationFailed","`%s'",image->filename);
-    goto err_out_free;
-  }
-
-  SeekBlob(image, ctx->itemInfo[id].offset, SEEK_SET);
-  count = ReadBlob(image, ctx->itemInfo[id].size, buffer);
-  if (count != ctx->itemInfo[id].size) {
-    ThrowImproperImageHeader("unable to read data");
-    goto err_out_free;
-  }
-
-  /*
-   * AVCC to AnnexB
-   */
-  for (p = buffer; p < buffer + ctx->itemInfo[id].size; /* void */) {
-    nal_unit_size = readInt(p);
-    p[0] = 0;
-    p[1] = 0;
-    p[2] = 0;
-    p[3] = 1;
-    p += nal_unit_size + 4;
-  }
-
-  err = de265_push_data(ctx->h265Ctx, buffer, ctx->itemInfo[id].size, pos, (void*)2);
-  if (err != DE265_OK) {
-    ThrowImproperImageHeader("unable to push data");
-    goto err_out_free;
-  }
-
-  err = de265_flush_data(ctx->h265Ctx);
-  if (err != DE265_OK) {
-    ThrowImproperImageHeader("unable to flush data");
-    goto err_out_free;
-  }
-
-  more = 0;
-
-  do {
-    err = de265_decode(ctx->h265Ctx, &more);
-    if (err != DE265_OK) {
-      ThrowImproperImageHeader("unable to decode data");
-      goto err_out_free;
-    }
-
-    while (1) {
-      de265_error warning = de265_get_warning(ctx->h265Ctx);
-      if (warning==DE265_OK) {
-        break;
-      }
-
-      ThrowBinaryException(CoderWarning,(const char *)NULL,
-        de265_get_error_text(warning));
-    }
-
-    const struct de265_image* img = de265_get_next_picture(ctx->h265Ctx);
-    if (img) {
-      const uint8_t *planes[3];
-      int dims[3][2];
-      int strides[3];
-
-      int c;
-      for (c = 0; c < 3; c++) {
-        planes[c] = de265_get_image_plane(img, c, &(strides[c]));
-        dims[c][0] = de265_get_image_width(img, c);
-        dims[c][1] = de265_get_image_height(img, c);
-      }
-
-
-      assert(dims[0][0] == 512);
-      assert(dims[0][1] == 512);
-      assert(dims[1][0] == 256);
-      assert(dims[1][1] == 256);
-      assert(dims[2][0] == 256);
-      assert(dims[2][1] == 256);
-
-      Image* chroma;
-
-      chroma = ctx->tmp;
-
-      int x, y;
-
-      for (y = 0; y < 256; y++) {
-        register Quantum *q;
-        register const uint8_t *p1 = planes[1] + y * strides[1];
-        register const uint8_t *p2 = planes[2] + y * strides[2];
-
-        q = QueueAuthenticPixels(chroma, 0, y, 256, 1, exception);
-        if (q == NULL) {
-          goto err_out_free;
-        }
-
-        for (x = 0; x < 256; x++) {
-          SetPixelGreen(chroma, ScaleCharToQuantum(*p1++), q);
-          SetPixelBlue(chroma, ScaleCharToQuantum(*p2++), q);
-          q+=GetPixelChannels(chroma);
-        }
-
-        if (SyncAuthenticPixels(chroma, exception) == MagickFalse) {
-          goto err_out_free;
-        }
-      }
-
-      Image* resized_chroma = ResizeImage(chroma, 512, 512, TriangleFilter, exception);
-      if (resized_chroma == NULL) {
-        goto err_out_free;
-      }
-
-      for (y = 0; y < 512; y++) {
-        register Quantum *q;
-        register const Quantum *p;
-        register const uint8_t *l = planes[0] + y * strides[0];
-
-        q = QueueAuthenticPixels(image, x_offset, y_offset + y, 512, 1, exception);
-        if (q == NULL) {
-          goto err_loop_free;
-        }
-
-        p = GetVirtualPixels(resized_chroma, 0, y, 512, 1, exception);
-        if (p == NULL) {
-          goto err_loop_free;
-        }
-
-        for (x = 0; x < 512; x++) {
-          SetPixelRed(image, ScaleCharToQuantum(*l), q);
-          SetPixelGreen(image, GetPixelGreen(resized_chroma, p), q);
-          SetPixelBlue(image, GetPixelBlue(resized_chroma, p), q);
-          l++;
-          q+=GetPixelChannels(image);
-          p+=GetPixelChannels(resized_chroma);
-        }
-
-        if (SyncAuthenticPixels(image, exception) == MagickFalse) {
-          goto err_loop_free;
-        }
-      }
-
-      if (resized_chroma)
-        resized_chroma = DestroyImage(resized_chroma);
-
-      more = 0;
-      de265_release_next_picture(ctx->h265Ctx);
-      break;
-
-err_loop_free:
-      if (resized_chroma)
-        resized_chroma = DestroyImage(resized_chroma);
-
-      de265_release_next_picture(ctx->h265Ctx);
-
-      goto err_out_free;
-    }
-  } while (more);
-
-  de265_reset(ctx->h265Ctx);
-  buffer = (unsigned char *) RelinquishMagickMemory(buffer);
-  return MagickTrue;
-
-err_out_free:
-  de265_reset(ctx->h265Ctx);
-  buffer = (unsigned char *) RelinquishMagickMemory(buffer);
-  return MagickFalse;
-}
-
 /*
+  Define declarations.
+*/
+#define XmpNamespaceExtent  28
+
+/*
+  Const declarations.
+*/
+static const char
+  xmp_namespace[] = "http://ns.adobe.com/xap/1.0/ ";
+
+#if !defined(MAGICKCORE_WINDOWS_SUPPORT)
+/*
+  Forward declarations.
+*/
+static MagickBooleanType
+  WriteHEICImage(const ImageInfo *,Image *,ExceptionInfo *);
+#endif
+
+/*x
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
 %                                                                             %
@@ -1079,32 +128,299 @@ err_out_free:
 %    o exception: return any errors or warnings in this structure.
 %
 */
-static Image *ReadHEICImage(const ImageInfo *image_info,
+static MagickBooleanType IsHeifSuccess(struct heif_error *error,Image *image,
   ExceptionInfo *exception)
 {
-  Image
-    *image;
+  if (error->code == 0)
+    return(MagickTrue);
+  ThrowBinaryException(CorruptImageError,error->message,image->filename);
+}
 
-  Image
-    *cropped = NULL;
+static MagickBooleanType ReadHEICColorProfile(Image *image,
+  struct heif_image_handle *image_handle,ExceptionInfo *exception)
+{
+  size_t
+    length;
+
+#if LIBHEIF_NUMERIC_VERSION >= 0x01040000
+  length=heif_image_handle_get_raw_color_profile_size(image_handle);
+  if (length > 0)
+    {
+      unsigned char
+        *color_buffer;
+
+      /*
+        Read color profile.
+      */
+      if ((MagickSizeType) length > GetBlobSize(image))
+        ThrowBinaryException(CorruptImageError,"InsufficientImageDataInFile",
+          image->filename);
+      color_buffer=(unsigned char *) AcquireMagickMemory(length);
+      if (color_buffer != (unsigned char *) NULL)
+        {
+          struct heif_error
+            error;
+
+          error=heif_image_handle_get_raw_color_profile(image_handle,
+            color_buffer);
+          if (error.code == 0)
+            {
+              StringInfo
+                *profile;
+
+              profile=BlobToStringInfo(color_buffer,length);
+              if (profile != (StringInfo*) NULL)
+                {
+                  (void) SetImageProfile(image,"icc",profile,exception);
+                  profile=DestroyStringInfo(profile);
+                }
+            }
+        }
+      color_buffer=(unsigned char *) RelinquishMagickMemory(color_buffer);
+    }
+#endif
+  return(MagickTrue);
+}
+
+static MagickBooleanType ReadHEICExifProfile(Image *image,
+  struct heif_image_handle *image_handle,ExceptionInfo *exception)
+{
+  heif_item_id
+    exif_id;
+
+  int
+    count;
+
+  count=heif_image_handle_get_list_of_metadata_block_IDs(image_handle,"Exif",
+    &exif_id,1);
+  if (count > 0)
+    {
+      size_t
+        exif_size;
+
+      unsigned char
+        *exif_buffer;
+
+      /*
+        Read Exif profile.
+      */
+      exif_size=heif_image_handle_get_metadata_size(image_handle,exif_id);
+      if ((MagickSizeType) exif_size > GetBlobSize(image))
+        ThrowBinaryException(CorruptImageError,"InsufficientImageDataInFile",
+          image->filename);
+      exif_buffer=(unsigned char *) AcquireMagickMemory(exif_size);
+      if (exif_buffer != (unsigned char *) NULL)
+        {
+          struct heif_error
+            error;
+
+          error=heif_image_handle_get_metadata(image_handle,
+            exif_id,exif_buffer);
+          if (error.code == 0)
+            {
+              StringInfo
+                *profile;
+
+              /*
+                The first 4 byte should be skipped since they indicate the
+                offset to the start of the TIFF header of the Exif data.
+              */
+              profile=(StringInfo*) NULL;
+              if (exif_size > 8)
+                profile=BlobToStringInfo(exif_buffer+4,(size_t) exif_size-4);
+              if (profile != (StringInfo*) NULL)
+                {
+                  (void) SetImageProfile(image,"exif",profile,exception);
+                  profile=DestroyStringInfo(profile);
+                }
+            }
+        }
+      exif_buffer=(unsigned char *) RelinquishMagickMemory(exif_buffer);
+  }
+  return(MagickTrue);
+}
+
+static inline MagickBooleanType HEICSkipImage(const ImageInfo *image_info,
+  Image *image)
+{
+  if (image_info->number_scenes == 0)
+    return(MagickFalse);
+  if (image->scene == 0)
+    return(MagickFalse);
+  if (image->scene < image_info->scene)
+    return(MagickTrue);
+  if (image->scene > image_info->scene+image_info->number_scenes-1)
+    return(MagickTrue);
+  return(MagickFalse);
+}
+
+static MagickBooleanType ReadHEICImageByID(const ImageInfo *image_info,
+  Image *image,struct heif_context *heif_context,heif_item_id image_id,
+  ExceptionInfo *exception)
+{
+  const char
+    *option;
+
+  int
+    stride_y,
+    stride_cb,
+    stride_cr;
 
   MagickBooleanType
     status;
 
-  RectangleInfo
-      crop_info;
+  ssize_t
+    y;
 
-  MagickSizeType
+  struct heif_decoding_options
+    *decode_options;
+
+  struct heif_error
+    error;
+
+  struct heif_image
+    *heif_image;
+
+  struct heif_image_handle
+    *image_handle;
+
+  const uint8_t
+    *p_y,
+    *p_cb,
+    *p_cr;
+
+  error=heif_context_get_image_handle(heif_context,image_id,&image_handle);
+  if (IsHeifSuccess(&error,image,exception) == MagickFalse)
+    return(MagickFalse);
+  if (ReadHEICColorProfile(image,image_handle,exception) == MagickFalse)
+    {
+      heif_image_handle_release(image_handle);
+      return(MagickFalse);
+    }
+  if (ReadHEICExifProfile(image,image_handle,exception) == MagickFalse)
+    {
+      heif_image_handle_release(image_handle);
+      return(MagickFalse);
+    }
+  /*
+    Set image size.
+  */
+  image->depth=8;
+  image->columns=(size_t) heif_image_handle_get_width(image_handle);
+  image->rows=(size_t) heif_image_handle_get_height(image_handle);
+  if (image_info->ping != MagickFalse)
+    {
+      image->colorspace=YCbCrColorspace;
+      heif_image_handle_release(image_handle);
+      return(MagickTrue);
+    }
+  if (HEICSkipImage(image_info,image) != MagickFalse)
+    {
+      heif_image_handle_release(image_handle);
+      return(MagickTrue);
+    }
+  status=SetImageExtent(image,image->columns,image->rows,exception);
+  if (status == MagickFalse)
+    {
+      heif_image_handle_release(image_handle);
+      return(MagickFalse);
+    }
+  /*
+    Copy HEIF image into ImageMagick data structures.
+  */
+  (void) SetImageColorspace(image,YCbCrColorspace,exception);
+  decode_options=(struct heif_decoding_options *) NULL;
+  option=GetImageOption(image_info,"heic:preserve-orientation");
+  if (IsStringTrue(option) == MagickTrue)
+    {
+      decode_options=heif_decoding_options_alloc();
+      decode_options->ignore_transformations=1;
+    }
+  else
+    (void) SetImageProperty(image,"exif:Orientation","1",exception);
+  error=heif_decode_image(image_handle,&heif_image,heif_colorspace_YCbCr,
+    heif_chroma_420,decode_options);
+  if (IsHeifSuccess(&error,image,exception) == MagickFalse)
+    {
+      heif_image_handle_release(image_handle);
+      return(MagickFalse);
+    }
+  if (decode_options != (struct heif_decoding_options *) NULL)
+    {
+      /*
+        Correct the width and height of the image.
+      */
+      image->columns=(size_t) heif_image_get_width(heif_image,heif_channel_Y);
+      image->rows=(size_t) heif_image_get_height(heif_image,heif_channel_Y);
+      status=SetImageExtent(image,image->columns,image->rows,exception);
+      heif_decoding_options_free(decode_options);
+      if (status == MagickFalse)
+        {
+          heif_image_release(heif_image);
+          heif_image_handle_release(image_handle);
+          return(MagickFalse);
+        }
+    }
+  p_y=heif_image_get_plane_readonly(heif_image,heif_channel_Y,&stride_y);
+  p_cb=heif_image_get_plane_readonly(heif_image,heif_channel_Cb,&stride_cb);
+  p_cr=heif_image_get_plane_readonly(heif_image,heif_channel_Cr,&stride_cr);
+  for (y=0; y < (ssize_t) image->rows; y++)
+  {
+    Quantum
+      *q;
+
+    register ssize_t
+      x;
+
+    q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
+    if (q == (Quantum *) NULL)
+      break;
+    for (x=0; x < (ssize_t) image->columns; x++)
+    {
+      SetPixelRed(image,ScaleCharToQuantum((unsigned char) p_y[y*
+        stride_y+x]),q);
+      SetPixelGreen(image,ScaleCharToQuantum((unsigned char) p_cb[(y/2)*
+        stride_cb+x/2]),q);
+      SetPixelBlue(image,ScaleCharToQuantum((unsigned char) p_cr[(y/2)*
+        stride_cr+x/2]),q);
+      q+=GetPixelChannels(image);
+    }
+    if (SyncAuthenticPixels(image,exception) == MagickFalse)
+      break;
+  }
+  heif_image_release(heif_image);
+  heif_image_handle_release(image_handle);
+  return(MagickTrue);
+}
+
+static Image *ReadHEICImage(const ImageInfo *image_info,
+  ExceptionInfo *exception)
+{
+  const StringInfo
+    *profile;
+
+  heif_item_id
+    *image_ids,
+    primary_image_id;
+
+  Image
+    *image;
+
+  MagickBooleanType
+    status;
+
+  size_t
+    count,
     length;
 
-  ssize_t
-    count,
-    i;
+  struct heif_context
+    *heif_context;
 
-  HEICImageContext
-    ctx;
+  struct heif_error
+    error;
 
-  memset(&ctx, 0, sizeof(ctx));
+  void
+    *file_data;
 
   /*
     Open image file.
@@ -1119,185 +435,111 @@ static Image *ReadHEICImage(const ImageInfo *image_info,
   image=AcquireImage(image_info,exception);
   status=OpenBlob(image_info,image,ReadBinaryBlobMode,exception);
   if (status == MagickFalse)
-  {
-    image=DestroyImageList(image);
-    return((Image *) NULL);
-  }
-  cropped=(Image *) NULL;
-
-  length=GetBlobSize(image);
-  count = MAX_ATOMS_IN_BOX;
-  while (length && ctx.finished == MagickFalse && count--)
-  {
-    if (ParseRootAtom(image, &length, &ctx, exception) == MagickFalse)
-      goto cleanup;
-  }
-
-  if (ctx.finished != MagickTrue)
-    goto cleanup;
-
+    return(DestroyImageList(image));
+  if (GetBlobSize(image) > (MagickSizeType) SSIZE_MAX)
+    ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+  length=(size_t) GetBlobSize(image);
+  file_data=AcquireMagickMemory(length);
+  if (file_data == (void *) NULL)
+    ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+  if (ReadBlob(image,length,file_data) != (ssize_t) length)
+    {
+      file_data=RelinquishMagickMemory(file_data);
+      ThrowReaderException(CorruptImageError,"InsufficientImageDataInFile");
+    }
   /*
-     Initialize h265 decoder
+    Decode HEIF file
   */
-  ctx.h265Ctx = de265_new_decoder();
-  if (ctx.h265Ctx == NULL) {
-    ThrowImproperImageHeader("unable to initialize decode");
-    goto cleanup;
-  }
-
-  if (decodeGrid(&ctx, exception) != MagickTrue)
-    goto cleanup;
-
-  count = (ctx.grid.rowsMinusOne + 1) * (ctx.grid.columnsMinusOne + 1);
-
-  image->columns = 512 * (ctx.grid.columnsMinusOne + 1);
-  image->rows = 512 * (ctx.grid.rowsMinusOne + 1);
-  image->depth=8;
-
-  status=SetImageExtent(image,image->columns,image->rows,exception);
-  if (status == MagickFalse)
-    goto cleanup;
-
-  if (image_info->ping == MagickFalse)
+  heif_context=heif_context_alloc();
+  error=heif_context_read_from_memory_without_copy(heif_context,file_data,
+    length,NULL);
+  if (IsHeifSuccess(&error,image,exception) == MagickFalse)
     {
-      ctx.tmp = CloneImage(image, 256, 256, MagickTrue, exception);
-      if (ctx.tmp == NULL) {
-        (void) ThrowMagickException(exception,GetMagickModule(),
-          ResourceLimitError,"MemoryAllocationFailed","`%s'",image->filename);
-        goto cleanup;
-      }
-
-      DuplicateBlob(ctx.tmp, image);
-
-      for (i = 0; i < count; i++) {
-        decodeH265Image(image, &ctx, i+1, exception);
-      }
+      heif_context_free(heif_context);
+      file_data=RelinquishMagickMemory(file_data);
+      return(DestroyImageList(image));
     }
-
-  crop_info.x = 0;
-  crop_info.y = 0;
-
-  for (i = 0; i < ctx.itemInfo[ctx.grid.id].assocsCount; i++) {
-    ssize_t
-      assoc;
-
-    assoc = ctx.itemInfo[ctx.grid.id].assocs[i] & 0x7f;
-    if (assoc > ctx.itemPropsCount) {
-      ThrowImproperImageHeader("incorrect item property index");
-      goto cleanup;
+  error=heif_context_get_primary_image_ID(heif_context,&primary_image_id);
+  if (IsHeifSuccess(&error,image,exception) == MagickFalse)
+    {
+      heif_context_free(heif_context);
+      file_data=RelinquishMagickMemory(file_data);
+      return(DestroyImageList(image));
     }
+  status=ReadHEICImageByID(image_info,image,heif_context,primary_image_id,
+    exception);
+  image_ids=(heif_item_id *) NULL;
+  count=(size_t) heif_context_get_number_of_top_level_images(heif_context);
+  if ((status != MagickFalse) && (count > 1))
+    {
+      register size_t
+        i;
 
-    switch (ctx.itemProps[assoc].type) {
-      case ATOM('i', 's', 'p', 'e'):
-        if (ctx.itemProps[assoc].size < 12) {
-          ThrowImproperImageHeader("ispe atom is too short");
-          goto cleanup;
-        }
-        crop_info.width = readInt(ctx.itemProps[assoc].data+4);
-        crop_info.height = readInt(ctx.itemProps[assoc].data+8);
-        break;
-
-      case ATOM('i', 'r', 'o', 't'):
+      image_ids=(heif_item_id *) AcquireQuantumMemory((size_t) count,
+        sizeof(*image_ids));
+      if (image_ids == (heif_item_id *) NULL)
         {
-          const char *value;
-
-          if (ctx.itemProps[assoc].size < 1) {
-            ThrowImproperImageHeader("irot atom is too short");
-            goto cleanup;
-          }
-
-          switch (ctx.itemProps[assoc].data[0])
-          {
-            case 0:
-              image->orientation = TopLeftOrientation;
-              value = "1";
-              break;
-            case 1:
-              image->orientation = RightTopOrientation;
-              value = "8";
-              break;
-            case 2:
-              image->orientation = BottomRightOrientation;
-              value = "3";
-              break;
-            case 3:
-              image->orientation = LeftTopOrientation;
-              value = "6";
-              break;
-            default:
-              value = "1";
-          }
-
-          SetImageProperty(image, "exif:Orientation", value, exception);
+          heif_context_free(heif_context);
+          ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
         }
-        break;
-    }
-  }
-
-  for (i = 1; i <= ctx.idsCount; i++) {
-    unsigned char
-      *buffer = NULL;
-
-    StringInfo
-      *profile;
-
-    HEICItemInfo
-      *info = &ctx.itemInfo[i];
-
-    if (info->type != ATOM('E','x','i','f'))
-      continue;
-
-    buffer = (unsigned char *) AcquireMagickMemory(info->size);
-    if (buffer == NULL) {
-      (void) ThrowMagickException(exception,GetMagickModule(),ResourceLimitError,
-        "MemoryAllocationFailed","`%s'",image->filename);
-      goto cleanup;
-    }
-
-    SeekBlob(image, info->offset+4, SEEK_SET);
-    count = ReadBlob(image, info->size-4, buffer);
-    profile=BlobToStringInfo(buffer, count);
-    SetImageProfile(image, "exif", profile, exception);
-
-    profile = DestroyStringInfo(profile);
-    RelinquishMagickMemory(buffer);
-  }
-
-  cropped = CropImage(image, &crop_info, exception);
-  image = DestroyImage(image);
-  if (cropped != NULL)
-    {
-      if (image_info->ping != MagickFalse)
-        cropped->colorspace=YCbCrColorspace;
-      else
-        SetImageColorspace(cropped,YCbCrColorspace,exception);
-    }
-
-cleanup:
-  if (image) {
-    image = DestroyImage(image);
-  }
-  if (ctx.h265Ctx) {
-      de265_free_decoder(ctx.h265Ctx);
-  }
-  if (ctx.tmp) {
-      ctx.tmp = DestroyImage(ctx.tmp);
-  }
-  if (ctx.idat) {
-      ctx.idat = (uint8_t *) RelinquishMagickMemory(ctx.idat);
-  }
-  if (ctx.itemInfo) {
-      ctx.itemInfo = (HEICItemInfo *) RelinquishMagickMemory(ctx.itemInfo);
-  }
-  for (i = 1; i <= ctx.itemPropsCount; i++) {
-      if (ctx.itemProps[i].data) {
-          ctx.itemProps[i].data = (uint8_t *) RelinquishMagickMemory(ctx.itemProps[i].data);
+      (void) heif_context_get_list_of_top_level_image_IDs(heif_context,
+        image_ids,(int) count);
+      for (i=0; i < count; i++)
+      {
+        if (image_ids[i] == primary_image_id)
+          continue;
+        /*
+          Allocate next image structure.
+        */
+        AcquireNextImage(image_info,image,exception);
+        if (GetNextImageInList(image) == (Image *) NULL)
+          {
+            status=MagickFalse;
+            break;
+          }
+        image=SyncNextImageInList(image);
+        status=ReadHEICImageByID(image_info,image,heif_context,image_ids[i],
+          exception);
+        if (status == MagickFalse)
+          break;
+        if (image_info->number_scenes != 0)
+          if (image->scene >= (image_info->scene+image_info->number_scenes-1))
+            break;
       }
-  }
-  return cropped;
+    }
+  if (image_ids != (heif_item_id *) NULL)
+    (void) RelinquishMagickMemory(image_ids);
+  heif_context_free(heif_context);
+  file_data=RelinquishMagickMemory(file_data);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
+  /*
+    Change image colorspace if it contains a color profile.
+  */
+  image=GetFirstImageInList(image);
+  profile=GetImageProfile(image,"icc");
+  if (profile != (const StringInfo *) NULL)
+    {
+      Image
+        *next;
+
+      next=image;
+      while (next != (Image *) NULL)
+      {
+        if (HEICSkipImage(image_info,next) != MagickFalse)
+          {
+            if (image_info->ping == MagickFalse)
+              (void) TransformImageColorspace(next,sRGBColorspace,exception);
+            else
+              next->colorspace=sRGBColorspace;
+          }
+        next=GetNextImageInList(next);
+      }
+    }
+  return(image);
 }
 #endif
-
+
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
@@ -1327,11 +569,17 @@ static MagickBooleanType IsHEIC(const unsigned char *magick,const size_t length)
 {
   if (length < 12)
     return(MagickFalse);
+  if (LocaleNCompare((const char *) magick+4,"ftyp",4) != 0)
+  return(MagickFalse);
   if (LocaleNCompare((const char *) magick+8,"heic",4) == 0)
+    return(MagickTrue);
+  if (LocaleNCompare((const char *) magick+8,"heix",4) == 0)
+    return(MagickTrue);
+  if (LocaleNCompare((const char *) magick+8,"mif1",4) == 0)
     return(MagickTrue);
   return(MagickFalse);
 }
-
+
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
@@ -1359,18 +607,23 @@ ModuleExport size_t RegisterHEICImage(void)
   MagickInfo
     *entry;
 
-  entry=AcquireMagickInfo("HEIC","HEIC","Apple High efficiency Image Format");
+  entry=AcquireMagickInfo("HEIC","HEIC","High Efficiency Image Format");
 #if defined(MAGICKCORE_HEIC_DELEGATE)
   entry->decoder=(DecodeImageHandler *) ReadHEICImage;
+#if !defined(MAGICKCORE_WINDOWS_SUPPORT)
+  entry->encoder=(EncodeImageHandler *) WriteHEICImage;
+#endif
 #endif
   entry->magick=(IsImageFormatHandler *) IsHEIC;
   entry->mime_type=ConstantString("image/x-heic");
+#if defined(LIBHEIF_VERSION)
+  entry->version=ConstantString(LIBHEIF_VERSION);
+#endif
   entry->flags|=CoderDecoderSeekableStreamFlag;
-  entry->flags^=CoderAdjoinFlag;
   (void) RegisterMagickInfo(entry);
   return(MagickImageCoderSignature);
 }
-
+
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
@@ -1394,3 +647,331 @@ ModuleExport void UnregisterHEICImage(void)
 {
   (void) UnregisterMagickInfo("HEIC");
 }
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%   W r i t e H E I C I m a g e                                               %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  WriteHEICImage() writes an HEIF image using the libheif library.
+%
+%  The format of the WriteHEICImage method is:
+%
+%      MagickBooleanType WriteHEICImage(const ImageInfo *image_info,
+%        Image *image)
+%
+%  A description of each parameter follows.
+%
+%    o image_info: the image info.
+%
+%    o image:  The image.
+%
+%    o exception:  return any errors or warnings in this structure.
+%
+*/
+
+#if defined(MAGICKCORE_HEIC_DELEGATE) && !defined(MAGICKCORE_WINDOWS_SUPPORT)
+#if LIBHEIF_NUMERIC_VERSION >= 0x01030000
+static void WriteProfile(struct heif_context *context,Image *image,
+  ExceptionInfo *exception)
+{
+  const char
+    *name;
+
+  const StringInfo
+    *profile;
+
+  register ssize_t
+    i;
+
+  size_t
+    length;
+
+  struct heif_error
+    error;
+
+  struct heif_image_handle
+    *image_handle;
+
+  /*
+    Get image handle.
+  */
+  image_handle=(struct heif_image_handle *) NULL;
+  error=heif_context_get_primary_image_handle(context,&image_handle);
+  if (error.code != 0)
+    return;
+  /*
+    Save image profile as a APP marker.
+  */
+  ResetImageProfileIterator(image);
+  for (name=GetNextImageProfile(image); name != (const char *) NULL; )
+  {
+    profile=GetImageProfile(image,name);
+    length=GetStringInfoLength(profile);
+    if (LocaleCompare(name,"EXIF") == 0)
+      {
+        length=GetStringInfoLength(profile);
+        if (length > 65533L)
+          {
+            (void) ThrowMagickException(exception,GetMagickModule(),
+              CoderWarning,"ExifProfileSizeExceedsLimit","`%s'",
+              image->filename);
+            length=65533L;
+          }
+          (void) heif_context_add_exif_metadata(context,image_handle,
+            (void*) GetStringInfoDatum(profile),length);
+      }
+    if (LocaleCompare(name,"XMP") == 0)
+      {
+        StringInfo
+          *xmp_profile;
+
+        xmp_profile=StringToStringInfo(xmp_namespace);
+        if (xmp_profile != (StringInfo *) NULL)
+          {
+            if (profile != (StringInfo *) NULL)
+              ConcatenateStringInfo(xmp_profile,profile);
+            GetStringInfoDatum(xmp_profile)[XmpNamespaceExtent]='\0';
+            for (i=0; i < (ssize_t) GetStringInfoLength(xmp_profile); i+=65533L)
+            {
+              length=MagickMin(GetStringInfoLength(xmp_profile)-i,65533L);
+              error=heif_context_add_XMP_metadata(context,image_handle,
+                (void*) (GetStringInfoDatum(xmp_profile)+i),length);
+              if (error.code != 0)
+                break;
+            }
+            xmp_profile=DestroyStringInfo(xmp_profile);
+          }
+      }
+    if (image->debug != MagickFalse)
+      (void) LogMagickEvent(CoderEvent,GetMagickModule(),
+        "%s profile: %.20g bytes",name,(double) GetStringInfoLength(profile));
+    name=GetNextImageProfile(image);
+  }
+  heif_image_handle_release(image_handle);
+}
+#endif
+
+static struct heif_error heif_write_func(struct heif_context *context,
+  const void* data,size_t size,void* userdata)
+{
+  Image
+    *image;
+
+  struct heif_error
+    error_ok;
+
+  (void) context;
+  image=(Image*) userdata;
+  (void) WriteBlob(image,size,(const unsigned char *) data);
+  error_ok.code=heif_error_Ok;
+  error_ok.subcode=heif_suberror_Unspecified;
+  error_ok.message="ok";
+  return(error_ok);
+}
+
+static MagickBooleanType WriteHEICImage(const ImageInfo *image_info,
+  Image *image,ExceptionInfo *exception)
+{
+  MagickBooleanType
+    status;
+
+  MagickOffsetType
+    scene;
+
+  ssize_t
+    y;
+
+  struct heif_context
+    *heif_context;
+
+  struct heif_encoder
+    *heif_encoder;
+
+  struct heif_image
+    *heif_image;
+
+  /*
+    Open output image file.
+  */
+  assert(image_info != (const ImageInfo *) NULL);
+  assert(image_info->signature == MagickCoreSignature);
+  assert(image != (Image *) NULL);
+  assert(image->signature == MagickCoreSignature);
+  if (image->debug != MagickFalse)
+    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+  status=OpenBlob(image_info,image,WriteBinaryBlobMode,exception);
+  if (status == MagickFalse)
+    return(status);
+  scene=0;
+  heif_context=heif_context_alloc();
+  heif_image=(struct heif_image*) NULL;
+  heif_encoder=(struct heif_encoder*) NULL;
+  do
+  {
+    const Quantum
+      *p;
+
+#if LIBHEIF_NUMERIC_VERSION >= 0x01040000
+    const StringInfo
+      *profile;
+#endif
+
+    int
+      stride_y,
+      stride_cb,
+      stride_cr;
+
+    struct heif_error
+      error;
+
+    struct heif_writer
+      writer;
+
+    uint8_t
+      *p_y,
+      *p_cb,
+      *p_cr;
+
+    /*
+      Transform colorspace to YCbCr.
+    */
+    if (image->colorspace != YCbCrColorspace)
+      status=TransformImageColorspace(image,YCbCrColorspace,exception);
+    if (status == MagickFalse)
+      break;
+    /*
+      Initialize HEIF encoder context.
+    */
+    error=heif_image_create((int) image->columns,(int) image->rows,
+      heif_colorspace_YCbCr,heif_chroma_420,&heif_image);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+#if LIBHEIF_NUMERIC_VERSION >= 0x01040000
+    profile=GetImageProfile(image,"icc");
+    if (profile != (StringInfo *) NULL)
+      (void) heif_image_set_raw_color_profile(heif_image,"prof",
+        GetStringInfoDatum(profile),GetStringInfoLength(profile));
+#endif
+    error=heif_image_add_plane(heif_image,heif_channel_Y,(int) image->columns,
+      (int) image->rows,8);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+    error=heif_image_add_plane(heif_image,heif_channel_Cb,
+      ((int) image->columns+1)/2,((int) image->rows+1)/2,8);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+    error=heif_image_add_plane(heif_image,heif_channel_Cr,
+      ((int) image->columns+1)/2,((int) image->rows+1)/2,8);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+    p_y=heif_image_get_plane(heif_image,heif_channel_Y,&stride_y);
+    p_cb=heif_image_get_plane(heif_image,heif_channel_Cb,&stride_cb);
+    p_cr=heif_image_get_plane(heif_image,heif_channel_Cr,&stride_cr);
+    /*
+      Copy image to heif_image
+    */
+    for (y=0; y < (ssize_t) image->rows; y++)
+    {
+      register ssize_t
+        x;
+
+      p=GetVirtualPixels(image,0,y,image->columns,1,exception);
+      if (p == (const Quantum *) NULL)
+        {
+          status=MagickFalse;
+          break;
+        }
+      if ((y & 0x01) == 0)
+        for (x=0; x < (ssize_t) image->columns; x+=2)
+        {
+          p_y[y*stride_y+x]=ScaleQuantumToChar(GetPixelRed(image,p));
+          p_cb[y/2*stride_cb+x/2]=ScaleQuantumToChar(GetPixelGreen(image,p));
+          p_cr[y/2*stride_cr+x/2]=ScaleQuantumToChar(GetPixelBlue(image,p));
+          p+=GetPixelChannels(image);
+          if ((x+1) < (ssize_t) image->columns)
+            {
+              p_y[y*stride_y+x+1]=ScaleQuantumToChar(GetPixelRed(image,p));
+              p+=GetPixelChannels(image);
+            }
+        }
+      else
+        for (x=0; x < (ssize_t) image->columns; x++)
+        {
+          p_y[y*stride_y+x]=ScaleQuantumToChar(GetPixelRed(image,p));
+          p+=GetPixelChannels(image);
+        }
+      if (image->previous == (Image *) NULL)
+        {
+          status=SetImageProgress(image,SaveImageTag,(MagickOffsetType) y,
+            image->rows);
+          if (status == MagickFalse)
+            break;
+        }
+    }
+    if (status == MagickFalse)
+      break;
+    /*
+      Code and actually write the HEIC image
+    */
+    error=heif_context_get_encoder_for_format(heif_context,
+      heif_compression_HEVC,&heif_encoder);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+    if (image_info->quality != UndefinedCompressionQuality)
+      {
+        error=heif_encoder_set_lossy_quality(heif_encoder,(int)
+          image_info->quality);
+        status=IsHeifSuccess(&error,image,exception);
+        if (status == MagickFalse)
+          break;
+      }
+    error=heif_context_encode_image(heif_context,heif_image,heif_encoder,
+      (const struct heif_encoding_options *) NULL,
+      (struct heif_image_handle **) NULL);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+    writer.writer_api_version=1;
+    writer.write=heif_write_func;
+#if LIBHEIF_NUMERIC_VERSION >= 0x01030000
+    if (image->profiles != (void *) NULL)
+      WriteProfile(heif_context, image, exception);
+#endif
+    error=heif_context_write(heif_context,&writer,image);
+    status=IsHeifSuccess(&error,image,exception);
+    if (status == MagickFalse)
+      break;
+    if (GetNextImageInList(image) == (Image *) NULL)
+      break;
+    image=SyncNextImageInList(image);
+    status=SetImageProgress(image,SaveImagesTag,scene,
+      GetImageListLength(image));
+    if (status == MagickFalse)
+      break;
+    heif_encoder_release(heif_encoder);
+    heif_encoder=(struct heif_encoder*) NULL;
+    heif_image_release(heif_image);
+    heif_image=(struct heif_image*) NULL;
+    scene++;
+  } while (image_info->adjoin != MagickFalse);
+  if (heif_encoder != (struct heif_encoder*) NULL)
+    heif_encoder_release(heif_encoder);
+  if (heif_image != (struct heif_image*) NULL)
+    heif_image_release(heif_image);
+  heif_context_free(heif_context);
+  (void) CloseBlob(image);
+  return(status);
+}
+#endif

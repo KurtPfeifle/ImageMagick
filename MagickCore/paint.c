@@ -17,13 +17,13 @@
 %                                 July 1998                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -186,7 +186,7 @@ MagickExport MagickBooleanType FloodfillPaintImage(Image *image,
   /*
     Set floodfill state.
   */
-  floodplane_image=CloneImage(image,image->columns,image->rows,MagickTrue,
+  floodplane_image=CloneImage(image,0,0,MagickTrue,
     exception);
   if (floodplane_image == (Image *) NULL)
     return(MagickFalse);
@@ -605,8 +605,7 @@ MagickExport MagickBooleanType GradientImage(Image *image,
   if (gradient->stops == (StopInfo *) NULL)
     ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
       image->filename);
-  (void) memcpy(gradient->stops,stops,(size_t) number_stops*
-    sizeof(*stops));
+  (void) memcpy(gradient->stops,stops,(size_t) number_stops*sizeof(*stops));
   /*
     Draw a gradient on the image.
   */
@@ -722,7 +721,7 @@ MagickExport Image *OilPaintImage(const Image *image,const double radius,
   assert(exception->signature == MagickCoreSignature);
   width=GetOptimalKernelWidth2D(radius,sigma);
   linear_image=CloneImage(image,0,0,MagickTrue,exception);
-  paint_image=CloneImage(image,image->columns,image->rows,MagickTrue,exception);
+  paint_image=CloneImage(image,0,0,MagickTrue,exception);
   if ((linear_image == (Image *) NULL) || (paint_image == (Image *) NULL))
     {
       if (linear_image != (Image *) NULL)
@@ -828,8 +827,7 @@ MagickExport Image *OilPaintImage(const Image *image,const double radius,
         if ((traits == UndefinedPixelTrait) ||
             (paint_traits == UndefinedPixelTrait))
           continue;
-        if (((paint_traits & CopyPixelTrait) != 0) ||
-            (GetPixelWriteMask(linear_image,p) <= (QuantumRange/2)))
+        if ((paint_traits & CopyPixelTrait) != 0)
           {
             SetPixelChannel(paint_image,channel,p[center+i],q);
             continue;
@@ -848,9 +846,10 @@ MagickExport Image *OilPaintImage(const Image *image,const double radius,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_OilPaintImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(linear_image,OilPaintImageTag,progress++,
+        progress++;
+        proceed=SetImageProgress(linear_image,OilPaintImageTag,progress,
           linear_image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
@@ -970,11 +969,6 @@ MagickExport MagickBooleanType OpaquePaintImage(Image *image,
     pixel=zero;
     for (x=0; x < (ssize_t) image->columns; x++)
     {
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          q+=GetPixelChannels(image);
-          continue;
-        }
       GetPixelInfoPixel(image,q,&pixel);
       if (IsFuzzyEquivalencePixelInfo(&pixel,&conform_target) != invert)
         {
@@ -1007,9 +1001,10 @@ MagickExport MagickBooleanType OpaquePaintImage(Image *image,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_OpaquePaintImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,OpaquePaintImageTag,progress++,
+        progress++;
+        proceed=SetImageProgress(image,OpaquePaintImageTag,progress,
           image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
@@ -1121,11 +1116,6 @@ MagickExport MagickBooleanType TransparentPaintImage(Image *image,
     pixel=zero;
     for (x=0; x < (ssize_t) image->columns; x++)
     {
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          q+=GetPixelChannels(image);
-          continue;
-        }
       GetPixelInfoPixel(image,q,&pixel);
       if (IsFuzzyEquivalencePixelInfo(&pixel,target) != invert)
         SetPixelAlpha(image,opacity,q);
@@ -1139,9 +1129,10 @@ MagickExport MagickBooleanType TransparentPaintImage(Image *image,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_TransparentPaintImage)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,TransparentPaintImageTag,progress++,
+        progress++;
+        proceed=SetImageProgress(image,TransparentPaintImageTag,progress,
           image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;
@@ -1256,11 +1247,6 @@ MagickExport MagickBooleanType TransparentPaintImageChroma(Image *image,
     GetPixelInfo(image,&pixel);
     for (x=0; x < (ssize_t) image->columns; x++)
     {
-      if (GetPixelWriteMask(image,q) <= (QuantumRange/2))
-        {
-          q+=GetPixelChannels(image);
-          continue;
-        }
       GetPixelInfoPixel(image,q,&pixel);
       match=((pixel.red >= low->red) && (pixel.red <= high->red) &&
         (pixel.green >= low->green) && (pixel.green <= high->green) &&
@@ -1278,9 +1264,10 @@ MagickExport MagickBooleanType TransparentPaintImageChroma(Image *image,
           proceed;
 
 #if defined(MAGICKCORE_OPENMP_SUPPORT)
-        #pragma omp critical (MagickCore_TransparentPaintImageChroma)
+        #pragma omp atomic
 #endif
-        proceed=SetImageProgress(image,TransparentPaintImageTag,progress++,
+        progress++;
+        proceed=SetImageProgress(image,TransparentPaintImageTag,progress,
           image->rows);
         if (proceed == MagickFalse)
           status=MagickFalse;

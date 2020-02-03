@@ -15,13 +15,13 @@
 %                              Anthony Thyssen                                %
 %                                 April 2011                                  %
 %                                                                             %
-%  Copyright 1999-2018 ImageMagick Studio LLC, a non-profit organization      %
+%  Copyright 1999-2020 ImageMagick Studio LLC, a non-profit organization      %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
 %  obtain a copy of the License at                                            %
 %                                                                             %
-%    https://www.imagemagick.org/script/license.php                           %
+%    https://imagemagick.org/script/license.php                               %
 %                                                                             %
 %  Unless required by applicable law or agreed to in writing, software        %
 %  distributed under the License is distributed on an "AS IS" BASIS,          %
@@ -241,8 +241,10 @@ WandExport MagickBooleanType CLICatchException(MagickCLI *cli_wand,
   if (cli_wand->wand.debug != MagickFalse)
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",cli_wand->wand.name);
 
-  // FUTURE: '-regard_warning' should make this more sensitive.
-  // Note pipelined options may like more control over this level
+  /*
+    FUTURE: '-regard_warning' should make this more sensitive.
+    Note pipelined options may like more control over this level
+  */
 
   status=cli_wand->wand.exception->severity > ErrorException ? MagickTrue :
     MagickFalse;
@@ -269,7 +271,7 @@ WandExport MagickBooleanType CLICatchException(MagickCLI *cli_wand,
 %
 */
 WandExport MagickBooleanType CLILogEvent(MagickCLI *cli_wand,
-     const LogEventType type,const char *module,const char *function,
+     const LogEventType type,const char *magick_module,const char *function,
      const size_t line,const char *format,...)
 {
   char
@@ -295,7 +297,8 @@ WandExport MagickBooleanType CLILogEvent(MagickCLI *cli_wand,
   (void) ConcatenateMagickString(new_format,format,MagickPathExtent);
 
   va_start(operands,format);
-  status=LogMagickEventList(type,module,function,line,new_format,operands);
+  status=LogMagickEventList(type,magick_module,function,line,new_format,
+    operands);
   va_end(operands);
 
   return(status);
@@ -316,7 +319,7 @@ WandExport MagickBooleanType CLILogEvent(MagickCLI *cli_wand,
 % it the location of the option that caused the exception to occur.
 */
 WandExport MagickBooleanType CLIThrowException(MagickCLI *cli_wand,
-  const char *module,const char *function,const size_t line,
+  const char *magick_module,const char *function,const size_t line,
   const ExceptionType severity,const char *tag,const char *format,...)
 {
   char
@@ -344,8 +347,8 @@ WandExport MagickBooleanType CLIThrowException(MagickCLI *cli_wand,
     cli_wand->location,cli_wand->filename,cli_wand->line,cli_wand->column);
 
   va_start(operands,format);
-  status=ThrowMagickExceptionList(cli_wand->wand.exception,module,function,
-    line,severity,tag,new_format,operands);
+  status=ThrowMagickExceptionList(cli_wand->wand.exception,magick_module,
+    function,line,severity,tag,new_format,operands);
   va_end(operands);
   return(status);
 }
