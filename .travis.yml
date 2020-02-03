@@ -147,7 +147,7 @@ script:
   - #; fi
   
   - echo '#################################'
-  - find . -name "ImageMagick*.AppImage*"
+  - find . -name "ImageMagick*.AppImage*" 
   - echo '#################################'
   
   - env | grep -i travis
